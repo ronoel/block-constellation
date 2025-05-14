@@ -22,6 +22,7 @@
 (define-data-var cycle-duration uint u144) ;; 144 bitcoin blocks
 (define-data-var min-allocation uint u1000000) ;; 1 million satoshis
 (define-data-var treasure-distribution-cycle-count uint u3)
+(define-data-var prize-expiration-cycle-count uint u5) ;; Number of cycles before prize expires
 (define-data-var reward-claim-fee uint u100)
 
 ;; Financial state variables
@@ -151,6 +152,18 @@
   )
 )
 
+;; Set the prize expiration cycle count - can only be called by the current manager
+(define-public (set-prize-expiration-cycle-count (new-count uint))
+  (begin
+    ;; Check that the caller is the current manager
+    (asserts! (is-eq contract-caller (var-get manager)) ERR-PERMISSION-DENIED)
+    ;; Validate the new count (must be greater than 0)
+    (asserts! (> new-count u0) ERR-INVALID-VALUE)
+    ;; Update the prize expiration cycle count to the new value
+    (ok (var-set prize-expiration-cycle-count new-count))
+  )
+)
+
 ;; Set the allocation division - can only be called by the current manager
 (define-public (set-allocation-division (current-cycle-percent uint) (treasure-percent uint) (team-fee-percent uint) (referral-reward-percent uint) )
   (begin
@@ -189,6 +202,10 @@
 
 (define-read-only (get-treasure-distribution-cycle-count) 
     (var-get treasure-distribution-cycle-count)
+)
+
+(define-read-only (get-prize-expiration-cycle-count)
+    (var-get prize-expiration-cycle-count)
 )
 
 (define-read-only (get-allocation-division) 
@@ -342,6 +359,37 @@
     )
 )
 
+(define-public (claim-expired-prize (cycle-id uint))
+    (begin 
+        ;; Check that the cycle was more than the defined expiration cycles ago
+        (let (
+            (current-cycle-id (get-current-cycle-id))
+            (expiration-cycles (get-prize-expiration-cycle-count))
+        )
+            (asserts! (>= (- current-cycle-id cycle-id) expiration-cycles) ERR-PRECONDITION-FAILED)
+            
+            (let (
+                (cycle-data (get-cycle cycle-id))
+                (unclaimed-prize (- (get prize cycle-data) (get prize-claimed cycle-data)))
+            )
+                ;; Check that there's unclaimed prize to recover
+                (asserts! (> unclaimed-prize u0) ERR-PRECONDITION-FAILED)
+                
+                ;; Update the cycle data to mark all prize as claimed
+                (map-set cycle cycle-id 
+                    (merge cycle-data { 
+                        prize-claimed: (get prize cycle-data)
+                    }))
+                
+                ;; Add the unclaimed prize back to the treasure
+                (var-set treasure (+ (var-get treasure) unclaimed-prize))
+                
+                (ok unclaimed-prize)
+            )
+        )
+    )
+)
+
 (define-public (allocate (amount uint) (constellation uint) (refferral-user principal))
     (begin 
         (asserts! (>= amount (var-get min-allocation)) ERR-PRECONDITION-FAILED)
@@ -409,7 +457,7 @@
             (reward-amount (get amount user-reward))
             (update-block (get block-update user-reward))
             (current-cycle-id (get-current-cycle-id))
-            (min-cycles-passed u5)
+            (expiration-cycles (var-get prize-expiration-cycle-count))
             (cycles-since-update (if (> update-block u0)
                                       (/ (- tenure-height update-block) (var-get cycle-duration))
                                       u0))
@@ -417,8 +465,8 @@
             ;; Check if there's any reward to claim
             (asserts! (> reward-amount u0) ERR-PRECONDITION-FAILED)
             
-            ;; Check if at least 5 cycles have passed since the last update
-            (asserts! (>= cycles-since-update min-cycles-passed) ERR-PRECONDITION-FAILED)
+            ;; Check if at least the required number of cycles have passed since the last update
+            (asserts! (>= cycles-since-update expiration-cycles) ERR-PRECONDITION-FAILED)
             
             ;; Transfer reward from contract to manager
             (try! (as-contract (contract-call? .sbtc-token transfer reward-amount tx-sender (var-get manager) none)))
