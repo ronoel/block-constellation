@@ -21,6 +21,16 @@
 (define-constant ERR-PERMISSION-DENIED (err u403))   ;; Caller lacks permission
 (define-constant ERR-INVALID-VALUE (err u400))       ;; Input validation failed
 
+;; Specific error codes for claim-reward function
+(define-constant ERR-CYCLE-NOT-FINISHED (err u4121)) ;; Attempting to claim from an active cycle
+(define-constant ERR-ALREADY-CLAIMED (err u4122))    ;; User has already claimed their reward
+(define-constant ERR-NO-ALLOCATION (err u4123))      ;; User has no allocation in winning constellation
+(define-constant ERR-PRIZE-POOL-EMPTY (err u4124))   ;; Prize pool has been exhausted
+
+;; Specific error codes for recover-expired-prizes function  
+(define-constant ERR-EXPIRATION-PERIOD-NOT-MET (err u4131)) ;; Prize expiration period not yet reached
+(define-constant ERR-NO-UNCLAIMED-PRIZE (err u4132))       ;; No unclaimed prize to recover
+
 ;; System constants
 (define-constant START-BLOCK tenure-height)          ;; Contract deployment block
 (define-constant TOTAL-CONSTELLATIONS u21)           ;; Total number of available constellations
@@ -327,7 +337,7 @@
 (define-public (claim-reward (cycle-id uint))
     (begin 
         ;; Check that the cycle is finished - users can only claim rewards after a cycle completes
-        (asserts! (< cycle-id (get-current-cycle-id)) ERR-PRECONDITION-FAILED)
+        (asserts! (< cycle-id (get-current-cycle-id)) ERR-CYCLE-NOT-FINISHED)
 
         (let (
             (user contract-caller)
@@ -340,13 +350,13 @@
             (constellation-allocation-remained (- total-constellation-allocation (get allocation-claimed cycle-data)))
             )
             ;; Check that the user hasn't claimed yet - prevent double-claiming
-            (asserts! (not (get claimed user-allocation)) ERR-PRECONDITION-FAILED)
+            (asserts! (not (get claimed user-allocation)) ERR-ALREADY-CLAIMED)
             
             ;; Check that the user allocated to the winning constellation - must have skin in the game
-            (asserts! (> user-constellation-allocation u0) ERR-PRECONDITION-FAILED)
+            (asserts! (> user-constellation-allocation u0) ERR-NO-ALLOCATION)
 
             ;; Check that the prize pool has not been exhausted - ensure there's something to claim
-            (asserts! (> prize-remained u0) ERR-PRECONDITION-FAILED)
+            (asserts! (> prize-remained u0) ERR-PRIZE-POOL-EMPTY)
 
             (let (
                     ;; Calculate user's proportional share of the prize pool
@@ -385,14 +395,14 @@
             (expiration-period (get-prize-expiration-period))
         )
             ;; Ensure the expiration period has passed (configurable via prize-expiration-period)
-            (asserts! (>= (- current-cycle-id cycle-id) expiration-period) ERR-PRECONDITION-FAILED)
+            (asserts! (>= (- current-cycle-id cycle-id) expiration-period) ERR-EXPIRATION-PERIOD-NOT-MET)
             
             (let (
                 (cycle-data (get-cycle cycle-id))
                 (unclaimed-prize (- (get prize cycle-data) (get prize-claimed cycle-data)))
             )
                 ;; Check that there's unclaimed prize to recover
-                (asserts! (> unclaimed-prize u0) ERR-PRECONDITION-FAILED)
+                (asserts! (> unclaimed-prize u0) ERR-NO-UNCLAIMED-PRIZE)
                 
                 ;; Update the cycle data to mark all prize as claimed
                 (map-set cycle cycle-id 
