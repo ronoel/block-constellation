@@ -345,6 +345,9 @@
             ;; Check that the user allocated to the winning constellation - must have skin in the game
             (asserts! (> user-constellation-allocation u0) ERR-PRECONDITION-FAILED)
 
+            ;; Check that the prize pool has not been exhausted - ensure there's something to claim
+            (asserts! (> prize-remained u0) ERR-PRECONDITION-FAILED)
+
             (let (
                     ;; Calculate user's proportional share of the prize pool
                     (user-prize (/ (* prize-remained user-constellation-allocation) constellation-allocation-remained))

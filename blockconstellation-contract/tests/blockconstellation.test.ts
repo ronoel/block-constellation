@@ -208,7 +208,7 @@ describe("Finance and Allocation Tests", () => {
     
     // Allocate in the current cycle (which is now cycle 1)
     const allocAmount = 3000000;
-    const constellation = 0; // Using constellation 0 for this test
+    const constellation = 1; // Using constellation 0 for this test
     
     // Mint tokens for address3
     mintToken(allocAmount, address3);
@@ -223,19 +223,25 @@ describe("Finance and Allocation Tests", () => {
     // Get the current cycle ID, should be 2 now
     const currentCycleId = getCurrentCycleId();
     expect(currentCycleId.result).toBeUint(2);
+
+    
+
+    // Get constellation of the cycle
+    const constellationResult = getConstellation(1);
     
     // Claim reward for cycle 1
     const claimResult = claimReward(1, address3);
+    expect(claimResult.result).toHaveClarityType(ClarityType.ResponseOk);
+
+    // Check the user balance after claiming
+    const userBalance2 = Number(simnet.getAssetsMap().get(".sbtc-token.sbtc-token")?.get(address3));
+    expect(userBalance2).toBeGreaterThan(0);
+
+    // Check the cycle details
+    const cycle = getCycle(1);
+    console.log("Cycle Data: ", cvToJSON(cycle.result));
     
-    // The result might be an error if address3 didn't allocate to the winning constellation
-    // So we just check that the function executed without throwing an exception
-    expect(claimResult).toBeDefined();
     
-    // If we got an OK, then the user successfully claimed their reward
-    if (claimResult.result.type === ClarityType.ResponseOk) {
-      const userReward = cvToValue(claimResult.result.value);
-      expect(userReward).toBeGreaterThan(0);
-    }
   });
 });
 
@@ -258,6 +264,7 @@ describe("Cycle and Tracking Tests", () => {
     expect(cycle.result).toBeDefined();
     if (cycle.result) {
       const resultValue = cvToJSON(cycle.result);
+      console.log("Cycle Data: ", resultValue);
       expect(resultValue).toHaveProperty("prize");
       expect(resultValue).toHaveProperty("prize-claimed");
       expect(resultValue).toHaveProperty("constellation-allocation");
@@ -436,6 +443,16 @@ function getRewardClaimFee() {
     CONTRACT_NAME,
     "get-reward-claim-fee",
     [],
+    deployer
+  );
+}
+
+// get-constellation
+function getConstellation(cycleNumber: number) {
+  return simnet.callReadOnlyFn(
+    CONTRACT_NAME,
+    "get-constellation",
+    [Cl.uint(cycleNumber)],
     deployer
   );
 }
