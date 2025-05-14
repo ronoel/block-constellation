@@ -1,77 +1,89 @@
 ;; title: Block Constellation
 ;; version: 1.0.0
 ;; summary: Contract for managing blockchain constellations and cycles 
-;; description: This contract allows users to allocate resources to constellations, participate in cycles, and earn rewards
+;; description: 
+;;   This contract implements a decentralized constellation allocation system where:
+;;   - Users allocate funds to one or more of 21 constellations in each cycle
+;;   - At the end of a cycle, a winning constellation is determined via randomization
+;;   - Users who allocated to the winning constellation receive rewards proportionally
+;;   - Unclaimed prizes can be recovered after a defined expiration period
+;;   - Referral rewards incentivize network growth
+;;
+;; The contract enforces timeframes, handles token transfers, calculates rewards,
+;; and allows for administrative adjustments of key parameters.
 
 ;; ========================================
 ;; Constants
 ;; ========================================
-(define-constant ERR-PRECONDITION-FAILED (err u412))
-(define-constant ERR-PRINCIPAL-NOT-FOUND (err u404))
-(define-constant ERR-PERMISSION-DENIED (err u403))
-(define-constant ERR-INVALID-VALUE (err u400))
+;; Error codes
+(define-constant ERR-PRECONDITION-FAILED (err u412)) ;; Conditions for operation not met
+(define-constant ERR-PRINCIPAL-NOT-FOUND (err u404)) ;; Principal not found in system
+(define-constant ERR-PERMISSION-DENIED (err u403))   ;; Caller lacks permission
+(define-constant ERR-INVALID-VALUE (err u400))       ;; Input validation failed
 
-(define-constant START-BLOCK tenure-height)
-(define-constant TOTAL-CONSTELLATIONS u21)
+;; System constants
+(define-constant START-BLOCK tenure-height)          ;; Contract deployment block
+(define-constant TOTAL-CONSTELLATIONS u21)           ;; Total number of available constellations
 
 ;; ========================================
 ;; Data Variables
 ;; ========================================
 ;; Admin and configuration variables
-(define-data-var manager principal tx-sender)
-(define-data-var cycle-duration uint u144) ;; 144 bitcoin blocks
-(define-data-var min-allocation uint u1000000) ;; 1 million satoshis
-(define-data-var treasure-distribution-cycle-count uint u3)
-(define-data-var prize-expiration-cycle-count uint u5) ;; Number of cycles before prize expires
-(define-data-var reward-claim-fee uint u100)
+(define-data-var manager principal tx-sender)                 ;; Contract administrator
+(define-data-var blocks-per-cycle uint u144)                  ;; Duration of each cycle (144 bitcoin blocks)
+(define-data-var min-allocation uint u1000000)                ;; Minimum allocation amount (1 million satoshis)
+(define-data-var treasury-distribution-period uint u3)        ;; Number of cycles for distributing treasury
+(define-data-var prize-expiration-period uint u5)             ;; Cycles before unclaimed prizes expire and return to treasury
+(define-data-var reward-claim-fee uint u100)                  ;; Fee for claiming referral rewards
 
 ;; Financial state variables
-(define-data-var treasure uint u0)
-(define-data-var team-fee uint u0)
+(define-data-var treasury uint u0)                            ;; Total treasury accumulated
+(define-data-var team-fee uint u0)                            ;; Total team fee accumulated
 
 ;; Division configuration
-(define-data-var allocation-division
+(define-data-var allocation-percentages
     {
-        current-cycle: uint,
-        treasure: uint,
-        team-fee: uint,
-        referral-reward: uint
+        current-cycle: uint,    ;; Percentage allocated to current cycle's prize pool
+        treasury: uint,         ;; Percentage allocated to long-term treasury
+        team-fee: uint,         ;; Percentage allocated as team fee
+        referral-reward: uint   ;; Percentage allocated for referral rewards
     }
     {
-        current-cycle: u30,
-        treasure: u40,
-        team-fee: u25,
-        referral-reward: u5
+        current-cycle: u30,     ;; 30% to current cycle
+        treasury: u40,          ;; 40% to treasury
+        team-fee: u25,          ;; 25% to team
+        referral-reward: u5     ;; 5% to referrals
     }
 )
 
 ;; ========================================
 ;; Maps
 ;; ========================================
-;; Allocate the prize for each constellation
+;; Tracks prize pool and allocation data for each cycle
 (define-map cycle uint 
     {
-        prize: uint,
-        prize-claimed: uint,
-        constellation-allocation: (list 21 uint),
-        allocation-claimed: uint
+        prize: uint,                          ;; Total prize for this cycle
+        prize-claimed: uint,                  ;; Amount of prize already claimed
+        constellation-allocation: (list 21 uint), ;; Allocation to each constellation (21 constellations)
+        allocation-claimed: uint              ;; Amount of allocation claimed by users
     })
 
-;; Store the allocated by user for each constellation
+;; Tracks each user's allocation across constellations for each cycle
 (define-map allocated-by-user
     {
-        cycle-id: uint,
-        user: principal
+        cycle-id: uint,    ;; ID of the cycle
+        user: principal    ;; User principal address
     }
     {
-        constellation-allocation: (list 21 uint),
-        claimed: bool
+        constellation-allocation: (list 21 uint), ;; User's allocation to each constellation
+        claimed: bool      ;; Whether user has claimed their reward
     })
 
-(define-map refferral-reward principal
+;; Tracks referral rewards for users
+(define-map referral-reward principal
     {
-        amount: uint, ;; Amount of reward
-        block-update: uint  ;; Block number when the reward was updated
+        amount: uint,      ;; Amount of reward accumulated
+        block-update: uint ;; Block number when the reward was last updated
     })
 
 ;; ========================================
@@ -93,14 +105,14 @@
 )
 
 ;; Set the cycle duration - can only be called by the current manager
-(define-public (set-cycle-duration (new-duration uint))
+(define-public (set-blocks-per-cycle (new-duration uint))
   (begin
     ;; Check that the caller is the current manager
     (asserts! (is-eq contract-caller (var-get manager)) ERR-PERMISSION-DENIED)
     ;; Validate the new duration (must be greater than 0)
     (asserts! (> new-duration u0) ERR-INVALID-VALUE)
     ;; Update the cycle duration to the new value
-    (ok (var-set cycle-duration new-duration))
+    (ok (var-set blocks-per-cycle new-duration))
   )
 )
 
@@ -116,15 +128,15 @@
   )
 )
 
-;; Set the treasure distribution cycle count - can only be called by the current manager
-(define-public (set-treasure-distribution-cycle-count (new-count uint))
+;; Set the treasury distribution period - can only be called by the current manager
+(define-public (set-treasury-distribution-period (new-count uint))
   (begin
     ;; Check that the caller is the current manager
     (asserts! (is-eq contract-caller (var-get manager)) ERR-PERMISSION-DENIED)
     ;; Validate the new count (must be greater than 0)
     (asserts! (> new-count u0) ERR-INVALID-VALUE)
-    ;; Update the treasure distribution cycle count to the new value
-    (ok (var-set treasure-distribution-cycle-count new-count))
+    ;; Update the treasury distribution period to the new value
+    (ok (var-set treasury-distribution-period new-count))
   )
 )
 
@@ -152,29 +164,29 @@
   )
 )
 
-;; Set the prize expiration cycle count - can only be called by the current manager
-(define-public (set-prize-expiration-cycle-count (new-count uint))
+;; Set the prize expiration period - can only be called by the current manager
+(define-public (set-prize-expiration-period (new-count uint))
   (begin
     ;; Check that the caller is the current manager
     (asserts! (is-eq contract-caller (var-get manager)) ERR-PERMISSION-DENIED)
     ;; Validate the new count (must be greater than 0)
     (asserts! (> new-count u0) ERR-INVALID-VALUE)
-    ;; Update the prize expiration cycle count to the new value
-    (ok (var-set prize-expiration-cycle-count new-count))
+    ;; Update the prize expiration period to the new value
+    (ok (var-set prize-expiration-period new-count))
   )
 )
 
 ;; Set the allocation division - can only be called by the current manager
-(define-public (set-allocation-division (current-cycle-percent uint) (treasure-percent uint) (team-fee-percent uint) (referral-reward-percent uint) )
+(define-public (set-allocation-percentages (current-cycle-percent uint) (treasury-percent uint) (team-fee-percent uint) (referral-reward-percent uint) )
   (begin
     ;; Check that the caller is the current manager
     (asserts! (is-eq contract-caller (var-get manager)) ERR-PERMISSION-DENIED)
     ;; Check that the percentages sum to 100
-    (asserts! (is-eq (+ (+ (+ current-cycle-percent treasure-percent) team-fee-percent) referral-reward-percent) u100) ERR-PRECONDITION-FAILED)
-    ;; Update the allocation division to the new values
-    (ok (var-set allocation-division {
+    (asserts! (is-eq (+ (+ (+ current-cycle-percent treasury-percent) team-fee-percent) referral-reward-percent) u100) ERR-PRECONDITION-FAILED)
+    ;; Update the allocation percentages to the new values
+    (ok (var-set allocation-percentages {
         current-cycle: current-cycle-percent,
-        treasure: treasure-percent,
+        treasury: treasury-percent,
         team-fee: team-fee-percent,
         referral-reward: referral-reward-percent
     }))
@@ -184,32 +196,32 @@
 ;; ========================================
 ;; Read-Only Functions
 ;; ========================================
-(define-read-only (read-random (block uint))
+(define-read-only (get-random-number-from-block (block uint))
     (buff-to-uint-be (unwrap-panic (as-max-len? (unwrap-panic (slice? (unwrap-panic (get-tenure-info? vrf-seed block)) u16 u32)) u16)))
 )
 
-(define-read-only (get-cycle-duration) 
-    (var-get cycle-duration)
+(define-read-only (get-blocks-per-cycle) 
+    (var-get blocks-per-cycle)
 )
 
-(define-read-only (get-treasure) 
-    (var-get treasure)
+(define-read-only (get-treasury) 
+    (var-get treasury)
 )
 
 (define-read-only (get-team-fee) 
     (var-get team-fee)
 )
 
-(define-read-only (get-treasure-distribution-cycle-count) 
-    (var-get treasure-distribution-cycle-count)
+(define-read-only (get-treasury-distribution-period) 
+    (var-get treasury-distribution-period)
 )
 
-(define-read-only (get-prize-expiration-cycle-count)
-    (var-get prize-expiration-cycle-count)
+(define-read-only (get-prize-expiration-period)
+    (var-get prize-expiration-period)
 )
 
-(define-read-only (get-allocation-division) 
-    (var-get allocation-division)
+(define-read-only (get-allocation-percentages) 
+    (var-get allocation-percentages)
 )
 
 (define-read-only (get-min-allocation) 
@@ -221,16 +233,16 @@
 )
 
 (define-read-only (get-current-cycle-id)
-    (/ (- tenure-height START-BLOCK) (var-get cycle-duration))
+    (/ (- tenure-height START-BLOCK) (var-get blocks-per-cycle))
 )
 
 ;; Get the block number for a constellation given cycle number
-(define-read-only (get-consttellation-block (cycle-id uint)) 
-    (- (+ (* (var-get cycle-duration) (+ cycle-id u1)) START-BLOCK) u1)
+(define-read-only (get-constellation-block (cycle-id uint)) 
+    (- (+ (* (var-get blocks-per-cycle) (+ cycle-id u1)) START-BLOCK) u1)
 )
 
-(define-read-only (get-consttellation (cycle-id uint))
-    (mod (read-random (get-consttellation-block cycle-id)) TOTAL-CONSTELLATIONS)
+(define-read-only (get-constellation (cycle-id uint))
+    (mod (get-random-number-from-block (get-constellation-block cycle-id)) TOTAL-CONSTELLATIONS)
 )
 
 ;; Get the referral reward for a specific user
@@ -240,7 +252,7 @@
             amount: u0,
             block-update: u0
         }
-        (map-get? refferral-reward user))
+        (map-get? referral-reward user))
 )
 
 (define-read-only (get-allocated-by-user (cycle-id uint) (user principal))
@@ -266,46 +278,46 @@
 ;; ========================================
 ;; Public Functions
 ;; ========================================
-(define-public (deposit-treaure (amount uint)) 
+(define-public (deposit-treasury (amount uint)) 
     (begin 
         ;; Validate amount is greater than 0
         (asserts! (> amount u0) ERR-INVALID-VALUE)
         ;; Transfer tokens from the sender to the contract
         (try! (contract-call? .sbtc-token transfer amount tx-sender (as-contract tx-sender) none))
-        ;; Update the treasure amount
-        (var-set treasure (+ (var-get treasure) amount))
+        ;; Update the treasury amount
+        (var-set treasury (+ (var-get treasury) amount))
         (ok true)
     )
 )
 
-(define-public (withdraw-treasure (amount uint) (recipient principal))
+(define-public (withdraw-treasury (amount uint) (recipient principal))
     (begin
         ;; Check that the caller is the current manager
         (asserts! (is-eq contract-caller (var-get manager)) ERR-PERMISSION-DENIED)
-        ;; Validate the amount (must be greater than 0 and less than or equal to available treasure)
+        ;; Validate the amount (must be greater than 0 and less than or equal to available treasury)
         (asserts! (> amount u0) ERR-INVALID-VALUE)
         (let (
-            (treasure-avlb (var-get treasure))
+            (treasury-available (var-get treasury))
         )
-            (asserts! (<= amount treasure-avlb) ERR-PRECONDITION-FAILED)
+            (asserts! (<= amount treasury-available) ERR-PRECONDITION-FAILED)
             ;; Transfer tokens from the contract to the recipient
             (try! (as-contract (contract-call? .sbtc-token transfer amount tx-sender recipient none)))
-            ;; Update the treasure amount
-            (var-set treasure (- treasure-avlb amount))
+            ;; Update the treasury amount
+            (var-set treasury (- treasury-available amount))
             (ok true)
         )
     )
 )
 
-(define-public (close-contract (amount uint))
+(define-public (withdraw-contract-funds (amount uint))
     (begin
         ;; Check that the caller is the current manager
         (asserts! (is-eq contract-caller (var-get manager)) ERR-PERMISSION-DENIED)
-        ;; Transfer remaining treasure to the manager
+        ;; Transfer remaining funds to the manager
         (let (
-                (fund-avlb (unwrap-panic (as-contract (contract-call? .sbtc-token get-balance tx-sender ))))
+                (fund-available (unwrap-panic (as-contract (contract-call? .sbtc-token get-balance tx-sender ))))
             )
-            (asserts! (<= amount fund-avlb) ERR-PRECONDITION-FAILED)
+            (asserts! (<= amount fund-available) ERR-PRECONDITION-FAILED)
             (try! (as-contract (contract-call? .sbtc-token transfer amount tx-sender (var-get manager) none)))
             (ok true)
         )
@@ -314,31 +326,33 @@
 
 (define-public (claim-reward (cycle-id uint))
     (begin 
-        ;; Check that the cycle is finished
+        ;; Check that the cycle is finished - users can only claim rewards after a cycle completes
         (asserts! (< cycle-id (get-current-cycle-id)) ERR-PRECONDITION-FAILED)
 
         (let (
             (user contract-caller)
             (user-allocation (get-allocated-by-user cycle-id user))
             (cycle-data (get-cycle cycle-id))
-            (winning-constellation (get-consttellation cycle-id))
+            (winning-constellation (get-constellation cycle-id))
             (user-constellation-allocation (unwrap-panic (element-at? (get constellation-allocation user-allocation) winning-constellation)))
             (total-constellation-allocation (unwrap-panic (element-at? (get constellation-allocation cycle-data) winning-constellation)))
             (prize-remained (- (get prize cycle-data) (get prize-claimed cycle-data)))
             (constellation-allocation-remained (- total-constellation-allocation (get allocation-claimed cycle-data)))
             )
-            ;; Check that the user hasn't claimed yet
+            ;; Check that the user hasn't claimed yet - prevent double-claiming
             (asserts! (not (get claimed user-allocation)) ERR-PRECONDITION-FAILED)
             
-            ;; Check that the user allocated to the winning constellation
+            ;; Check that the user allocated to the winning constellation - must have skin in the game
             (asserts! (> user-constellation-allocation u0) ERR-PRECONDITION-FAILED)
 
             (let (
+                    ;; Calculate user's proportional share of the prize pool
                     (user-prize (/ (* prize-remained user-constellation-allocation) constellation-allocation-remained))
+                    ;; Safety check to ensure we don't exceed available prize
                     (user-reward (if (> user-prize prize-remained) prize-remained user-prize))
                 )
 
-                ;; Update the cycle data
+                ;; Update the cycle data to reflect this claim
                 (map-set cycle cycle-id 
                     (merge cycle-data { 
                         allocation-claimed: (+ (get allocation-claimed cycle-data) user-constellation-allocation),
@@ -359,14 +373,16 @@
     )
 )
 
-(define-public (claim-expired-prize (cycle-id uint))
+(define-public (recover-expired-prizes (cycle-id uint))
     (begin 
-        ;; Check that the cycle was more than the defined expiration cycles ago
+        ;; This function allows recovering unclaimed prizes after the expiration period
+        ;; Recovered prizes are returned to the treasury for future distribution
         (let (
             (current-cycle-id (get-current-cycle-id))
-            (expiration-cycles (get-prize-expiration-cycle-count))
+            (expiration-period (get-prize-expiration-period))
         )
-            (asserts! (>= (- current-cycle-id cycle-id) expiration-cycles) ERR-PRECONDITION-FAILED)
+            ;; Ensure the expiration period has passed (configurable via prize-expiration-period)
+            (asserts! (>= (- current-cycle-id cycle-id) expiration-period) ERR-PRECONDITION-FAILED)
             
             (let (
                 (cycle-data (get-cycle cycle-id))
@@ -381,8 +397,8 @@
                         prize-claimed: (get prize cycle-data)
                     }))
                 
-                ;; Add the unclaimed prize back to the treasure
-                (var-set treasure (+ (var-get treasure) unclaimed-prize))
+                ;; Add the unclaimed prize back to the treasury
+                (var-set treasury (+ (var-get treasury) unclaimed-prize))
                 
                 (ok unclaimed-prize)
             )
@@ -390,29 +406,38 @@
     )
 )
 
-(define-public (allocate (amount uint) (constellation uint) (refferral-user principal))
+(define-public (allocate (amount uint) (constellation uint) (referral-user principal))
     (begin 
+        ;; This is the core function for users to participate in a cycle
+        ;; It allows allocation of funds to a constellation, with a portion going to referrals
+        
+        ;; Ensure minimum allocation requirement is met
         (asserts! (>= amount (var-get min-allocation)) ERR-PRECONDITION-FAILED)
-        ;; Validate that the constellation index is within bounds
+        
+        ;; Validate that the constellation index is within bounds (0-20)
         (asserts! (< constellation TOTAL-CONSTELLATIONS) ERR-INVALID-VALUE)
+        
         ;; Transfer tokens from the sender to the contract
         (try! (contract-call? .sbtc-token transfer amount tx-sender (as-contract tx-sender) none))
+        
         (let
             (
                 (current-cycle-id (get-current-cycle-id))
                 (current-cycle (get-cycle current-cycle-id))
                 (current-allocation-by-user (get-allocated-by-user current-cycle-id tx-sender))
             )
-
+            ;; Update the cycle map with new allocation data
+            ;; distribute-allocation splits the amount according to allocation-percentages
             (map-set cycle current-cycle-id 
                 (merge current-cycle {
-                    prize: (+ (updated-prize (get prize current-cycle)) (division-allocate amount refferral-user)),
-                    constellation-allocation: (update-allocation-constellation amount constellation (get constellation-allocation current-cycle))
+                    prize: (+ (calculate-prize-with-treasury-addition (get prize current-cycle)) (distribute-allocation amount referral-user)),
+                    constellation-allocation: (update-constellation-allocation amount constellation (get constellation-allocation current-cycle))
                 }))
             
+            ;; Update the user's allocation record
             (map-set allocated-by-user { cycle-id: current-cycle-id, user: tx-sender } 
                 { 
-                    constellation-allocation: (update-allocation-constellation amount constellation (get constellation-allocation current-allocation-by-user)), 
+                    constellation-allocation: (update-constellation-allocation amount constellation (get constellation-allocation current-allocation-by-user)), 
                     claimed: false 
                 })
             (ok true)
@@ -438,7 +463,7 @@
         (var-set team-fee (+ (var-get team-fee) fee))
         
         ;; Reset the user's reward to 0
-        (map-set refferral-reward recipient {
+        (map-set referral-reward recipient {
             amount: u0,
             block-update: stacks-block-height
         })
@@ -457,22 +482,22 @@
             (reward-amount (get amount user-reward))
             (update-block (get block-update user-reward))
             (current-cycle-id (get-current-cycle-id))
-            (expiration-cycles (var-get prize-expiration-cycle-count))
+            (expiration-period (var-get prize-expiration-period))
             (cycles-since-update (if (> update-block u0)
-                                      (/ (- tenure-height update-block) (var-get cycle-duration))
+                                      (/ (- tenure-height update-block) (var-get blocks-per-cycle))
                                       u0))
         )
             ;; Check if there's any reward to claim
             (asserts! (> reward-amount u0) ERR-PRECONDITION-FAILED)
             
             ;; Check if at least the required number of cycles have passed since the last update
-            (asserts! (>= cycles-since-update expiration-cycles) ERR-PRECONDITION-FAILED)
+            (asserts! (>= cycles-since-update expiration-period) ERR-PRECONDITION-FAILED)
             
             ;; Transfer reward from contract to manager
             (try! (as-contract (contract-call? .sbtc-token transfer reward-amount tx-sender (var-get manager) none)))
             
             ;; Reset the user's reward to 0
-            (map-set refferral-reward user {
+            (map-set referral-reward user {
                 amount: u0,
                 block-update: stacks-block-height
             })
@@ -485,22 +510,29 @@
 ;; ========================================
 ;; Private Functions
 ;; ========================================
-(define-private (updated-prize (current-prize uint))
+(define-private (calculate-prize-with-treasury-addition (current-prize uint))
+    ;; If this is the first allocation for this cycle, seed the prize pool from treasury
+    ;; Otherwise, return the existing prize amount
     (if (is-eq u0 current-prize)
         (let (
-                (current-treasure (get-treasure))
-                (prize (/ current-treasure (get-treasure-distribution-cycle-count)))
+                (current-treasury (get-treasury))
+                ;; Calculate prize based on treasury-distribution-period (e.g., 1/3 of treasury)
+                (prize (/ current-treasury (get-treasury-distribution-period)))
             )
-            (var-set treasure (- current-treasure prize))
+            ;; Update the treasury by removing the allocated prize
+            (var-set treasury (- current-treasury prize))
             prize
         )
         current-prize
     )
 )
 
-(define-private (update-allocation-constellation (amount uint) (constellation uint) (constellation-allocation (list 21 uint)))
+(define-private (update-constellation-allocation (amount uint) (constellation uint) (constellation-allocation (list 21 uint)))
+    ;; Updates the allocation amount for a specific constellation in the list
     (let (
+            ;; Get the current allocation for this constellation
             (current-constellation-allocation (unwrap-panic (element-at? constellation-allocation constellation)))
+            ;; Create a new list with updated amount at the specified constellation index
             (new-constellation-allocation (unwrap-panic (replace-at? constellation-allocation constellation (+ current-constellation-allocation amount))))
         )
         new-constellation-allocation
@@ -508,23 +540,30 @@
 )
 
 ;; Allocate the amount to the different parts and return the part for current cycle allocation
-(define-private (division-allocate (amount uint) (refferral-user principal))
+(define-private (distribute-allocation (amount uint) (referral-user principal))
+    ;; This function divides an allocation amount according to the configured percentages
+    ;; and updates the relevant accumulators (treasury, team fee, referral rewards)
     (let (
-            (current-allocation-division (get-allocation-division))
-            (current-cycle-allocation (/ (* amount (get current-cycle current-allocation-division)) u100))
-            (treasure-allocation (/ (* amount (get treasure current-allocation-division)) u100))
-            (referral-reward-allocation (/ (* amount (get referral-reward current-allocation-division)) u100))
-            (team-fee-allocation (- (- (- amount current-cycle-allocation) treasure-allocation) referral-reward-allocation))
+            (current-allocation-percentages (get-allocation-percentages))
+            ;; Calculate the portion for each category based on percentage settings
+            (current-cycle-allocation (/ (* amount (get current-cycle current-allocation-percentages)) u100))
+            (treasury-allocation (/ (* amount (get treasury current-allocation-percentages)) u100))
+            (referral-reward-allocation (/ (* amount (get referral-reward current-allocation-percentages)) u100))
+            ;; The remainder goes to team fee
+            (team-fee-allocation (- (- (- amount current-cycle-allocation) treasury-allocation) referral-reward-allocation))
         )
-        ;; Calculate the allocation for each part
-        (var-set treasure (+ treasure-allocation (get-treasure)))
+        ;; Update treasury with its portion
+        (var-set treasury (+ treasury-allocation (get-treasury)))
+        ;; Update team fee with its portion
         (var-set team-fee (+ team-fee-allocation (get-team-fee)))
-        (map-set refferral-reward refferral-user 
+        ;; Update referral reward for the specified user
+        (map-set referral-reward referral-user 
             {
-                amount: (+ (get amount (get-referral-reward refferral-user)) referral-reward-allocation), 
+                amount: (+ (get amount (get-referral-reward referral-user)) referral-reward-allocation), 
                 block-update: stacks-block-height 
             })
         
+        ;; Return the portion allocated to the current cycle's prize pool
         current-cycle-allocation
     )
 )
