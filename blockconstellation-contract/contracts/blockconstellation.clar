@@ -33,7 +33,7 @@
 
 ;; System constants
 (define-constant START-BLOCK tenure-height)          ;; Contract deployment block
-(define-constant TOTAL-CONSTELLATIONS u21)           ;; Total number of available constellations
+(define-constant TOTAL-CONSTELLATIONS u25)           ;; Total number of available constellations
 
 ;; ========================================
 ;; Data Variables
@@ -74,7 +74,7 @@
     {
         prize: uint,                          ;; Total prize for this cycle
         prize-claimed: uint,                  ;; Amount of prize already claimed
-        constellation-allocation: (list 21 uint), ;; Allocation to each constellation (21 constellations)
+        constellation-allocation: (list 25 uint), ;; Allocation to each constellation (25 constellations)
         allocation-claimed: uint              ;; Amount of allocation claimed by users
     })
 
@@ -85,7 +85,7 @@
         user: principal    ;; User principal address
     }
     {
-        constellation-allocation: (list 21 uint), ;; User's allocation to each constellation
+        constellation-allocation: (list 25 uint), ;; User's allocation to each constellation
         claimed: bool      ;; Whether user has claimed their reward
     })
 
@@ -268,7 +268,7 @@
 (define-read-only (get-allocated-by-user (cycle-id uint) (user principal))
     (default-to
         {
-            constellation-allocation: (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0),
+            constellation-allocation: (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0),
             claimed: false
         } 
         (map-get? allocated-by-user { cycle-id: cycle-id, user: user }))
@@ -279,7 +279,7 @@
         {
             prize: u0,
             prize-claimed: u0,
-            constellation-allocation: (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0),
+            constellation-allocation: (list u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0 u0),
             allocation-claimed: u0
         }
         (map-get? cycle cycle-id))
@@ -427,7 +427,7 @@
         ;; Ensure minimum allocation requirement is met
         (asserts! (>= amount (var-get min-allocation)) ERR-PRECONDITION-FAILED)
         
-        ;; Validate that the constellation index is within bounds (0-20)
+        ;; Validate that the constellation index is within bounds (0-24)
         (asserts! (< constellation TOTAL-CONSTELLATIONS) ERR-INVALID-VALUE)
         
         ;; Transfer tokens from the sender to the contract
@@ -540,7 +540,7 @@
     )
 )
 
-(define-private (update-constellation-allocation (amount uint) (constellation uint) (constellation-allocation (list 21 uint)))
+(define-private (update-constellation-allocation (amount uint) (constellation uint) (constellation-allocation (list 25 uint)))
     ;; Updates the allocation amount for a specific constellation in the list
     (let (
             ;; Get the current allocation for this constellation
