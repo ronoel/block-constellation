@@ -1,3 +1,6 @@
+ng generate module /pages/game --routing
+ng generate component /pages/game
+
 ng generate module /page/test --routing
 ng generate component /page/test
 
