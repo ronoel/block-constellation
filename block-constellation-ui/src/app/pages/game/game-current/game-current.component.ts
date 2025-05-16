@@ -37,10 +37,10 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   feeBalance = 15000;
   
   // Epoch data
-  currentEpoch = 42;
-  blocksRemaining = 97;
+  currentEpoch = 0;  // Initialize to 0 instead of 42
+  blocksRemaining = 0;  // Initialize to 0 instead of 97
   totalBlocks = 144;
-  estimatedTimeRemaining = '≈ 16h 10m';
+  estimatedTimeRemaining = '';  // Initialize to empty string instead of mock value
   totalStakedPool = 0;  // Initialize to 0 instead of mock value
   
   // UI states
@@ -54,13 +54,13 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   // Mock constellation data
   constellations: Constellation[] = [
     { id: 1, name: 'Aries', meaning: 'Courage, initiative, beginnings', totalStaked: 0.12345, yourStake: 0, yourShare: 0 },
-    { id: 2, name: 'Taurus', meaning: 'Stability, sensuality, material grounding', totalStaked: 0.07865, yourStake: 5000, yourShare: 0.635 },
+    { id: 2, name: 'Taurus', meaning: 'Stability, sensuality, material grounding', totalStaked: 0.07865, yourStake: 0, yourShare: 0 },
     { id: 3, name: 'Gemini', meaning: 'Curiosity, communication, adaptability', totalStaked: 0.10524, yourStake: 0, yourShare: 0 },
     { id: 4, name: 'Cancer', meaning: 'Intuition, emotional depth, home', totalStaked: 0.05632, yourStake: 0, yourShare: 0 },
     { id: 5, name: 'Leo', meaning: 'Confidence, leadership, creative power', totalStaked: 0.13751, yourStake: 0, yourShare: 0 },
     { id: 6, name: 'Virgo', meaning: 'Precision, service, analysis', totalStaked: 0.04321, yourStake: 0, yourShare: 0 },
     { id: 7, name: 'Libra', meaning: 'Harmony, balance, relationships', totalStaked: 0.09876, yourStake: 0, yourShare: 0 },
-    { id: 8, name: 'Scorpio', meaning: 'Transformation, intensity, mystery', totalStaked: 0.17654, yourStake: 8000, yourShare: 0.453 },
+    { id: 8, name: 'Scorpio', meaning: 'Transformation, intensity, mystery', totalStaked: 0.17654, yourStake: 0, yourShare: 0 },
     { id: 9, name: 'Sagittarius', meaning: 'Freedom, truth, expansion', totalStaked: 0.06789, yourStake: 0, yourShare: 0 },
     { id: 10, name: 'Capricorn', meaning: 'Ambition, discipline, mastery', totalStaked: 0.08765, yourStake: 0, yourShare: 0 },
     { id: 11, name: 'Aquarius', meaning: 'Innovation, rebellion, community', totalStaked: 0.12398, yourStake: 0, yourShare: 0 },
@@ -75,19 +75,15 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     { id: 20, name: 'Lyra', meaning: 'Harmony, resonance, cosmic music', totalStaked: 0.08761, yourStake: 0, yourShare: 0 },
     { id: 21, name: 'Draco', meaning: 'Shadow work, ancient wisdom', totalStaked: 0.11879, yourStake: 0, yourShare: 0 },
     { id: 22, name: 'Hydra', meaning: 'Challenges, perseverance, growth through struggle', totalStaked: 0.09871, yourStake: 0, yourShare: 0 },
-    { id: 23, name: 'Crux', meaning: 'Faith, sacrifice, divine guidance', totalStaked: 0.07654, yourStake: 2000, yourShare: 0.261 },
+    { id: 23, name: 'Crux', meaning: 'Faith, sacrifice, divine guidance', totalStaked: 0.07654, yourStake: 0, yourShare: 0 },
     { id: 24, name: 'Corona Borealis', meaning: 'Royal power, sovereignty, sacred feminine', totalStaked: 0.09912, yourStake: 0, yourShare: 0 }
   ];
   
   // User allocation summary
   userAllocation: UserAllocation = {
-    totalStaked: 15000,
-    constellationCount: 3,
-    allocations: [
-      { constellation: 'Taurus', amount: 5000 },
-      { constellation: 'Scorpio', amount: 8000 },
-      { constellation: 'Crux', amount: 2000 }
-    ]
+    totalStaked: 0,
+    constellationCount: 0,
+    allocations: []
   };
   
   // Service injections
@@ -97,9 +93,28 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   // Subscriptions
   private subscriptions: Subscription[] = [];
 
+  // Reset user allocation data to zero values (clear mock data)
+  resetUserAllocationData(): void {
+    // Reset the user allocation summary
+    this.userAllocation = {
+      totalStaked: 0,
+      constellationCount: 0,
+      allocations: []
+    };
+    
+    // Reset each constellation's user stake and share
+    this.constellations.forEach(constellation => {
+      constellation.yourStake = 0;
+      constellation.yourShare = 0;
+    });
+  }
+
   ngOnInit(): void {
     // Initialize component data
     this.loadingPage = true;
+    
+    // Reset user allocation data - don't show mock data
+    this.resetUserAllocationData();
     
     // Check if wallet is connected
     this.walletConnected = this.walletService.isLoggedIn();
@@ -140,19 +155,25 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     const userAddress = this.walletService.getSTXAddress();
     if (!userAddress) return;
     
+    console.log(`Fetching allocation data for user ${userAddress} in cycle ${cycleId}`);
+    
     const userAllocationSubscription = this.blockConstellationContractService
       .getAllocatedByUser(cycleId, userAddress)
       .subscribe({
         next: (allocationData) => {
           console.log('Received user allocation data:', allocationData);
           
+          // Reset any previous mock data
+          this.resetUserAllocationData();
+          
+          // Update UI with actual data from the blockchain if available
           if (allocationData && 
               allocationData.constellationAllocation && 
               Array.isArray(allocationData.constellationAllocation) && 
               allocationData.constellationAllocation.length > 0) {
             this.updateUserAllocationData(allocationData.constellationAllocation);
           } else {
-            console.log('No user allocation data found or empty array');
+            console.log('No user allocation data found or empty array - showing zero values');
           }
         },
         error: (error) => {
@@ -171,12 +192,8 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Reset current allocation data
-    this.userAllocation = {
-      totalStaked: 0,
-      constellationCount: 0,
-      allocations: []
-    };
+    // Reset allocation data first
+    this.resetUserAllocationData();
     
     // Count constellations where the user has allocated tokens
     let count = 0;
