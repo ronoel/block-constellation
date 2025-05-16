@@ -3,6 +3,8 @@ ng generate component /pages/game
 
 ng generate component /pages/game/game-header --skip-tests
 ng generate component /pages/game/game-footer --skip-tests
+ng generate component /pages/game/game-current --skip-tests
+ng generate component /pages/game/game-ledger --skip-tests
 
 
 ng generate service shared/services/contract

@@ -1,0 +1,183 @@
+<!-- Loading State -->
+<div class="loading-state" *ngIf="loadingPage">
+  <div class="container">
+    <div class="epoch-strip skeleton"></div>
+    <div class="constellation-grid skeleton">
+      <div class="constellation-card skeleton" *ngFor="let i of [].constructor(25)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Actual Content (when loaded) -->
+<ng-container *ngIf="!loadingPage">
+  <!-- Epoch Strip -->
+  <div class="epoch-strip">
+    <div class="container">
+      <div class="epoch-info">
+        <div class="epoch-id">
+          <h2>Epoch #{{ currentEpoch }}</h2>
+        </div>
+        
+        <div class="epoch-progress">
+          <div class="blocks-remaining">
+            {{ blocksRemaining }} of {{ totalBlocks }} blocks remaining
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="(1 - blocksRemaining/totalBlocks) * 100"></div>
+          </div>
+          <div class="eta">
+            Estimated time remaining: {{ estimatedTimeRemaining }}
+          </div>
+        </div>
+        
+        <div class="cosmic-pool">
+          <p>Total in Cosmic Pool: {{ formatBTC(totalStakedPool) }} BTC</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Top-up Alert (if balance is low) -->
+  <div class="top-up-alert" *ngIf="walletConnected && feeBalance < 1000">
+    <div class="container">
+      <p>You need ≥ 1,000 sats to stake. <button class="btn-deposit">Deposit</button></p>
+    </div>
+  </div>
+  
+  <!-- User Allocation Summary (if user has stakes) -->
+  <div class="allocation-summary" *ngIf="walletConnected && userAllocation.totalStaked > 0">
+    <div class="container">
+      <div class="summary-content" (click)="toggleAllocationSummary()">
+        <p>You staked {{ formatSats(userAllocation.totalStaked) }} sats across {{ userAllocation.constellationCount }} constellations.</p>
+        <span class="toggle-icon" [class.active]="showAllocationSummary">▼</span>
+      </div>
+      
+      <!-- Allocation Details Popover -->
+      <div class="allocation-details" *ngIf="showAllocationSummary">
+        <table>
+          <thead>
+            <tr>
+              <th>Constellation</th>
+              <th>Staked Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let allocation of userAllocation.allocations">
+              <td>{{ allocation.constellation }}</td>
+              <td>{{ formatSats(allocation.amount) }} sats</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Constellation Grid -->
+  <div class="constellation-section">
+    <div class="container">
+      <div class="constellation-grid" [class.wallet-disconnected]="!walletConnected">
+        <!-- Wallet Disconnected Overlay -->
+        <div class="wallet-overlay" *ngIf="!walletConnected">
+          <div class="overlay-content">
+            <p>Connect your wallet to stake on constellations</p>
+            <button class="btn-connect">Connect Wallet</button>
+          </div>
+        </div>
+        
+        <!-- Constellation Cards -->
+        <div class="constellation-card" 
+             *ngFor="let constellation of constellations" 
+             [class.has-stake]="constellation.yourStake > 0"
+             (click)="walletConnected && selectConstellation(constellation)">
+          <div class="card-content">
+            <h3 class="constellation-name">{{ constellation.name }}</h3>
+            <p class="constellation-meaning">{{ constellation.meaning }}</p>
+            
+            <div class="stake-info">
+              <div class="total-staked">
+                {{ formatBTC(constellation.totalStaked) }} BTC staked
+              </div>
+              
+              <div class="your-stake" *ngIf="constellation.yourStake > 0">
+                Your stake: {{ formatSats(constellation.yourStake) }} sats
+              </div>
+              
+              <div class="your-share" *ngIf="constellation.yourStake > 0">
+                Your share: {{ (constellation.yourShare * 100).toFixed(2) }}%
+              </div>
+              
+              <button class="btn-stake" *ngIf="walletConnected">
+                {{ constellation.yourStake > 0 ? 'Add Stake' : 'Stake' }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="stake-tag" *ngIf="constellation.yourStake > 0">
+            Staked
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Stake Drawer -->
+<div class="stake-drawer" [class.open]="isDrawerOpen" *ngIf="selectedConstellation">
+  <div class="drawer-backdrop" (click)="closeStakeDrawer()"></div>
+  <div class="drawer-content">
+    <div class="drawer-header">
+      <h3>Stake on {{ selectedConstellation.name }}</h3>
+      <button class="btn-close" (click)="closeStakeDrawer()">×</button>
+    </div>
+    
+    <div class="drawer-body">
+      <div class="constellation-snapshot">
+        <div class="snapshot-item">
+          <span class="label">Total Staked:</span>
+          <span class="value">{{ formatBTC(selectedConstellation.totalStaked) }} BTC</span>
+        </div>
+        <div class="snapshot-item" *ngIf="selectedConstellation.yourStake > 0">
+          <span class="label">You Already Staked:</span>
+          <span class="value">{{ formatSats(selectedConstellation.yourStake) }} sats</span>
+        </div>
+      </div>
+      
+      <div class="stake-input-section">
+        <label for="stakeAmount">Amount (sats)</label>
+        <input 
+          type="number" 
+          id="stakeAmount" 
+          [(ngModel)]="stakeAmount" 
+          min="1000" 
+          step="1000" 
+          [max]="feeBalance"
+          class="stake-input"
+          [class.invalid]="stakeAmount < 1000 || stakeAmount > feeBalance"
+        >
+        
+        <div class="quick-adjust">
+          <button class="btn-quick" (click)="stakeAmount = 1000" [disabled]="feeBalance < 1000">MIN</button>
+          <button class="btn-quick" (click)="increaseStakeAmount(2)" [disabled]="stakeAmount * 2 > feeBalance">2×</button>
+          <button class="btn-quick" (click)="increaseStakeAmount(5)" [disabled]="stakeAmount * 5 > feeBalance">5×</button>
+          <button class="btn-quick" (click)="increaseStakeAmount(10)" [disabled]="stakeAmount * 10 > feeBalance">10×</button>
+          <button class="btn-quick" (click)="setMaxStake()" [disabled]="feeBalance < 1000">MAX</button>
+        </div>
+        
+        <div class="balance-info" [class.insufficient]="feeBalance < 1000">
+          Your balance: {{ formatSats(feeBalance) }} sats
+        </div>
+      </div>
+    </div>
+    
+    <div class="drawer-footer">
+      <button class="btn-cancel" (click)="closeStakeDrawer()">Cancel</button>
+      <button 
+        class="btn-confirm" 
+        [disabled]="stakeAmount < 1000 || stakeAmount > feeBalance"
+        (click)="confirmStake()"
+      >
+        Confirm Stake
+      </button>
+    </div>
+  </div>
+</div>
