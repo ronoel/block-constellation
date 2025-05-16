@@ -179,7 +179,7 @@ export class BlockConstellationContractService extends ContractUtil {
     /**
      * Public function to allocate tokens to a constellation
      * @param amount The amount of tokens to allocate (in sats)
-     * @param constellation The constellation ID (0-24)
+     * @param constellation The constellation ID (0-23)
      * @param referralUser The optional referral user address
      */
     allocate(amount: number, constellation: number, referralUser?: string): Observable<BlockConstellationResponse> {

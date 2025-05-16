@@ -76,8 +76,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     { id: 21, name: 'Draco', meaning: 'Shadow work, ancient wisdom', totalStaked: 0.11879, yourStake: 0, yourShare: 0 },
     { id: 22, name: 'Hydra', meaning: 'Challenges, perseverance, growth through struggle', totalStaked: 0.09871, yourStake: 0, yourShare: 0 },
     { id: 23, name: 'Crux', meaning: 'Faith, sacrifice, divine guidance', totalStaked: 0.07654, yourStake: 2000, yourShare: 0.261 },
-    { id: 24, name: 'Corona Borealis', meaning: 'Royal power, sovereignty, sacred feminine', totalStaked: 0.09912, yourStake: 0, yourShare: 0 },
-    { id: 25, name: 'Delphinus', meaning: 'Joy, intuition, spiritual guidance', totalStaked: 0.05643, yourStake: 0, yourShare: 0 }
+    { id: 24, name: 'Corona Borealis', meaning: 'Royal power, sovereignty, sacred feminine', totalStaked: 0.09912, yourStake: 0, yourShare: 0 }
   ];
   
   // User allocation summary

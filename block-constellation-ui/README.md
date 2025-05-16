@@ -87,4 +87,3 @@ For more information on using the Angular CLI, including detailed command refere
 | 22 | Hydra           | Challenges, perseverance, growth through struggle |
 | 23 | Crux            | Faith, sacrifice, divine guidance                 |
 | 24 | Corona Borealis | Royal power, sovereignty, sacred feminine         |
-| 25 | Delphinus       | Joy, intuition, spiritual guidance                |

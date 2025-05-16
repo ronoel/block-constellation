@@ -220,7 +220,7 @@ describe("Finance and Allocation Tests", () => {
     
     // Allocate in the current cycle (which is now cycle 1)
     const allocAmount = 3000000;
-    const constellation = 6; // Using constellation 0 for this test
+    const constellation = 7; // Using constellation 0 for this test
     
     // Mint tokens for address3
     mintToken(allocAmount, address3);
@@ -282,7 +282,7 @@ describe("Finance and Allocation Tests", () => {
     // First, allocate to a constellation that is NOT the winning one
     const prevCycleId = cycleIdValue - 1;
     const winningConstellation = Number(cvToValue(getConstellation(prevCycleId).result));
-    let nonWinningConstellation = (winningConstellation + 1) % 25; // Choose a different constellation
+    let nonWinningConstellation = (winningConstellation + 1) % 24; // Choose a different constellation
     
     // Mint tokens for address2
     const allocAmount = 2000000;

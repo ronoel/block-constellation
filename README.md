@@ -4,7 +4,7 @@
 
 ## 🔍 How It Works
 
-- There are **25 constellations**, each representing a symbol in the game.
+- There are **24 constellations**, each representing a symbol in the game.
 - Each game round lasts **144 Bitcoin blocks** (~1 day).
 - The **hash of the last block** in the round determines the winning constellation.
 - Players can **allocate sats** to any constellation during the round.
