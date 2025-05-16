@@ -41,7 +41,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   blocksRemaining = 97;
   totalBlocks = 144;
   estimatedTimeRemaining = '≈ 16h 10m';
-  totalStakedPool = 2.31875;
+  totalStakedPool = 0;  // Initialize to 0 instead of mock value
   
   // UI states
   isDrawerOpen = false;
@@ -110,7 +110,12 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
         next: (cycleId: number) => {
           console.log('Current Cycle ID:', cycleId);
           this.currentEpoch = cycleId;
-          this.loadingPage = false;
+          
+          // After getting the cycle ID, fetch the cycle data
+          this.fetchCycleData(cycleId);
+          
+          // Also fetch user's allocations if they're logged in
+          this.fetchUserAllocations(cycleId);
         },
         error: (error) => {
           console.error('Error fetching current cycle ID:', error);
@@ -126,6 +131,168 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
         this.loadingPage = false;
       }, 1000);
     }
+  }
+  
+  // Fetch user allocation data for the current cycle
+  fetchUserAllocations(cycleId: number): void {
+    if (!this.walletConnected) return;
+    
+    const userAddress = this.walletService.getSTXAddress();
+    if (!userAddress) return;
+    
+    const userAllocationSubscription = this.blockConstellationContractService
+      .getAllocatedByUser(cycleId, userAddress)
+      .subscribe({
+        next: (allocationData) => {
+          console.log('Received user allocation data:', allocationData);
+          
+          if (allocationData && 
+              allocationData.constellationAllocation && 
+              Array.isArray(allocationData.constellationAllocation) && 
+              allocationData.constellationAllocation.length > 0) {
+            this.updateUserAllocationData(allocationData.constellationAllocation);
+          } else {
+            console.log('No user allocation data found or empty array');
+          }
+        },
+        error: (error) => {
+          console.error('Error fetching user allocation data:', error);
+        }
+      });
+      
+    this.subscriptions.push(userAllocationSubscription);
+  }
+  
+  // Update user allocation data from blockchain
+  updateUserAllocationData(allocations: number[]): void {
+    console.log('Updating user allocation data with:', allocations);
+    if (!allocations || !Array.isArray(allocations)) {
+      console.error('Invalid user allocations data:', allocations);
+      return;
+    }
+    
+    // Reset current allocation data
+    this.userAllocation = {
+      totalStaked: 0,
+      constellationCount: 0,
+      allocations: []
+    };
+    
+    // Count constellations where the user has allocated tokens
+    let count = 0;
+    let totalStaked = 0;
+    
+    // Process the allocations
+    for (let i = 0; i < allocations.length; i++) {
+      // Ensure allocation is a valid number
+      const allocation = allocations[i] || 0;
+      
+      if (allocation > 0) {
+        count++;
+        totalStaked += allocation;
+        
+        // Update the constellations array with user's stake
+        if (i < this.constellations.length) {
+          this.constellations[i].yourStake = allocation;
+          
+          // Calculate user's share of this constellation
+          if (this.constellations[i].totalStaked > 0) {
+            const btcTotal = this.constellations[i].totalStaked;
+            const satTotal = btcTotal * 100000000;
+            this.constellations[i].yourShare = allocation / satTotal;
+          }
+          
+          // Add to the allocations list
+          this.userAllocation.allocations.push({
+            constellation: this.constellations[i].name,
+            amount: allocation
+          });
+        }
+      }
+    }
+    
+    // Update the summary data
+    this.userAllocation.totalStaked = totalStaked;
+    this.userAllocation.constellationCount = count;
+    
+    console.log('Updated user allocation:', this.userAllocation);
+  }
+  
+  // Fetch cycle data including the prize pool
+  fetchCycleData(cycleId: number): void {
+    const cycleDataSubscription = this.blockConstellationContractService.getCycle(cycleId).subscribe({
+      next: (cycleData) => {
+        console.log('Received cycle data:', cycleData);
+        
+        // Convert prize from satoshis to BTC for display
+        // Always update the totalStakedPool with the actual value from the contract,
+        // even if it's zero, to ensure we don't show mock data
+        this.totalStakedPool = (cycleData && typeof cycleData.prize === 'number') 
+          ? cycleData.prize / 100000000 
+          : 0;
+        
+        // Update constellation allocations from blockchain data if available
+        if (cycleData && cycleData.constellationAllocation && Array.isArray(cycleData.constellationAllocation)) {
+          // Update each constellation with real allocation data from the contract
+          this.updateConstellationAllocations(cycleData.constellationAllocation);
+        }
+        
+        // Calculate blocks remaining and estimated time
+        this.calculateRemainingTime();
+        
+        this.loadingPage = false;
+      },
+      error: (error) => {
+        console.error('Error fetching cycle data:', error);
+        this.loadingPage = false;
+      }
+    });
+    
+    this.subscriptions.push(cycleDataSubscription);
+  }
+  
+  // Calculate the remaining time in the current cycle
+  calculateRemainingTime(): void {
+    // In a real implementation, you'd get the current block height and calculate 
+    // the blocks remaining until the next cycle
+    // For now, we'll use the mock data
+    
+    // Calculate estimated time: assuming ~10 minutes per Bitcoin block
+    const minutesRemaining = this.blocksRemaining * 10;
+    const hours = Math.floor(minutesRemaining / 60);
+    const minutes = minutesRemaining % 60;
+    
+    this.estimatedTimeRemaining = `≈ ${hours}h ${minutes}m`;
+  }
+  
+  // Update constellation data with real allocation values from the blockchain
+  updateConstellationAllocations(allocations: number[]): void {
+    console.log('Updating constellation allocations with data:', allocations);
+    if (!allocations || !Array.isArray(allocations)) {
+      console.error('Invalid allocations data:', allocations);
+      return;
+    }
+    
+    // Make sure we don't exceed the number of constellations we have in our UI
+    const maxLength = Math.min(allocations.length, this.constellations.length);
+    
+    for (let i = 0; i < maxLength; i++) {
+      // Ensure allocation is a valid number
+      const allocation = allocations[i] || 0;
+      
+      // Convert satoshis to BTC for display
+      const btcAmount = allocation / 100000000;
+      this.constellations[i].totalStaked = btcAmount;
+    }
+    
+    // Recalculate total staked pool
+    let totalStaked = 0;
+    allocations.forEach(allocation => {
+      totalStaked += (allocation || 0);
+    });
+    
+    // Always update the totalStakedPool - even if it's zero
+    this.totalStakedPool = totalStaked / 100000000;
   }
 
   ngOnDestroy(): void {
@@ -151,9 +318,23 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
 
   confirmStake(): void {
     if (this.selectedConstellation && this.stakeAmount >= 1000 && this.stakeAmount <= this.feeBalance) {
-      // Logic to stake on the selected constellation would go here
-      console.log(`Staking ${this.stakeAmount} sats on ${this.selectedConstellation.name}`);
-      this.closeStakeDrawer();
+      // Stake on the selected constellation via the contract
+      this.blockConstellationContractService
+        .allocate(this.stakeAmount, this.selectedConstellation.id)
+        .subscribe({
+          next: (response) => {
+            console.log(`Staking transaction submitted: ${response.txid}`);
+            // Close the drawer
+            this.closeStakeDrawer();
+            
+            // Provide feedback to user that transaction is submitted
+            // In a real app, you might want to show a success toast or message
+          },
+          error: (error) => {
+            console.error('Error staking on constellation:', error);
+            // Show error to user
+          }
+        });
     }
   }
 

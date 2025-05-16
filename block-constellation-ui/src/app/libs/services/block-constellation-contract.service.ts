@@ -19,10 +19,13 @@ export interface BlockConstellationResponse {
 
 export interface CycleData {
     allocationClaimed: number;
+    prize: number;
+    constellationAllocation: number[];
 }
 
 export interface AllocationData {
     claimed: boolean;
+    constellationAllocation?: number[];
 }
 
 export interface ReferralReward {
@@ -72,11 +75,22 @@ export class BlockConstellationContractService extends ContractUtil {
                 const data = cvToValue(result);
                 console.log('Cycle data:', data);
                 if (data) {
+                    // Extract constellation allocation array
+                    let constellationAllocation: number[] = [];
+                    if (data['constellation-allocation'] && data['constellation-allocation'].value) {
+                        // Extract the array from the nested structure
+                        constellationAllocation = data['constellation-allocation'].value.map((allocation: any) => {
+                            return parseInt(allocation.value);
+                        });
+                    }
+                    
                     return {
-                        allocationClaimed: cvToValue(data['allocation-claimed'])
+                        allocationClaimed: cvToValue(data['allocation-claimed']),
+                        prize: cvToValue(data['prize']),
+                        constellationAllocation: constellationAllocation
                     };
                 }
-                return { allocationClaimed: 0 };
+                return { allocationClaimed: 0, prize: 0, constellationAllocation: [] };
             })
         );
     }
@@ -96,12 +110,22 @@ export class BlockConstellationContractService extends ContractUtil {
         )).pipe(
             map((result: any) => {
                 const data = cvToValue(result);
+                console.log('User allocation data:', data);
                 if (data) {
+                    // Extract constellation allocation with proper nested structure
+                    let constellationAllocation: number[] = [];
+                    if (data['constellation-allocation'] && data['constellation-allocation'].value) {
+                        constellationAllocation = data['constellation-allocation'].value.map((allocation: any) => {
+                            return parseInt(allocation.value);
+                        });
+                    }
+                    
                     return {
-                        claimed: cvToValue(data['claimed'])
+                        claimed: cvToValue(data['claimed']),
+                        constellationAllocation: constellationAllocation
                     };
                 }
-                return { claimed: false };
+                return { claimed: false, constellationAllocation: [] };
             })
         );
     }
