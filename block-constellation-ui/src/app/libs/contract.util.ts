@@ -12,7 +12,7 @@ import { openContractCall, ContractCallOptions, ContractCallSponsoredOptions, Sp
 import { StacksNetworkName } from '@stacks/network';
 import { environment } from '../../environments/environment';
 
-export abstract class ContractService {
+export abstract class ContractUtil {
 
   // private network: StacksNetworkName = environment.network as StacksNetworkName;
 

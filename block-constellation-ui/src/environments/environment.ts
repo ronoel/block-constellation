@@ -5,9 +5,9 @@ export const environment = {
     // apiUrl: 'https://boltproto.org/api/v1',
     apiUrl: '/api/v1',
     blockchainAPIUrl: 'https://api.hiro.so',
-    boltProtocol: {
+    gameContract: {
         contractAddress: 'SP3QZNX3CGT6V7PE1PBK17FCRK1TP1AT02ZHQCMVJ',
-        contractName: 'boltproto-sbtc-v2'
+        contractName: 'blockconstellation',
     },
     supportedAsset: {
         sBTC: {
