@@ -1,40 +1,12 @@
 <div class="game-page">
-  <!-- Sticky Header -->
-  <header class="site-header">
-    <div class="container header-container">
-      <div class="logo">
-        <a href="/" class="logo-link">Block Constellation</a>
-      </div>
-      
-      <nav class="main-nav">
-        <ul class="nav-links">
-          <li><a href="#" class="nav-link">History</a></li>
-          <li><a href="#" class="nav-link">Claim</a></li>
-          <li><a href="#" class="nav-link">Settings</a></li>
-        </ul>
-      </nav>
-      
-      <div class="wallet-section">
-        <ng-container *ngIf="walletConnected; else connectWallet">
-          <div class="wallet-badge">
-            <span class="wallet-network">{{ networkType }}</span>
-            <span class="wallet-address">{{ walletAddress | slice:0:6 }}...{{ walletAddress | slice:-4 }}</span>
-          </div>
-        </ng-container>
-        
-        <ng-template #connectWallet>
-          <button class="btn-connect" (click)="toggleWalletConnection()">Connect Wallet</button>
-        </ng-template>
-      </div>
-    </div>
-  </header>
-
-  <!-- Network Mismatch Warning (if needed) -->
-  <div class="network-mismatch" *ngIf="showNetworkMismatch">
-    <div class="container">
-      <p>You're on Testnet. Switch to Mainnet to play for BTC.</p>
-    </div>
-  </div>
+  <!-- Using the extracted header component -->
+  <app-game-header 
+    [walletConnected]="walletConnected"
+    [walletAddress]="walletAddress"
+    [networkType]="networkType"
+    [showNetworkMismatch]="showNetworkMismatch"
+    (toggleWallet)="toggleWalletConnection()">
+  </app-game-header>
 
   <!-- Main Content -->
   <main class="main-content">
@@ -226,21 +198,6 @@
     </div>
   </div>
   
-  <!-- Footer -->
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-links">
-        <a href="#" class="footer-link">About</a>
-        <a href="#" class="footer-link">Rules</a>
-        <a href="#" class="footer-link">FAQ</a>
-        <a href="#" class="footer-link">Support</a>
-        <a href="#" class="footer-link">Twitter</a>
-        <a href="#" class="footer-link">Discord</a>
-      </div>
-      
-      <div class="footer-copyright">
-        <p>© 2025 Block Constellation</p>
-      </div>
-    </div>
-  </footer>
+  <!-- Using the extracted footer component -->
+  <app-game-footer></app-game-footer>
 </div>

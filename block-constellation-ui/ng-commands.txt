@@ -1,60 +1,8 @@
 ng generate module /pages/game --routing
 ng generate component /pages/game
 
-ng generate module /page/test --routing
-ng generate component /page/test
-
-ng generate component /page/home
-ng generate component /page/bolt-wallet-ui
-ng generate component /page/bolt-wallet-ui/bolt-wallet-ui-send
-ng generate component /page/bolt-wallet-ui/bolt-wallet-ui-deposit
-
-ng generate component /page/apps/bitfundApp
-ng generate component /page/apps/bitfund-app/fundOrder
-
-ng generate component /page/apps/bitfundstxApp
-
-ng generate component /page/apps/p2pmarketplace
-
-
-
-
-ng generate component /components/processing-transaction-info
-ng generate component /components/processing-bolt-transaction-info
-ng generate component /components/bolt-transaction-notification
-ng generate component /components/connect-wallet
-ng generate component /components/header
-ng generate component /components/footer
-
-
-
-ng generate environments staging
------------- OLD ------------------
-
-ng generate component /component/toolbar
-ng generate component /component/footer
-ng generate component /component/connect-wallet
-ng generate component /component/transaction-info
-
-
-ng generate component /page/home
-ng generate component /page/invest-info
-ng generate component /page/token-buy
-ng generate component /page/token-sell
-
-ng generate module /page/stx-market --routing
-ng generate component /page/stx-market/
-ng generate component /page/stx-market/buy-order
-ng generate component /page/stx-market/sell-order
-ng generate component /page/stx-market/trade-stx-fbtc
-ng generate component /page/stx-market/trade-fbtc-stx
-
-
-ng generate module /page/manage --routing
-ng generate component /page/manage
-ng generate component /page/manage/manage-stx-market
-
-
+ng generate component /pages/game/game-header --skip-tests
+ng generate component /pages/game/game-footer --skip-tests
 
 
 ng generate service shared/services/contract

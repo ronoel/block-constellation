@@ -28,130 +28,6 @@
   box-sizing: border-box;
 }
 
-// Sticky header
-.site-header {
-  background-color: rgba(13, 17, 23, 0.9); /* Using actual bg-main color with alpha */
-  backdrop-filter: blur(10px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  padding: 15px 0;
-  border-bottom: 1px solid rgba(176, 184, 193, 0.1); /* Using actual text-secondary color with alpha */
-}
-
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  
-  .logo-link {
-    color: var(--text-primary);
-    text-decoration: none;
-    font-size: 24px;
-    position: relative;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -3px;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary), transparent);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s ease;
-    }
-    
-    &:hover::after {
-      transform: scaleX(1);
-    }
-  }
-}
-
-.main-nav {
-  .nav-links {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    
-    li {
-      margin: 0 15px;
-    }
-    
-    .nav-link {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.3s ease;
-      
-      &:hover {
-        color: var(--primary);
-      }
-    }
-  }
-}
-
-.wallet-section {
-  .wallet-badge {
-    background-color: rgba(30, 42, 71, 0.7); /* Use actual bg-surface color with alpha */
-    padding: 8px 12px;
-    border-radius: 50px;
-    display: flex;
-    align-items: center;
-    @include card-shadow;
-    
-    .wallet-network {
-      margin-right: 8px;
-      font-size: 14px;
-      color: var(--success);
-      font-weight: 600;
-      
-      &::after {
-        content: '•';
-        margin-left: 8px;
-        color: var(--success);
-      }
-    }
-    
-    .wallet-address {
-      font-family: monospace;
-      letter-spacing: 0.5px;
-    }
-  }
-  
-  .btn-connect {
-    background-color: var(--primary);
-    color: var(--text-primary);
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:hover {
-      transform: translateY(-2px);
-      @include card-shadow;
-    }
-  }
-}
-
-// Network mismatch warning
-.network-mismatch {
-  background-color: var(--error);
-  color: var(--text-primary);
-  padding: 10px 0;
-  text-align: center;
-  font-weight: 500;
-}
-
 // Main content
 .main-content {
   flex: 1;
@@ -713,38 +589,6 @@
   }
 }
 
-// Footer
-.site-footer {
-  background-color: rgba(13, 17, 23, 0.8);
-  padding: 30px 0;
-  margin-top: auto;
-  border-top: 1px solid rgba(176, 184, 193, 0.1);
-  
-  .footer-links {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 20px;
-    
-    .footer-link {
-      color: var(--text-secondary);
-      text-decoration: none;
-      transition: color 0.3s ease;
-      
-      &:hover {
-        color: var(--primary);
-      }
-    }
-  }
-  
-  .footer-copyright {
-    text-align: center;
-    color: rgba(176, 184, 193, 0.7);
-    font-size: 14px;
-  }
-}
-
 // Responsive styles
 @media (max-width: 1024px) {
   .constellation-grid {
@@ -767,24 +611,6 @@
     grid-template-columns: repeat(3, 1fr);
   }
   
-  .header-container {
-    flex-wrap: wrap;
-    gap: 15px;
-    
-    .logo {
-      flex: 1;
-    }
-    
-    .main-nav {
-      order: 3;
-      width: 100%;
-      
-      .nav-links {
-        justify-content: center;
-      }
-    }
-  }
-  
   .stake-drawer {
     &.open {
       max-width: 100%;
@@ -795,10 +621,6 @@
 @media (max-width: 576px) {
   .constellation-grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .main-nav .nav-links li {
-    margin: 0 10px;
   }
   
   .drawer-content {
@@ -823,10 +645,5 @@
     &::before {
       left: 50%;
     }
-  }
-  
-  .wallet-badge {
-    font-size: 12px;
-    padding: 6px 10px;
   }
 }

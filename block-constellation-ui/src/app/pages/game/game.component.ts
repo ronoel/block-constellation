@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { GameHeaderComponent } from './game-header/game-header.component';
+import { GameFooterComponent } from './game-footer/game-footer.component';
 
 // Interfaces
 interface Constellation {
@@ -27,7 +29,9 @@ interface UserAllocation {
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule
+    RouterModule,
+    GameHeaderComponent,
+    GameFooterComponent
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss'
