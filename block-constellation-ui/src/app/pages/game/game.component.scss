@@ -246,7 +246,7 @@
 
 // Top-up alert
 .top-up-alert {
-  background-color: rgba(var(--error), 0.1);
+  background-color: rgba(227, 72, 80, 0.1); /* Using error color with alpha */
   border-left: 4px solid var(--error);
   padding: 10px 0;
   margin: 20px 0;
@@ -374,7 +374,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(var(--bg-main), 0.7);
+  background-color: rgba(13, 17, 23, 0.7); /* Using actual bg-main color with alpha */
   backdrop-filter: blur(4px);
   z-index: 5;
   display: flex;
