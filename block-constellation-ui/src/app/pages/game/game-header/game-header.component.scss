@@ -67,6 +67,25 @@
     
     li {
       margin: 0 15px;
+      text-align: center;
+      position: relative;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -12px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--primary);
+        transform: scaleX(0);
+        transform-origin: center;
+        transition: transform 0.3s ease;
+      }
+      
+      &:hover::after {
+        transform: scaleX(0.3);
+      }
     }
     
     .nav-link {
@@ -78,6 +97,39 @@
       &:hover {
         color: var(--primary);
       }
+      
+      &.active {
+        color: var(--primary);
+        font-weight: 600;
+        
+        .nav-description {
+          opacity: 1;
+          color: var(--primary);
+          animation: pulse 2s infinite ease-in-out;
+        }
+        
+        & ~ li::after {
+          transform: scaleX(1);
+        }
+      }
+    }
+    
+    .nav-description {
+      display: block;
+      font-size: 12px;
+      color: var(--text-secondary);
+      opacity: 0.7;
+      margin-top: 2px;
+      transition: all 0.3s ease;
+      
+      // Add a subtle transition on hover
+      transform-origin: top;
+      transform: translateY(0);
+    }
+    
+    li:hover .nav-link .nav-description {
+      opacity: 1;
+      transform: translateY(2px);
     }
   }
 }
@@ -125,6 +177,69 @@
       @include card-shadow;
     }
   }
+}
+
+// Wallet controls wrapper
+.wallet-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+// Theme toggle button
+.theme-toggle {
+  background-color: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .theme-icon {
+    font-size: 18px;
+    transition: transform 0.5s ease;
+    
+    &.dark {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+// Animation for active navigation item
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+// Active nav item styling
+.nav-link.active {
+  color: var(--primary);
+  font-weight: 600;
+  
+  & + .nav-description {
+    opacity: 1;
+    color: var(--primary);
+    animation: pulse 2s infinite ease-in-out;
+  }
+}
+
+// Animation for wallet connection
+@keyframes connectWallet {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.wallet-badge, .btn-connect {
+  animation: connectWallet 0.3s ease forwards;
 }
 
 // Network mismatch warning

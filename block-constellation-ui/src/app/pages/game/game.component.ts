@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { GameHeaderComponent } from './game-header/game-header.component';
+import { GameHeaderComponent, NavItem } from './game-header/game-header.component';
 import { GameFooterComponent } from './game-footer/game-footer.component';
 
 // Interfaces
@@ -42,6 +42,12 @@ export class GameComponent implements OnInit, OnDestroy {
   walletAddress = 'bc1q8c6c7ccst89np0plj9yys34s8p6kgn8dskavnx';
   networkType = 'Mainnet';
   feeBalance = 15000; // in sats
+  
+  // Navigation items
+  navigationItems: NavItem[] = [
+    { label: 'Star Former', description: '(Stake)', route: '/game', active: true },
+    { label: 'Star Ledger', description: '(Claim your reward)', route: '/ledger' }
+  ];
   
   // Epoch data
   currentEpoch = 42;
@@ -98,9 +104,22 @@ export class GameComponent implements OnInit, OnDestroy {
     ]
   };
   
+  // Footer links
+  footerLinks = [
+    { label: 'About', route: '/about' },
+    { label: 'Rules', route: '/rules' },
+    { label: 'FAQ', route: '/faq' },
+    { label: 'Support', url: 'mailto:support@blockconstellation.com', isExternal: true },
+    { label: 'Twitter', url: 'https://twitter.com/blockconstellation', isExternal: true },
+    { label: 'Discord', url: 'https://discord.gg/blockconstellation', isExternal: true }
+  ];
+
+  footerCopyright = '© 2025 Block Constellation - All rights reserved';
+
   private destroy$ = new Subject<void>();
   
-  constructor() {}
+  // Constructor with router
+  constructor(private router: Router) {}
   
   ngOnInit(): void {
     // Simulate loading
@@ -260,5 +279,19 @@ export class GameComponent implements OnInit, OnDestroy {
         constellation.yourShare = +(constellation.yourStake / totalSats * 100).toFixed(3);
       }
     });
+  }
+  
+  // Navigation handler method
+  handleNavItemClick(navItem: NavItem): void {
+    if (navItem.route) {
+      this.router.navigateByUrl(navItem.route);
+    }
+  }
+  
+  // Theme toggle handler
+  handleThemeToggle(theme: 'light' | 'dark'): void {
+    console.log(`Theme changed to ${theme} mode`);
+    // Here you could perform additional actions when theme changes
+    // such as updating application state or other component properties
   }
 }

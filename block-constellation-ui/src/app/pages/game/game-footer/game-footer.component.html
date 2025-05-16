@@ -2,16 +2,34 @@
 <footer class="site-footer">
   <div class="container">
     <div class="footer-links">
-      <a href="#" class="footer-link">About</a>
-      <a href="#" class="footer-link">Rules</a>
-      <a href="#" class="footer-link">FAQ</a>
-      <a href="#" class="footer-link">Support</a>
-      <a href="#" class="footer-link">Twitter</a>
-      <a href="#" class="footer-link">Discord</a>
+      <ng-container *ngFor="let link of links">
+        <!-- External link -->
+        <a *ngIf="link.isExternal && link.url" 
+           [href]="link.url" 
+           target="_blank" 
+           rel="noopener noreferrer" 
+           class="footer-link">
+          {{ link.label }}
+        </a>
+        
+        <!-- Internal router link -->
+        <a *ngIf="link.route && !link.isExternal" 
+           [routerLink]="link.route" 
+           class="footer-link">
+          {{ link.label }}
+        </a>
+        
+        <!-- Special case links like mailto: -->
+        <a *ngIf="!link.route && link.url && !link.isExternal"
+           [href]="link.url"
+           class="footer-link">
+          {{ link.label }}
+        </a>
+      </ng-container>
     </div>
     
     <div class="footer-copyright">
-      <p>© 2025 Block Constellation</p>
+      <p>{{ copyrightText }}</p>
     </div>
   </div>
 </footer>

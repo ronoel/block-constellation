@@ -7,23 +7,41 @@
     
     <nav class="main-nav">
       <ul class="nav-links">
-        <li><a href="#" class="nav-link">History</a></li>
-        <li><a href="#" class="nav-link">Claim</a></li>
-        <li><a href="#" class="nav-link">Settings</a></li>
+        <li *ngFor="let item of navItems">
+          <a 
+            [routerLink]="item.route" 
+            [href]="item.url" 
+            [class.active]="item.active"
+            class="nav-link"
+            (click)="onNavItemClick(item)">
+            {{ item.label }}
+            <span class="nav-description">{{ item.description }}</span>
+          </a>
+        </li>
       </ul>
     </nav>
     
-    <div class="wallet-section">
-      <ng-container *ngIf="walletConnected; else connectWallet">
-        <div class="wallet-badge">
-          <span class="wallet-network">{{ networkType }}</span>
-          <span class="wallet-address">{{ walletAddress | slice:0:6 }}...{{ walletAddress | slice:-4 }}</span>
-        </div>
-      </ng-container>
+    <div class="wallet-controls">
+      <!-- Theme toggle button -->
+      <!-- <button class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
+        <span class="theme-icon" [class.dark]="isDarkTheme">
+          {{ isDarkTheme ? '☀️' : '🌙' }}
+        </span>
+      </button> -->
       
-      <ng-template #connectWallet>
-        <button class="btn-connect" (click)="toggleWalletConnection()">Connect Wallet</button>
-      </ng-template>
+      <!-- Wallet section -->
+      <div class="wallet-section">
+        <ng-container *ngIf="walletConnected; else connectWallet">
+          <div class="wallet-badge">
+            <span class="wallet-network">{{ networkType }}</span>
+            <span class="wallet-address">{{ walletAddress | slice:0:6 }}...{{ walletAddress | slice:-4 }}</span>
+          </div>
+        </ng-container>
+        
+        <ng-template #connectWallet>
+          <button class="btn-connect" (click)="toggleWalletConnection()">Connect Wallet</button>
+        </ng-template>
+      </div>
     </div>
   </div>
 </header>

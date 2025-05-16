@@ -5,7 +5,10 @@
     [walletAddress]="walletAddress"
     [networkType]="networkType"
     [showNetworkMismatch]="showNetworkMismatch"
-    (toggleWallet)="toggleWalletConnection()">
+    [navItems]="navigationItems"
+    (toggleWallet)="toggleWalletConnection()"
+    (navItemClick)="handleNavItemClick($event)"
+    (themeToggle)="handleThemeToggle($event)">
   </app-game-header>
 
   <!-- Main Content -->
@@ -39,7 +42,7 @@
             </div>
             
             <div class="cosmic-pool">
-              <p>Total Stakes: {{ formatBTC(totalStakedPool) }} BTC</p>
+              <p>Cosmic Reward: {{ formatBTC(totalStakedPool) }} BTC</p>
             </div>
           </div>
         </div>
@@ -199,5 +202,8 @@
   </div>
   
   <!-- Using the extracted footer component -->
-  <app-game-footer></app-game-footer>
+  <app-game-footer 
+    [links]="footerLinks"
+    [copyrightText]="footerCopyright">
+  </app-game-footer>
 </div>

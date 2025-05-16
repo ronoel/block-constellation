@@ -24,10 +24,31 @@
     .footer-link {
       color: var(--text-secondary);
       text-decoration: none;
-      transition: color 0.3s ease;
+      transition: all 0.3s ease;
+      position: relative;
+      padding: 5px 8px;
+      border-radius: 4px;
       
       &:hover {
         color: var(--primary);
+        background-color: rgba(255, 255, 255, 0.05);
+        transform: translateY(-2px);
+      }
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+      
+      &:hover::after {
+        transform: scaleX(1);
       }
     }
   }
@@ -36,6 +57,13 @@
     text-align: center;
     color: rgba(176, 184, 193, 0.7);
     font-size: 14px;
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    
+    p {
+      margin: 0;
+    }
   }
 }
 
@@ -43,9 +71,12 @@
 @media (max-width: 576px) {
   .footer-links {
     gap: 15px;
+    flex-direction: column;
+    align-items: center;
   }
   
   .footer-copyright {
     font-size: 12px;
+    margin-top: 20px;
   }
 }
