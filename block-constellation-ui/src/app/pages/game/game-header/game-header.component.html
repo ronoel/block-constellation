@@ -23,23 +23,27 @@
     
     <div class="wallet-controls">
       <!-- Theme toggle button -->
-      <!-- <button class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
+      <button class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
         <span class="theme-icon" [class.dark]="isDarkTheme">
           {{ isDarkTheme ? '☀️' : '🌙' }}
         </span>
-      </button> -->
+      </button>
       
       <!-- Wallet section -->
       <div class="wallet-section">
         <ng-container *ngIf="walletConnected; else connectWallet">
-          <div class="wallet-badge">
+          <div class="wallet-badge" (click)="toggleWalletConnection()">
             <span class="wallet-network">{{ networkType }}</span>
             <span class="wallet-address">{{ walletAddress | slice:0:6 }}...{{ walletAddress | slice:-4 }}</span>
+            <span class="wallet-disconnect-icon">▼</span>
           </div>
         </ng-container>
         
         <ng-template #connectWallet>
-          <button class="btn-connect" (click)="toggleWalletConnection()">Connect Wallet</button>
+          <button class="btn-connect" (click)="toggleWalletConnection()">
+            <span class="connect-icon">🔌</span>
+            Connect Wallet
+          </button>
         </ng-template>
       </div>
     </div>
@@ -50,5 +54,18 @@
 <div class="network-mismatch" *ngIf="showNetworkMismatch">
   <div class="container">
     <p>You're on Testnet. Switch to Mainnet to play for BTC.</p>
+  </div>
+</div>
+
+<!-- Wallet disconnect confirmation dialog -->
+<div class="disconnect-dialog" *ngIf="showDisconnectDialog">
+  <div class="dialog-backdrop" (click)="cancelDisconnect()"></div>
+  <div class="dialog-content">
+    <h3>Disconnect Wallet</h3>
+    <p>Are you sure you want to disconnect your wallet?</p>
+    <div class="dialog-actions">
+      <button class="btn-cancel" (click)="cancelDisconnect()">Cancel</button>
+      <button class="btn-confirm" (click)="confirmDisconnect()">Disconnect</button>
+    </div>
   </div>
 </div>

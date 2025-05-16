@@ -1,12 +1,8 @@
 <div class="game-page">
   <!-- Using the extracted header component -->
   <app-game-header 
-    [walletConnected]="walletConnected"
-    [walletAddress]="walletAddress"
-    [networkType]="networkType"
     [showNetworkMismatch]="showNetworkMismatch"
     [navItems]="navigationItems"
-    (toggleWallet)="toggleWalletConnection()"
     (navItemClick)="handleNavItemClick($event)"
     (themeToggle)="handleThemeToggle($event)">
   </app-game-header>
@@ -97,7 +93,7 @@
             <div class="wallet-overlay" *ngIf="!walletConnected">
               <div class="overlay-content">
                 <p>Connect your wallet to start staking.</p>
-                <button class="btn-connect" (click)="toggleWalletConnection()">Connect Wallet</button>
+                <button class="btn-connect" (click)="connectWallet()">Connect Wallet</button>
               </div>
             </div>
             

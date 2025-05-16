@@ -1,6 +1,7 @@
-import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
+import { Component, Output, EventEmitter, Input, OnInit, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { WalletService } from '../../../libs/services/wallet.service';
 
 export interface NavItem {
   label: string;
@@ -18,20 +19,42 @@ export interface NavItem {
   styleUrl: './game-header.component.scss'
 })
 export class GameHeaderComponent implements OnInit {
-  @Input() walletConnected = false;
-  @Input() walletAddress = '';
-  @Input() networkType = 'Mainnet';
   @Input() showNetworkMismatch = false;
   @Input() navItems: NavItem[] = [
     { label: 'Star Former', description: '(Stake)', route: '/star-former', active: true },
     { label: 'Star Ledger', description: '(Claim your reward)', route: '/star-ledger' }
   ];
   
-  @Output() toggleWallet = new EventEmitter<void>();
   @Output() navItemClick = new EventEmitter<NavItem>();
   @Output() themeToggle = new EventEmitter<'light' | 'dark'>();
   
+  // Wallet state
+  walletConnected = false;
+  walletAddress = '';
+  networkType = 'Mainnet';
+  
+  // Theme state
   isDarkTheme = true;
+  
+  // Service injection
+  private walletService = inject(WalletService);
+  
+  // Disconnect dialog state
+  showDisconnectDialog = false;
+  
+  constructor() {
+    // Monitor wallet connection state
+    effect(() => {
+      if (this.walletService.isLoggedIn()) {
+        this.walletConnected = true;
+        this.walletAddress = this.walletService.getSTXAddress();
+        this.networkType = this.walletService.getNetwork() === 'mainnet' ? 'Mainnet' : 'Testnet';
+      } else {
+        this.walletConnected = false;
+        this.walletAddress = '';
+      }
+    });
+  }
   
   ngOnInit(): void {
     // Check for saved theme preference
@@ -40,8 +63,22 @@ export class GameHeaderComponent implements OnInit {
     this.applyTheme();
   }
   
+  // Methods for handling wallet disconnection
   toggleWalletConnection(): void {
-    this.toggleWallet.emit();
+    if (this.walletConnected) {
+      this.showDisconnectDialog = true;
+    } else {
+      this.walletService.signIn();
+    }
+  }
+  
+  cancelDisconnect(): void {
+    this.showDisconnectDialog = false;
+  }
+  
+  confirmDisconnect(): void {
+    this.walletService.signOut();
+    this.showDisconnectDialog = false;
   }
   
   onNavItemClick(item: NavItem): void {

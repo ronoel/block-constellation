@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { GameHeaderComponent, NavItem } from './game-header/game-header.component';
 import { GameFooterComponent } from './game-footer/game-footer.component';
+import { WalletService } from '../../libs/services/wallet.service';
 
 // Interfaces
 interface Constellation {
@@ -39,8 +40,6 @@ interface UserAllocation {
 export class GameComponent implements OnInit, OnDestroy {
   // Wallet state
   walletConnected = false;
-  walletAddress = 'bc1q8c6c7ccst89np0plj9yys34s8p6kgn8dskavnx';
-  networkType = 'Mainnet';
   feeBalance = 15000; // in sats
   
   // Navigation items
@@ -118,8 +117,25 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   
-  // Constructor with router
-  constructor(private router: Router) {}
+  // Service injection
+  private router = inject(Router);
+  public walletService = inject(WalletService);
+  
+  constructor() {
+    // Monitor wallet connection state
+    effect(() => {
+      this.walletConnected = this.walletService.isLoggedIn();
+      
+      if (this.walletConnected) {
+        // In a real app, you would fetch the fee balance from an API
+        // Here we're just setting a mock value
+        this.feeBalance = 15000;
+      } else {
+        this.feeBalance = 0;
+        this.resetUserStakes();
+      }
+    });
+  }
   
   ngOnInit(): void {
     // Simulate loading
@@ -150,14 +166,6 @@ export class GameComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-  
-  toggleWalletConnection(): void {
-    this.walletConnected = !this.walletConnected;
-    if (!this.walletConnected) {
-      // Reset user data when disconnecting
-      this.resetUserStakes();
-    }
   }
   
   resetUserStakes(): void {
@@ -293,5 +301,10 @@ export class GameComponent implements OnInit, OnDestroy {
     console.log(`Theme changed to ${theme} mode`);
     // Here you could perform additional actions when theme changes
     // such as updating application state or other component properties
+  }
+  
+  // Connect wallet from the game UI
+  connectWallet(): void {
+    this.walletService.signIn();
   }
 }

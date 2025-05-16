@@ -8,8 +8,6 @@ const appConfig = new AppConfig(['store_write', 'publish_data']);
 
 const myAppName = 'BoltProto'; // shown in wallet pop-up
 const myAppIcon = 'https://storage.googleapis.com/bitfund/boltproto-icon.png'; // shown in wallet pop-up
-// const myAppIcon = 'https://boostaid.net/images/logo/boostaid-logo.png'; // shown in wallet pop-up
-
 /**
  * Service responsible for managing the user's wallet and authentication status.
  */
@@ -22,11 +20,6 @@ export class WalletService {
 
   private readonly isLoggedInSignal = signal(false);
   private readonly network = environment.network;
-    // environment.network === 'mainnet'
-    //   ? new StacksMainnet()
-    //   : environment.network === 'testnet'
-    //     ? new StacksTestnet({ url: environment.apiUrl })
-    //     : new StacksMocknet({ url: environment.apiUrl });
 
   constructor() {
     this.checkAuth();
