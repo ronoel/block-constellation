@@ -70,6 +70,7 @@ export class BlockConstellationContractService extends ContractUtil {
         )).pipe(
             map((result: any) => {
                 const data = cvToValue(result);
+                console.log('Cycle data:', data);
                 if (data) {
                     return {
                         allocationClaimed: cvToValue(data['allocation-claimed'])

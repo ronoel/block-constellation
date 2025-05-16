@@ -2,6 +2,8 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/services/wallet.service';
+import { BlockConstellationContractService } from '../../../libs/services/block-constellation-contract.service';
+import { Subscription } from 'rxjs';
 
 // Interfaces
 interface Constellation {
@@ -89,21 +91,47 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     ]
   };
   
+  // Service injections
   public walletService = inject(WalletService);
+  public blockConstellationContractService = inject(BlockConstellationContractService);
+  
+  // Subscriptions
+  private subscriptions: Subscription[] = [];
 
   ngOnInit(): void {
     // Initialize component data
     this.loadingPage = true;
     
-    // Simulate loading time
-    setTimeout(() => {
-      this.loadingPage = false;
-      this.walletConnected = this.walletService.isLoggedIn();
-    }, 1000);
+    // Check if wallet is connected
+    this.walletConnected = this.walletService.isLoggedIn();
+    
+    // Get current epoch ID from blockchain
+    if (this.walletConnected) {
+      const cycleSubscription = this.blockConstellationContractService.getCurrentCycleId().subscribe({
+        next: (cycleId: number) => {
+          console.log('Current Cycle ID:', cycleId);
+          this.currentEpoch = cycleId;
+          this.loadingPage = false;
+        },
+        error: (error) => {
+          console.error('Error fetching current cycle ID:', error);
+          // Fallback to the mock data if there's an error
+          this.loadingPage = false;
+        }
+      });
+      
+      this.subscriptions.push(cycleSubscription);
+    } else {
+      // Simulate loading time when no wallet connected
+      setTimeout(() => {
+        this.loadingPage = false;
+      }, 1000);
+    }
   }
 
   ngOnDestroy(): void {
-    // Cleanup if necessary
+    // Clean up subscriptions
+    this.subscriptions.forEach(subscription => subscription.unsubscribe());
   }
 
   toggleAllocationSummary(): void {

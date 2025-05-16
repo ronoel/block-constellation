@@ -11,12 +11,12 @@ import {
   PostConditionMode,
 } from '@stacks/transactions';
 import { ClarityUtil } from '../clarity.util';
-import { ContractService } from '../contract.util';
+import { ContractUtil } from '../contract.util';
 
 @Injectable({
   providedIn: 'root'
 })
-export class sBTCTokenService extends ContractService {
+export class sBTCTokenService extends ContractUtil {
 
   private readonly contractTokenName = environment.supportedAsset.sBTC.contractToken;
   private asset: AssetString = `${environment.supportedAsset.sBTC.contractAddress}.${environment.supportedAsset.sBTC.contractName}::${environment.supportedAsset.sBTC.contractToken}`;

@@ -1,14 +1,14 @@
 export const environment = {
     production: false,
     applicationName: 'Block Constellation',
-    network: "testnet", // 'mainnet', 'testnet', 'devnet', 'mocknet'
+    network: "devnet", // 'mainnet', 'testnet', 'devnet', 'mocknet'
     // apiUrl: 'https://api.testnet.hiro.so',
     apiUrl: 'http://localhost:3000/api/v1',
     // apiUrl: 'https://test.boltproto.org/api/v1',
-    // blockchainAPIUrl: 'http://localhost:3999',
-    blockchainAPIUrl: 'https://api.testnet.hiro.so',
+    blockchainAPIUrl: 'http://localhost:3999',
+    // blockchainAPIUrl: 'https://api.testnet.hiro.so',
     gameContract: {
-        contractAddress: 'ST3QZNX3CGT6V7PE1PBK17FCRK1TP1AT02W1N0YJF',
+        contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
         contractName: 'blockconstellation'
     },
     supportedAsset: {
