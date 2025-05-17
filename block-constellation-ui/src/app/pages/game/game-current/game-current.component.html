@@ -164,12 +164,22 @@
         </div>
         
         <div class="balance-info" [class.insufficient]="feeBalance < 1000">
-          Your balance: {{ formatSats(feeBalance) }} sats
+          <span class="balance-label">Your balance:</span>
+          <div class="balance-value-container">
+            <span class="balance-value" *ngIf="!isLoadingBalance">{{ formatSats(feeBalance) }} sats</span>
+            <span class="balance-value loading" *ngIf="isLoadingBalance">Loading...</span>
+            <button class="btn-refresh" (click)="fetchUserBalance()" [disabled]="isLoadingBalance" title="Refresh Balance">
+              <span class="refresh-icon">↻</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
     
     <div class="drawer-footer">
+      <div *ngIf="statusMessage" class="status-message" [ngClass]="statusType">
+        {{ statusMessage }}
+      </div>
       <button class="btn-cancel" (click)="closeStakeDrawer()">Cancel</button>
       <button 
         class="btn-confirm" 

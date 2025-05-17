@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/services/wallet.service';
 import { BlockConstellationContractService } from '../../../libs/services/block-constellation-contract.service';
+import { sBTCTokenService } from '../../../libs/services/sbtc-token.service';
 import { Subscription } from 'rxjs';
 
 // Interfaces
@@ -34,7 +35,8 @@ interface UserAllocation {
 export class GameCurrentComponent implements OnInit, OnDestroy {
   // Wallet state
   walletConnected = false;
-  feeBalance = 15000;
+  feeBalance = 0;
+  isLoadingBalance = false;
   
   // Epoch data
   currentEpoch = 0;  // Initialize to 0 instead of 42
@@ -47,36 +49,38 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   isDrawerOpen = false;
   selectedConstellation: Constellation | null = null;
   stakeAmount = 1000;
+  statusMessage = '';
+  statusType = ''; // 'success' or 'error'
   showAllocationSummary = false;
   loadingPage = false;
   showNetworkMismatch = false;
   
   // Mock constellation data
   constellations: Constellation[] = [
-    { id: 1, name: 'Aries', meaning: 'Courage, initiative, beginnings', totalStaked: 0.12345, yourStake: 0, yourShare: 0 },
-    { id: 2, name: 'Taurus', meaning: 'Stability, sensuality, material grounding', totalStaked: 0.07865, yourStake: 0, yourShare: 0 },
-    { id: 3, name: 'Gemini', meaning: 'Curiosity, communication, adaptability', totalStaked: 0.10524, yourStake: 0, yourShare: 0 },
-    { id: 4, name: 'Cancer', meaning: 'Intuition, emotional depth, home', totalStaked: 0.05632, yourStake: 0, yourShare: 0 },
-    { id: 5, name: 'Leo', meaning: 'Confidence, leadership, creative power', totalStaked: 0.13751, yourStake: 0, yourShare: 0 },
-    { id: 6, name: 'Virgo', meaning: 'Precision, service, analysis', totalStaked: 0.04321, yourStake: 0, yourShare: 0 },
-    { id: 7, name: 'Libra', meaning: 'Harmony, balance, relationships', totalStaked: 0.09876, yourStake: 0, yourShare: 0 },
-    { id: 8, name: 'Scorpio', meaning: 'Transformation, intensity, mystery', totalStaked: 0.17654, yourStake: 0, yourShare: 0 },
-    { id: 9, name: 'Sagittarius', meaning: 'Freedom, truth, expansion', totalStaked: 0.06789, yourStake: 0, yourShare: 0 },
-    { id: 10, name: 'Capricorn', meaning: 'Ambition, discipline, mastery', totalStaked: 0.08765, yourStake: 0, yourShare: 0 },
-    { id: 11, name: 'Aquarius', meaning: 'Innovation, rebellion, community', totalStaked: 0.12398, yourStake: 0, yourShare: 0 },
-    { id: 12, name: 'Pisces', meaning: 'Compassion, dreams, spirituality', totalStaked: 0.11357, yourStake: 0, yourShare: 0 },
-    { id: 13, name: 'Ophiuchus', meaning: 'Healing, knowledge, the mystical 13th sign', totalStaked: 0.09854, yourStake: 0, yourShare: 0 },
-    { id: 14, name: 'Orion', meaning: 'The hunter, purpose, power of pursuit', totalStaked: 0.21987, yourStake: 0, yourShare: 0 },
-    { id: 15, name: 'Andromeda', meaning: 'Grace, sacrifice, destiny', totalStaked: 0.08743, yourStake: 0, yourShare: 0 },
-    { id: 16, name: 'Pegasus', meaning: 'Spiritual freedom, transcendence', totalStaked: 0.07651, yourStake: 0, yourShare: 0 },
-    { id: 17, name: 'Cassiopeia', meaning: 'Beauty, pride, divine consequence', totalStaked: 0.10298, yourStake: 0, yourShare: 0 },
-    { id: 18, name: 'Phoenix', meaning: 'Rebirth, transformation, rising from ashes', totalStaked: 0.16543, yourStake: 0, yourShare: 0 },
-    { id: 19, name: 'Cygnus', meaning: 'Peace, purity, inner awakening', totalStaked: 0.06549, yourStake: 0, yourShare: 0 },
-    { id: 20, name: 'Lyra', meaning: 'Harmony, resonance, cosmic music', totalStaked: 0.08761, yourStake: 0, yourShare: 0 },
-    { id: 21, name: 'Draco', meaning: 'Shadow work, ancient wisdom', totalStaked: 0.11879, yourStake: 0, yourShare: 0 },
-    { id: 22, name: 'Hydra', meaning: 'Challenges, perseverance, growth through struggle', totalStaked: 0.09871, yourStake: 0, yourShare: 0 },
-    { id: 23, name: 'Crux', meaning: 'Faith, sacrifice, divine guidance', totalStaked: 0.07654, yourStake: 0, yourShare: 0 },
-    { id: 24, name: 'Corona Borealis', meaning: 'Royal power, sovereignty, sacred feminine', totalStaked: 0.09912, yourStake: 0, yourShare: 0 }
+    { id: 0, name: 'Aries', meaning: 'Courage, initiative, beginnings', totalStaked: 0.12345, yourStake: 0, yourShare: 0 },
+    { id: 1, name: 'Taurus', meaning: 'Stability, sensuality, material grounding', totalStaked: 0.07865, yourStake: 0, yourShare: 0 },
+    { id: 2, name: 'Gemini', meaning: 'Curiosity, communication, adaptability', totalStaked: 0.10524, yourStake: 0, yourShare: 0 },
+    { id: 3, name: 'Cancer', meaning: 'Intuition, emotional depth, home', totalStaked: 0.05632, yourStake: 0, yourShare: 0 },
+    { id: 4, name: 'Leo', meaning: 'Confidence, leadership, creative power', totalStaked: 0.13751, yourStake: 0, yourShare: 0 },
+    { id: 5, name: 'Virgo', meaning: 'Precision, service, analysis', totalStaked: 0.04321, yourStake: 0, yourShare: 0 },
+    { id: 6, name: 'Libra', meaning: 'Harmony, balance, relationships', totalStaked: 0.09876, yourStake: 0, yourShare: 0 },
+    { id: 7, name: 'Scorpio', meaning: 'Transformation, intensity, mystery', totalStaked: 0.17654, yourStake: 0, yourShare: 0 },
+    { id: 8, name: 'Sagittarius', meaning: 'Freedom, truth, expansion', totalStaked: 0.06789, yourStake: 0, yourShare: 0 },
+    { id: 9, name: 'Capricorn', meaning: 'Ambition, discipline, mastery', totalStaked: 0.08765, yourStake: 0, yourShare: 0 },
+    { id: 10, name: 'Aquarius', meaning: 'Innovation, rebellion, community', totalStaked: 0.12398, yourStake: 0, yourShare: 0 },
+    { id: 11, name: 'Pisces', meaning: 'Compassion, dreams, spirituality', totalStaked: 0.11357, yourStake: 0, yourShare: 0 },
+    { id: 12, name: 'Ophiuchus', meaning: 'Healing, knowledge, the mystical 13th sign', totalStaked: 0.09854, yourStake: 0, yourShare: 0 },
+    { id: 13, name: 'Orion', meaning: 'The hunter, purpose, power of pursuit', totalStaked: 0.21987, yourStake: 0, yourShare: 0 },
+    { id: 14, name: 'Andromeda', meaning: 'Grace, sacrifice, destiny', totalStaked: 0.08743, yourStake: 0, yourShare: 0 },
+    { id: 15, name: 'Pegasus', meaning: 'Spiritual freedom, transcendence', totalStaked: 0.07651, yourStake: 0, yourShare: 0 },
+    { id: 16, name: 'Cassiopeia', meaning: 'Beauty, pride, divine consequence', totalStaked: 0.10298, yourStake: 0, yourShare: 0 },
+    { id: 17, name: 'Phoenix', meaning: 'Rebirth, transformation, rising from ashes', totalStaked: 0.16543, yourStake: 0, yourShare: 0 },
+    { id: 18, name: 'Cygnus', meaning: 'Peace, purity, inner awakening', totalStaked: 0.06549, yourStake: 0, yourShare: 0 },
+    { id: 19, name: 'Lyra', meaning: 'Harmony, resonance, cosmic music', totalStaked: 0.08761, yourStake: 0, yourShare: 0 },
+    { id: 20, name: 'Draco', meaning: 'Shadow work, ancient wisdom', totalStaked: 0.11879, yourStake: 0, yourShare: 0 },
+    { id: 21, name: 'Hydra', meaning: 'Challenges, perseverance, growth through struggle', totalStaked: 0.09871, yourStake: 0, yourShare: 0 },
+    { id: 22, name: 'Crux', meaning: 'Faith, sacrifice, divine guidance', totalStaked: 0.07654, yourStake: 0, yourShare: 0 },
+    { id: 23, name: 'Corona Borealis', meaning: 'Royal power, sovereignty, sacred feminine', totalStaked: 0.09912, yourStake: 0, yourShare: 0 }
   ];
   
   // User allocation summary
@@ -89,6 +93,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   // Service injections
   public walletService = inject(WalletService);
   public blockConstellationContractService = inject(BlockConstellationContractService);
+  public sbtcTokenService = inject(sBTCTokenService);
   
   // Subscriptions
   private subscriptions: Subscription[] = [];
@@ -121,6 +126,9 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     
     // Get current epoch ID from blockchain
     if (this.walletConnected) {
+      // Fetch the user's sBTC balance
+      this.fetchUserBalance();
+      
       const cycleSubscription = this.blockConstellationContractService.getCurrentCycleId().subscribe({
         next: (cycleId: number) => {
           console.log('Current Cycle ID:', cycleId);
@@ -209,19 +217,23 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
         totalStaked += allocation;
         
         // Update the constellations array with user's stake
-        if (i < this.constellations.length) {
-          this.constellations[i].yourStake = allocation;
+        // Note: Contract uses 0-based index, UI uses 1-based index (add 1 to the index)
+        const constellationIndex = i;
+        const constellationUiIndex = constellationIndex; // UI constellation array is 0-based index too
+        
+        if (constellationUiIndex < this.constellations.length) {
+          this.constellations[constellationUiIndex].yourStake = allocation;
           
           // Calculate user's share of this constellation
-          if (this.constellations[i].totalStaked > 0) {
-            const btcTotal = this.constellations[i].totalStaked;
+          if (this.constellations[constellationUiIndex].totalStaked > 0) {
+            const btcTotal = this.constellations[constellationUiIndex].totalStaked;
             const satTotal = btcTotal * 100000000;
-            this.constellations[i].yourShare = allocation / satTotal;
+            this.constellations[constellationUiIndex].yourShare = allocation / satTotal;
           }
           
           // Add to the allocations list
           this.userAllocation.allocations.push({
-            constellation: this.constellations[i].name,
+            constellation: this.constellations[constellationUiIndex].name,
             amount: allocation
           });
         }
@@ -244,9 +256,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
         // Convert prize from satoshis to BTC for display
         // Always update the totalStakedPool with the actual value from the contract,
         // even if it's zero, to ensure we don't show mock data
-        this.totalStakedPool = (cycleData && typeof cycleData.prize === 'number') 
-          ? cycleData.prize / 100000000 
-          : 0;
+        this.totalStakedPool = cycleData.prize / 100000000;
         
         // Update constellation allocations from blockchain data if available
         if (cycleData && cycleData.constellationAllocation && Array.isArray(cycleData.constellationAllocation)) {
@@ -299,6 +309,8 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
       
       // Convert satoshis to BTC for display
       const btcAmount = allocation / 100000000;
+      
+      // Note: i is the contract's 0-based index, matches our array's 0-based index
       this.constellations[i].totalStaked = btcAmount;
     }
     
@@ -307,9 +319,6 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     allocations.forEach(allocation => {
       totalStaked += (allocation || 0);
     });
-    
-    // Always update the totalStakedPool - even if it's zero
-    this.totalStakedPool = totalStaked / 100000000;
   }
 
   ngOnDestroy(): void {
@@ -325,34 +334,141 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     this.isDrawerOpen = false;
     setTimeout(() => {
       this.selectedConstellation = null;
+      this.statusMessage = '';
+      this.statusType = '';
     }, 300);
   }
 
   selectConstellation(constellation: Constellation): void {
     this.selectedConstellation = constellation;
     this.isDrawerOpen = true;
+    
+    // Fetch the latest sBTC balance when opening the drawer
+    this.fetchUserBalance();
+  }
+  
+  // Fetch the user's sBTC balance
+  fetchUserBalance(): void {
+    if (!this.walletConnected) return;
+    
+    this.isLoadingBalance = true;
+    
+    const balanceSubscription = this.sbtcTokenService.getBalance().subscribe({
+      next: (balance) => {
+        // Convert from bigint to number (safe for reasonable amounts)
+        this.feeBalance = Number(balance);
+        this.isLoadingBalance = false;
+        
+        // If current stakeAmount is greater than the available balance, adjust it
+        if (this.stakeAmount > this.feeBalance) {
+          this.stakeAmount = this.feeBalance > 1000 ? this.feeBalance : 1000;
+        }
+        
+        console.log('User sBTC balance:', this.feeBalance);
+      },
+      error: (error) => {
+        console.error('Error fetching sBTC balance:', error);
+        this.isLoadingBalance = false;
+        // Set a fallback balance if there's an error
+        this.feeBalance = 0;
+      }
+    });
+    
+    this.subscriptions.push(balanceSubscription);
   }
 
   confirmStake(): void {
-    if (this.selectedConstellation && this.stakeAmount >= 1000 && this.stakeAmount <= this.feeBalance) {
-      // Stake on the selected constellation via the contract
-      this.blockConstellationContractService
-        .allocate(this.stakeAmount, this.selectedConstellation.id)
-        .subscribe({
-          next: (response) => {
-            console.log(`Staking transaction submitted: ${response.txid}`);
-            // Close the drawer
-            this.closeStakeDrawer();
-            
-            // Provide feedback to user that transaction is submitted
-            // In a real app, you might want to show a success toast or message
-          },
-          error: (error) => {
-            console.error('Error staking on constellation:', error);
-            // Show error to user
-          }
-        });
+    if (!this.walletConnected) {
+      this.statusMessage = 'Please connect your wallet first';
+      this.statusType = 'error';
+      this.clearStatusMessageAfterDelay();
+      return;
     }
+    
+    // Fetch the latest balance before confirming stake
+    this.isLoadingBalance = true;
+    
+    const balanceSubscription = this.sbtcTokenService.getBalance().subscribe({
+      next: (balance) => {
+        // Update the balance
+        this.feeBalance = Number(balance);
+        this.isLoadingBalance = false;
+        
+        // Check if stake amount is valid based on the latest balance
+        if (this.selectedConstellation && this.stakeAmount >= 1000 && this.stakeAmount <= this.feeBalance) {
+          // Reset any previous status messages
+          this.statusMessage = 'Submitting your stake...';
+          this.statusType = 'info';
+          
+          // Stake on the selected constellation via the contract
+          this.blockConstellationContractService
+            .allocate(this.stakeAmount, this.selectedConstellation.id)
+            .subscribe({
+              next: (response) => {
+                console.log(`Staking transaction submitted: ${response.txid}`);
+                
+                // Set success status message
+                this.statusMessage = `Stake of ${this.formatSats(this.stakeAmount)} sats successfully submitted to the ${this.selectedConstellation?.name} constellation!`;
+                this.statusType = 'success';
+                
+                // Clear message after 5 seconds
+                this.clearStatusMessageAfterDelay();
+                
+                // Refresh user allocation data after a successful stake
+                setTimeout(() => {
+                  if (this.currentEpoch) {
+                    this.fetchUserAllocations(this.currentEpoch);
+                    this.fetchCycleData(this.currentEpoch);
+                    this.fetchUserBalance(); // Also refresh the balance
+                  }
+                }, 2000);
+                
+                // Close the drawer
+                this.closeStakeDrawer();
+              },
+              error: (error) => {
+                console.error('Error staking on constellation:', error);
+                
+                // Set error status message
+                this.statusMessage = `Failed to stake on constellation: ${error.message || 'Unknown error'}`;
+                this.statusType = 'error';
+                
+                // Clear message after 5 seconds
+                this.clearStatusMessageAfterDelay();
+              }
+            });
+        } else {
+          // Insufficient balance or invalid stake amount
+          if (this.feeBalance < 1000) {
+            this.statusMessage = 'Insufficient sBTC balance. You need at least 1000 sats to stake.';
+          } else if (this.stakeAmount > this.feeBalance) {
+            this.statusMessage = `Insufficient balance. You only have ${this.formatSats(this.feeBalance)} sats available.`;
+          } else {
+            this.statusMessage = 'Please enter a valid stake amount (min 1000 sats).';
+          }
+          this.statusType = 'error';
+          
+          // Clear message after 5 seconds
+          this.clearStatusMessageAfterDelay();
+        }
+      },
+      error: (error) => {
+        console.error('Error fetching sBTC balance:', error);
+        this.isLoadingBalance = false;
+        this.statusMessage = 'Could not verify your balance. Please try again.';
+        this.statusType = 'error';
+        this.clearStatusMessageAfterDelay();
+      }
+    });
+    
+    this.subscriptions.push(balanceSubscription);
+  }
+  
+  clearStatusMessageAfterDelay(delay: number = 5000): void {
+    setTimeout(() => {
+      this.statusMessage = '';
+      this.statusType = '';
+    }, delay);
   }
 
   increaseStakeAmount(factor: number): void {

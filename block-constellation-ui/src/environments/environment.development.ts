@@ -13,7 +13,7 @@ export const environment = {
     },
     supportedAsset: {
         sBTC: {
-            contractAddress: 'ST3QZNX3CGT6V7PE1PBK17FCRK1TP1AT02W1N0YJF',
+            contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
             contractName: 'sbtc-token',
             contractToken: 'sbtc-token',
             decimals: 8,

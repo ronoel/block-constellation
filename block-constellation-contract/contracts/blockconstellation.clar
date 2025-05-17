@@ -41,7 +41,7 @@
 ;; Admin and configuration variables
 (define-data-var manager principal tx-sender)                 ;; Contract administrator
 (define-data-var blocks-per-cycle uint u144)                  ;; Duration of each cycle (144 bitcoin blocks)
-(define-data-var min-allocation uint u1000000)                ;; Minimum allocation amount (1 million satoshis)
+(define-data-var min-allocation uint u1000)                ;; Minimum allocation amount for participation
 (define-data-var treasury-distribution-period uint u3)        ;; Number of cycles for distributing treasury
 (define-data-var prize-expiration-period uint u5)             ;; Cycles before unclaimed prizes expire and return to treasury
 (define-data-var reward-claim-fee uint u100)                  ;; Fee for claiming referral rewards
