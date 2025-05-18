@@ -73,32 +73,6 @@
         </div>
       </div>
 
-      <!-- User Allocations -->
-      <div class="cosmic-card user-allocations" *ngIf="selectedEpoch.userAllocations.length > 0">
-        <h3>Your Cosmic Alignments</h3>
-        <table class="allocations-table">
-          <thead>
-            <tr>
-              <th>Constellation</th>
-              <th>Your Stake</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let allocation of selectedEpoch.userAllocations" [class.winning]="allocation.isWinner">
-              <td>{{ allocation.constellationName }}</td>
-              <td>{{ formatSats(allocation.amount) }} sats</td>
-              <td>
-                <div class="status-indicator-wrapper">
-                  <span class="status-indicator" [class.winning]="allocation.isWinner"></span>
-                  {{ allocation.isWinner ? 'Aligned!' : 'Not Aligned' }}
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
       <!-- No Allocations Message -->
       <div class="cosmic-card no-allocations" *ngIf="selectedEpoch.userAllocations.length === 0">
         <h3>No Cosmic Alignments Found</h3>
@@ -126,6 +100,33 @@
           {{ claimingReward ? 'Claiming...' : 'Claim Cosmic Bounty' }}
         </button>
       </div>
+
+      <!-- User Allocations -->
+      <div class="cosmic-card user-allocations" *ngIf="selectedEpoch.userAllocations.length > 0">
+        <h3>Your Cosmic Alignments</h3>
+        <table class="allocations-table">
+          <thead>
+            <tr>
+              <th>Constellation</th>
+              <th>Your Stake</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let allocation of selectedEpoch.userAllocations" [class.winning]="allocation.isWinner">
+              <td>{{ allocation.constellationName }}</td>
+              <td>{{ formatSats(allocation.amount) }} sats</td>
+              <td>
+                <div class="status-indicator-wrapper">
+                  <span class="status-indicator" [class.winning]="allocation.isWinner"></span>
+                  {{ allocation.isWinner ? 'Aligned!' : 'Not Aligned' }}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
     </div>
   </div>
 </div>
