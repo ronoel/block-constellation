@@ -79,6 +79,18 @@
   color: #ffffff;
   position: relative;
   overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
+  
+  @media (max-width: 480px) {
+    padding: 1.5rem;
+  }
+  max-width: 100%;
+  box-sizing: border-box;
+  
+  @media (max-width: 480px) {
+    padding: 1.5rem;
+  }
   
   &::before {
     content: '';
@@ -117,6 +129,7 @@
     margin: 0;
     background: linear-gradient(90deg, #9cb3fd, #64b5f6);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 }
@@ -267,19 +280,40 @@
     flex-wrap: wrap;
     gap: 1rem;
     margin-top: 1.5rem;
+    width: 100%; /* Ensure buttons don't exceed container width */
+    box-sizing: border-box;
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+    }
   }
   
   .social-button {
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1rem;
     border-radius: 0.5rem;
     cursor: pointer;
     font-weight: 600;
     transition: all 0.2s ease;
     text-decoration: none;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 120px;
+    flex: 1;
+    max-width: 100%; /* Prevent buttons from exceeding width */
+    box-sizing: border-box;
+    
+    .button-icon {
+      font-size: 1.2rem;
+      margin-right: 0.5rem;
+      flex-shrink: 0;
+    }
+    
+    .button-text {
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     
     &.twitter {
       background: linear-gradient(90deg, #1da1f2, #0d95e8);
@@ -287,6 +321,12 @@
       
       &:hover {
         background: linear-gradient(90deg, #0d95e8, #0c85d0);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(29, 161, 242, 0.3);
+      }
+      
+      &:active {
+        transform: translateY(0);
       }
     }
     
@@ -296,6 +336,12 @@
       
       &:hover {
         background: linear-gradient(90deg, #0077b3, #006699);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 136, 204, 0.3);
+      }
+      
+      &:active {
+        transform: translateY(0);
       }
     }
     
@@ -305,6 +351,22 @@
       
       &:hover {
         background: linear-gradient(90deg, #5c73c9, #4960b8);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(114, 137, 218, 0.3);
+      }
+      
+      &:active {
+        transform: translateY(0);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      padding: 0.75rem;
+      width: 100%;
+      justify-content: flex-start;
+      
+      .button-text {
+        white-space: normal;
       }
     }
   }
@@ -329,11 +391,19 @@
     width: 100%;
   }
   
-  .social-buttons {
-    flex-direction: column;
+  .social-section {
+    .social-buttons {
+      margin-bottom: 0.5rem;
+      width: 100%;
+    }
     
     .social-button {
       width: 100%;
+      margin-bottom: 0.5rem;
+      
+      .button-icon {
+        margin-right: 0.75rem;
+      }
     }
   }
   

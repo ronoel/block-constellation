@@ -55,20 +55,22 @@
 
       <!-- Epoch Details -->
       <div class="cosmic-card epoch-details">
-        <div class="cosmic-pool">
-          <div class="pool-icon">🌌</div>
-          <div class="pool-details">
-            <h3>Cosmic Pool</h3>
-            <p class="pool-value">{{ formatBTC(selectedEpoch.totalStakedPool) }} BTC</p>
+        <div class="epoch-details-container">
+          <div class="cosmic-pool">
+            <div class="pool-icon">🌌</div>
+            <div class="pool-details">
+              <h3>Cosmic Pool</h3>
+              <p class="pool-value">{{ formatBTC(selectedEpoch.totalStakedPool) }} BTC</p>
+            </div>
           </div>
-        </div>
 
-        <!-- Winning Constellation Reveal -->
-        <div class="winning-constellation">
-          <h3>Winning Constellation</h3>
-          <div class="constellation-reveal">
-            <div class="constellation-name">{{ selectedEpoch.winningConstellationName }}</div>
-            <div class="constellation-id">#{{ selectedEpoch.winningConstellation }}</div>
+          <!-- Winning Constellation Reveal -->
+          <div class="winning-constellation">
+            <h3>Winning Constellation</h3>
+            <div class="constellation-reveal">
+              <div class="constellation-name">{{ selectedEpoch.winningConstellationName }}</div>
+              <div class="constellation-id">#{{ selectedEpoch.winningConstellation }}</div>
+            </div>
           </div>
         </div>
       </div>

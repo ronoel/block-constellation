@@ -1,12 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { GameHeaderComponent, NavItem } from './game-header/game-header.component';
 import { GameFooterComponent } from './game-footer/game-footer.component';
-import { GameCurrentComponent } from './game-current/game-current.component';
-import { GameLedgerComponent } from './game-ledger/game-ledger.component';
-import { GameReferFriendComponent } from './game-refer-friend/game-refer-friend.component';
 import { WalletService } from '../../libs/wallet.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-game',
@@ -15,18 +13,15 @@ import { WalletService } from '../../libs/wallet.service';
     CommonModule,
     RouterModule,
     GameHeaderComponent,
-    GameFooterComponent,
-    GameCurrentComponent,
-    GameLedgerComponent,
-    GameReferFriendComponent
+    GameFooterComponent
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss'
 })
-export class GameComponent {
+export class GameComponent implements OnInit {
   // Navigation items
   navigationItems: NavItem[] = [
-    { label: 'Star Former', description: '(Stake)', route: '/play', active: true },
+    { label: 'Star Former', description: '(Stake)', route: '/play', active: false },
     { label: 'Star Ledger', description: '(Claim your reward)', route: '/play/ledger', active: false },
     { label: 'Refer Friend', description: '(Earn rewards)', route: '/play/refer', active: false }
   ];
@@ -52,6 +47,36 @@ export class GameComponent {
   // Service injection
   private router = inject(Router);
   public walletService = inject(WalletService);
+  
+  ngOnInit(): void {
+    // Set the initial active menu item based on the current route
+    this.setActiveNavFromUrl(this.router.url);
+    
+    // Subscribe to route changes to update the active menu item
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      this.setActiveNavFromUrl(event.url);
+    });
+  }
+  
+  // Helper method to set active navigation based on URL
+  private setActiveNavFromUrl(url: string): void {
+    // Reset all items to inactive first
+    this.navigationItems.forEach(item => item.active = false);
+    
+    // Set the appropriate item to active based on the URL
+    if (url.includes('/ledger')) {
+      this.navigationItems[1].active = true; // Star Ledger
+      this.activeView = 'ledger';
+    } else if (url.includes('/refer')) {
+      this.navigationItems[2].active = true; // Refer Friend
+      this.activeView = 'refer';
+    } else {
+      this.navigationItems[0].active = true; // Star Former
+      this.activeView = 'current';
+    }
+  }
   
   // Navigation handler method
   handleNavItemClick(navItem: NavItem): void {

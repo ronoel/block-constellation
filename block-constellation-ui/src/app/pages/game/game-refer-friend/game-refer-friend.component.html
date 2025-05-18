@@ -101,13 +101,16 @@
         
         <div class="social-buttons">
           <a class="social-button twitter" [href]="'https://twitter.com/intent/tweet?text=Join me in Block Constellation and explore the cosmic rewards! Use my referral link: ' + referralLink" target="_blank">
-            Twitter
+            <span class="button-icon">𝕏</span>
+            <span class="button-text">Twitter</span>
           </a>
           <a class="social-button telegram" [href]="'https://t.me/share/url?url=' + referralLink + '&text=Join me in Block Constellation and explore the cosmic rewards!'" target="_blank">
-            Telegram
+            <span class="button-icon">✈️</span>
+            <span class="button-text">Telegram</span>
           </a>
           <a class="social-button discord" (click)="copyToClipboard()">
-            Discord
+            <span class="button-icon">👾</span>
+            <span class="button-text">Discord</span>
           </a>
         </div>
       </div>
