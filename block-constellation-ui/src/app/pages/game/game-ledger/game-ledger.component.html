@@ -1,1 +1,131 @@
-<p>game-ledger works!</p>
+<!-- Loading State -->
+<div class="loading-state" *ngIf="loadingLedger">
+  <div class="container">
+    <div class="ledger-skeleton skeleton"></div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="star-ledger" *ngIf="!loadingLedger">
+  <div class="container">
+    <!-- Notification Banner -->
+    <app-transaction-notifications></app-transaction-notifications>
+
+    <!-- Status Message -->
+    <div class="status-message" *ngIf="statusMessage" [ngClass]="statusType">
+      {{ statusMessage }}
+    </div>
+
+    <!-- Wallet Connection Prompt -->
+    <div class="wallet-connection-prompt" *ngIf="!walletConnected">
+      <div class="cosmic-card">
+        <h2>Connect to the Cosmos</h2>
+        <p>Please connect your wallet to view the Star Ledger and claim your Cosmic Bounties</p>
+        <button class="cosmic-button">Connect Wallet</button>
+      </div>
+    </div>
+
+    <!-- Star Ledger Content -->
+    <div class="ledger-content" *ngIf="walletConnected && selectedEpoch">
+      <!-- Navigation -->
+      <div class="epoch-navigator">
+        <button 
+          class="nav-button prev" 
+          [disabled]="selectedEpochId <= 0" 
+          (click)="loadPreviousEpoch()"
+          [class.disabled]="selectedEpochId <= 0">
+          <span class="arrow">←</span> Previous Epoch
+        </button>
+        
+        <div class="epoch-selector">
+          <h2>Epoch #{{ selectedEpoch.id }}</h2>
+          <div class="epoch-status" *ngIf="selectedEpoch.isCurrent">
+            <span class="status-indicator current"></span> Current Epoch
+          </div>
+        </div>
+        
+        <button 
+          class="nav-button next" 
+          [disabled]="selectedEpochId >= currentEpochId - 1" 
+          (click)="loadNextEpoch()"
+          [class.disabled]="selectedEpochId >= currentEpochId - 1">
+          Next Epoch <span class="arrow">→</span>
+        </button>
+      </div>
+
+      <!-- Epoch Details -->
+      <div class="cosmic-card epoch-details">
+        <div class="cosmic-pool">
+          <div class="pool-icon">🌌</div>
+          <div class="pool-details">
+            <h3>Cosmic Pool</h3>
+            <p class="pool-value">{{ formatBTC(selectedEpoch.totalStakedPool) }} BTC</p>
+          </div>
+        </div>
+
+        <!-- Winning Constellation Reveal -->
+        <div class="winning-constellation">
+          <h3>Winning Constellation</h3>
+          <div class="constellation-reveal">
+            <div class="constellation-name">{{ selectedEpoch.winningConstellationName }}</div>
+            <div class="constellation-id">#{{ selectedEpoch.winningConstellation }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Allocations -->
+      <div class="cosmic-card user-allocations" *ngIf="selectedEpoch.userAllocations.length > 0">
+        <h3>Your Cosmic Alignments</h3>
+        <table class="allocations-table">
+          <thead>
+            <tr>
+              <th>Constellation</th>
+              <th>Your Stake</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let allocation of selectedEpoch.userAllocations" [class.winning]="allocation.isWinner">
+              <td>{{ allocation.constellationName }}</td>
+              <td>{{ formatSats(allocation.amount) }} sats</td>
+              <td>
+                <div class="status-indicator-wrapper">
+                  <span class="status-indicator" [class.winning]="allocation.isWinner"></span>
+                  {{ allocation.isWinner ? 'Aligned!' : 'Not Aligned' }}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Allocations Message -->
+      <div class="cosmic-card no-allocations" *ngIf="selectedEpoch.userAllocations.length === 0">
+        <h3>No Cosmic Alignments Found</h3>
+        <p>You didn't stake in this epoch. Align with the cosmos in future epochs to receive rewards!</p>
+      </div>
+
+      <!-- Reward Claim Section -->
+      <div class="cosmic-card reward-claim" *ngIf="selectedEpoch.userWinningAllocation > 0">
+        <div class="reward-status">
+          <div *ngIf="!selectedEpoch.claimed">
+            <h3>Cosmic Bounty Available!</h3>
+            <p>The stars have aligned in your favor! Your stake of {{ formatSats(selectedEpoch.userWinningAllocation) }} sats was aligned with the winning constellation.</p>
+          </div>
+          <div *ngIf="selectedEpoch.claimed">
+            <h3>Cosmic Bounty Claimed</h3>
+            <p>You've already claimed your reward for this epoch. The cosmos will present new opportunities in future epochs!</p>
+          </div>
+        </div>
+
+        <button 
+          class="cosmic-button claim-button" 
+          *ngIf="canClaimReward()"
+          [disabled]="claimingReward"
+          (click)="claimReward()">
+          {{ claimingReward ? 'Claiming...' : 'Claim Cosmic Bounty' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
