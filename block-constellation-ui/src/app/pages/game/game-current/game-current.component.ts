@@ -421,20 +421,17 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
                     this.selectedConstellation.id
                   );
                   
-                  // Show the transaction dialog
-                  this.transactionInfoService.showTransactionDialog(
-                    response.txid,
-                    `Stake on ${this.selectedConstellation.name}`
-                  );
+                  // Note: We're not showing the transaction dialog anymore
+                  // so the user can continue playing while the transaction is processed
                 }
                 
                 // Set success status message
                 const constellationName = this.selectedConstellation?.name || 'unknown';
-                this.statusMessage = `Stake of ${this.formatSats(this.stakeAmount)} sats successfully submitted to the ${constellationName} constellation!`;
+                this.statusMessage = `Stake of ${this.formatSats(this.stakeAmount)} sats successfully submitted to the ${constellationName} constellation! Your transaction is now processing. Check the notifications panel for updates.`;
                 this.statusType = 'success';
                 
-                // Clear message after 5 seconds
-                this.clearStatusMessageAfterDelay();
+                // Clear message after 8 seconds (extended time for the user to read)
+                this.clearStatusMessageAfterDelay(8000);
                 
                 // Refresh user allocation data after a successful stake
                 setTimeout(() => {

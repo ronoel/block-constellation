@@ -4,7 +4,7 @@
 }
 
 // Import the pending transaction styles
-@import './pending-transaction.scss';
+@import 'pending-transaction';
 
 // Using CSS variables directly
 @mixin gradient-glow($color) {
