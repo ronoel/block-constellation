@@ -17,6 +17,10 @@ interface EpochDetails {
   userWinningAllocation: number;
   claimed: boolean;
   isCurrent: boolean;
+  // New properties for reward calculation
+  winningConstellationTotalStake: number;
+  userRewardAmount: number;
+  userAllocationPercentage: number;
 }
 
 interface UserAllocation {
@@ -165,7 +169,33 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
         const winningConstellationNum = typeof winningConstellation === 'bigint' 
           ? Number(winningConstellation) 
           : winningConstellation;
+
+        // Get total staked in the winning constellation
+        const totalWinningConstellationStake = cycleData.constellationAllocation && cycleData.constellationAllocation[winningConstellationNum] 
+          ? (typeof cycleData.constellationAllocation[winningConstellationNum] === 'bigint' 
+            ? Number(cycleData.constellationAllocation[winningConstellationNum]) 
+            : cycleData.constellationAllocation[winningConstellationNum])
+          : 0;
         
+        // Get already claimed allocation amount - property is 'allocation-claimed' in the contract
+        const allocationClaimed = typeof cycleData['allocation-claimed'] === 'bigint' 
+          ? Number(cycleData['allocation-claimed']) 
+          : cycleData['allocation-claimed'] || 0;
+        
+        // Get already claimed prize amount - property is 'prize-claimed' in the contract
+        const prizeClaimed = typeof cycleData['prize-claimed'] === 'bigint' 
+          ? Number(cycleData['prize-claimed']) 
+          : cycleData['prize-claimed'] || 0;
+
+        // Get prize pool in sats
+        const prizeInSats = typeof cycleData.prize === 'bigint'
+          ? Number(cycleData.prize)
+          : cycleData.prize || 0;
+        
+        // Remaining prize and allocation
+        const prizeRemained = prizeInSats - prizeClaimed;
+        const constellationAllocationRemained = totalWinningConstellationStake - allocationClaimed;
+
         if (userAllocations && userAllocations.constellationAllocation) {
           userAllocations.constellationAllocation.forEach((amount, index) => {
             if (amount > 0) {
@@ -186,22 +216,77 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
           });
         }
         
+        // Calculate user reward based on the smart contract logic
+        let userRewardAmount = 0;
+        let userAllocationPercentage = 0;
+        
+        // First, check if we already have this epoch in cache with a reward amount (useful for claimed rewards)
+        const cachedEpoch = this.epochs.find(e => e.id === epochId && e.claimed && e.userRewardAmount > 0);
+        
+        if (cachedEpoch) {
+          // Use the cached values for claimed rewards to maintain the original amount
+          userRewardAmount = cachedEpoch.userRewardAmount;
+          userAllocationPercentage = cachedEpoch.userAllocationPercentage;
+        } else if (userWinningAllocation > 0) {
+          // Even if the reward is claimed, we want to show what it was
+          // Calculate user's percentage of the winning constellation
+          userAllocationPercentage = (userWinningAllocation / totalWinningConstellationStake) * 100;
+          
+          // For claimed rewards where we don't have the original amount,
+          // we need to calculate an estimate based on the user's allocation percentage
+          if (userAllocations.claimed) {
+            // When reward is claimed, we estimate based on total prize and user percentage
+            userRewardAmount = (prizeInSats * userWinningAllocation) / totalWinningConstellationStake;
+          } else if (constellationAllocationRemained > 0) {
+            // For unclaimed rewards, use the original formula
+            userRewardAmount = (prizeRemained * userWinningAllocation) / constellationAllocationRemained;
+            
+            // Safety check to ensure we don't exceed available prize (same as in smart contract)
+            userRewardAmount = userRewardAmount > prizeRemained ? prizeRemained : userRewardAmount;
+          }
+        }
+        
         // Create epoch details object
         const epochDetails: EpochDetails = {
           id: epochId,
-          totalStakedPool: typeof cycleData.prize === 'bigint' 
-            ? Number(cycleData.prize) / 100000000 
-            : cycleData.prize / 100000000, // Convert sats to BTC
+          totalStakedPool: prizeInSats / 100000000, // Convert sats to BTC
           winningConstellation: winningConstellationNum,
           winningConstellationName: this.getConstellationName(winningConstellationNum),
           userAllocations: userAllocs,
           userWinningAllocation: userWinningAllocation,
           claimed: userAllocations.claimed,
-          isCurrent: epochId === this.currentEpochId
+          isCurrent: epochId === this.currentEpochId,
+          // Add new properties
+          winningConstellationTotalStake: totalWinningConstellationStake,
+          userRewardAmount: userRewardAmount,
+          userAllocationPercentage: userAllocationPercentage
         };
         
-        // Add to our epochs cache
-        this.epochs.push(epochDetails);
+        // Add debug information about claim status and reward calculation
+        console.log(`Epoch ${epochId} details:`, {
+          rawClaimedValue: userAllocations.claimed,
+          epochDetailsClaimed: epochDetails.claimed,
+          userWinningAllocation,
+          totalWinningConstellationStake,
+          userRewardAmount,
+          userAllocationPercentage,
+          calculationMethod: userAllocations.claimed ? 'estimated from total prize' : 'calculated from remaining prize'
+        });
+        
+        // Add to our epochs cache - replace existing entry if found
+        const existingIndex = this.epochs.findIndex(e => e.id === epochId);
+        if (existingIndex !== -1) {
+          // If we already have this epoch in cache and it has a claim status and reward amount, 
+          // keep those values to preserve claimed rewards
+          if (this.epochs[existingIndex].claimed && this.epochs[existingIndex].userRewardAmount > 0) {
+            epochDetails.claimed = true;
+            epochDetails.userRewardAmount = this.epochs[existingIndex].userRewardAmount;
+            epochDetails.userAllocationPercentage = this.epochs[existingIndex].userAllocationPercentage;
+          }
+          this.epochs[existingIndex] = epochDetails;
+        } else {
+          this.epochs.push(epochDetails);
+        }
         this.loadingPastEpoch = false;
         
         return epochDetails;
@@ -290,6 +375,9 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    * @returns Formatted BTC amount
    */
   formatBTC(btc: number): string {
+    if (btc === undefined || btc === null || isNaN(btc)) {
+      return '0.00000000';
+    }
     return btc.toFixed(8);
   }
   
@@ -299,7 +387,22 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    * @returns Formatted sats amount
    */
   formatSats(sats: number): string {
+    if (sats === undefined || sats === null || isNaN(sats)) {
+      return '0';
+    }
     return sats.toLocaleString();
+  }
+  
+  /**
+   * Format percentage for display
+   * @param percentage Percentage value
+   * @returns Formatted percentage with 2 decimal places
+   */
+  formatPercentage(percentage: number): string {
+    if (percentage === undefined || percentage === null || isNaN(percentage)) {
+      return '0.00%';
+    }
+    return percentage.toFixed(2) + '%';
   }
   
   /**
@@ -315,6 +418,10 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
     // Make sure the epochId is converted to number if needed
     const epochId = this.selectedEpoch.id;
     
+    // Store the current reward amount before claiming
+    const claimedRewardAmount = this.selectedEpoch.userRewardAmount;
+    const claimedAllocationPercentage = this.selectedEpoch.userAllocationPercentage;
+    
     const subscription = this.blockConstellationContractService.claimReward(epochId)
       .subscribe({
         next: (response) => {
@@ -322,9 +429,12 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
           if (response.txid) {
             this.statusMessage = 'Destiny aligned! Your reward has been sent.';
             this.statusType = 'success';
-            // Mark as claimed in our local state
+            // Mark as claimed in our local state and preserve the reward amount
             if (this.selectedEpoch) {
               this.selectedEpoch.claimed = true;
+              // Preserve the reward amount and allocation percentage after claiming
+              this.selectedEpoch.userRewardAmount = claimedRewardAmount;
+              this.selectedEpoch.userAllocationPercentage = claimedAllocationPercentage;
             }
           } else if (response.error) {
             this.statusMessage = `Failed to claim reward: ${response.error}`;
@@ -348,11 +458,26 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    * @returns True if user can claim reward
    */
   canClaimReward(): boolean {
-    return this.walletConnected && 
+    const canClaim = this.walletConnected && 
            !!this.selectedEpoch && 
            !this.selectedEpoch.claimed && 
            this.selectedEpoch.userWinningAllocation > 0 &&
            !this.selectedEpoch.isCurrent;
+    
+    // Debug claim status
+    if (this.selectedEpoch) {
+      console.log('Can claim check:', {
+        walletConnected: this.walletConnected,
+        selectedEpoch: !!this.selectedEpoch,
+        notClaimed: !this.selectedEpoch.claimed,
+        claimedValue: this.selectedEpoch.claimed,
+        hasWinningAllocation: this.selectedEpoch.userWinningAllocation > 0,
+        notCurrent: !this.selectedEpoch.isCurrent,
+        canClaim: canClaim
+      });
+    }
+    
+    return canClaim;
   }
   
   /**

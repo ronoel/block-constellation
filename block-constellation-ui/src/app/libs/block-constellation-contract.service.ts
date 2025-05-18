@@ -19,8 +19,11 @@ export interface BlockConstellationResponse {
 
 export interface CycleData {
     allocationClaimed: number;
+    'allocation-claimed'?: number;  // Adding hyphenated version of property
     prize: number;
+    'prize-claimed'?: number;       // Adding hyphenated version for prize claimed
     constellationAllocation: number[];
+    'constellation-allocation'?: any; // For the nested structure from contract
 }
 
 export interface AllocationData {
@@ -86,8 +89,11 @@ export class BlockConstellationContractService extends ContractUtil {
                     
                     return {
                         allocationClaimed: cvToValue(data['allocation-claimed']),
+                        'allocation-claimed': cvToValue(data['allocation-claimed']),
                         prize: cvToValue(data['prize']),
-                        constellationAllocation: constellationAllocation
+                        'prize-claimed': cvToValue(data['prize-claimed']),
+                        constellationAllocation: constellationAllocation,
+                        'constellation-allocation': data['constellation-allocation']
                     };
                 }
                 return { allocationClaimed: 0, prize: 0, constellationAllocation: [] };
@@ -120,8 +126,18 @@ export class BlockConstellationContractService extends ContractUtil {
                         });
                     }
                     
+                    // Safely extract the claimed status, handling both direct boolean and object with value property
+                    let claimedStatus = false;
+                    if (data['claimed']) {
+                        if (typeof data['claimed'] === 'boolean') {
+                            claimedStatus = data['claimed'];
+                        } else if (data['claimed'].value !== undefined) {
+                            claimedStatus = data['claimed'].value === true;
+                        }
+                    }
+                    
                     return {
-                        claimed: cvToValue(data['claimed']),
+                        claimed: claimedStatus,
                         constellationAllocation: constellationAllocation
                     };
                 }
@@ -186,6 +202,15 @@ export class BlockConstellationContractService extends ContractUtil {
      * @param cycleId The ID of the cycle to claim reward from
      */
     claimReward(cycleId: number): Observable<BlockConstellationResponse> {
+
+        const ftPostCondition: FungiblePostCondition = {
+            type: 'ft-postcondition',
+            address: this.getContractAddress(),
+            condition: 'gt',
+            amount: 0,
+            asset: this.sbtcTokenService.getAsset()
+        };
+
         return from(new Promise<BlockConstellationResponse>((resolve, reject) => {
             this.callPublicFunction(
                 'claim-reward',
@@ -194,8 +219,8 @@ export class BlockConstellationContractService extends ContractUtil {
                 ],
                 (txid: string) => resolve({ txid }),
                 reject,
-                [],
-                PostConditionMode.Allow
+                [ftPostCondition],
+                PostConditionMode.Deny
             );
         }));
     }

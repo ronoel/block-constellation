@@ -519,6 +519,62 @@ $cosmic-gradient: linear-gradient(135deg, #7f5af0, #4033c0);
       font-size: 1.1rem;
       line-height: 1.6;
     }
+    
+    // New reward details styling
+    .reward-details {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      background: rgba($cosmic-primary, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem auto;
+      max-width: 800px;
+      text-align: left;
+      
+      .reward-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        background: rgba($cosmic-info, 0.1);
+        border-radius: 4px;
+        
+        .info-icon {
+          margin-right: 8px;
+          font-size: 1.2rem;
+        }
+        
+        .info-text {
+          font-size: 0.9rem;
+          opacity: 0.9;
+          line-height: 1.4;
+        }
+      }
+      
+      .reward-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        border-bottom: 1px solid rgba($cosmic-divider, 0.3);
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        .label {
+          font-size: 1rem;
+          opacity: 0.8;
+        }
+        
+        .value {
+          font-weight: 600;
+          font-size: 1.1rem;
+          color: $cosmic-accent;
+        }
+      }
+    }
   }
   
   .claim-button {
@@ -542,6 +598,23 @@ $cosmic-gradient: linear-gradient(135deg, #7f5af0, #4033c0);
       opacity: 0.7;
       cursor: not-allowed;
       animation: none;
+    }
+  }
+  
+  // Claimed message styling
+  .claimed-message {
+    margin-top: 1.5rem;
+    padding: 1rem 2rem;
+    background: rgba($cosmic-success, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid $cosmic-success;
+    text-align: center;
+    
+    p {
+      margin: 0;
+      font-size: 1.1rem;
+      color: $cosmic-success;
+      font-weight: 500;
     }
   }
 }

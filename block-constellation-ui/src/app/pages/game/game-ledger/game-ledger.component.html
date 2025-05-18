@@ -84,6 +84,7 @@
       <!-- Reward Claim Section -->
       <div class="cosmic-card reward-claim" *ngIf="selectedEpoch.userWinningAllocation > 0">
         <div class="reward-status">
+          <!-- Status heading and message -->
           <div *ngIf="!selectedEpoch.claimed">
             <h3>Cosmic Bounty Available!</h3>
             <p>The stars have aligned in your favor! Your stake of {{ formatSats(selectedEpoch.userWinningAllocation) }} sats was aligned with the winning constellation.</p>
@@ -92,15 +93,41 @@
             <h3>Cosmic Bounty Claimed</h3>
             <p>You've already claimed your reward for this epoch. The cosmos will present new opportunities in future epochs!</p>
           </div>
+          
+          <!-- Always show Reward Details when there's a winning allocation -->
+          <div class="reward-details">
+            <div class="reward-info">
+              <i class="info-icon">ℹ️</i>
+              <span class="info-text">Cosmic Bounty is calculated based on your percentage of the total stake in the winning constellation.</span>
+            </div>
+            <div class="reward-item">
+              <span class="label">Your Cosmic Bounty:</span>
+              <span class="value">{{ formatSats(selectedEpoch.userRewardAmount) }} sats</span>
+            </div>
+            <div class="reward-item">
+              <span class="label">Total Staked in {{ selectedEpoch.winningConstellationName }}:</span>
+              <span class="value">{{ formatSats(selectedEpoch.winningConstellationTotalStake) }} sats</span>
+            </div>
+            <div class="reward-item">
+              <span class="label">Your Allocation Percentage:</span>
+              <span class="value">{{ formatPercentage(selectedEpoch.userAllocationPercentage) }}</span>
+            </div>
+          </div>
         </div>
 
+        <!-- Only show claim button for unclaimed rewards -->
         <button 
           class="cosmic-button claim-button" 
-          *ngIf="canClaimReward()"
+          *ngIf="selectedEpoch && selectedEpoch.userWinningAllocation > 0 && !selectedEpoch.claimed && !selectedEpoch.isCurrent && walletConnected"
           [disabled]="claimingReward"
           (click)="claimReward()">
           {{ claimingReward ? 'Claiming...' : 'Claim Cosmic Bounty' }}
         </button>
+        
+        <!-- Show claimed message if already claimed -->
+        <div class="claimed-message" *ngIf="selectedEpoch.userWinningAllocation > 0 && selectedEpoch.claimed">
+          <p>✅ Cosmic Bounty has been successfully claimed</p>
+        </div>
       </div>
 
       <!-- User Allocations -->
