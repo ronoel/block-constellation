@@ -34,13 +34,13 @@
 ;; System constants
 (define-constant START-BLOCK tenure-height)          ;; Contract deployment block
 (define-constant TOTAL-CONSTELLATIONS u24)           ;; Total number of available constellations
+(define-constant BLOCKS-PER-CYCLE u144)              ;; Duration of each cycle (144 bitcoin blocks)
 
 ;; ========================================
 ;; Data Variables
 ;; ========================================
 ;; Admin and configuration variables
 (define-data-var manager principal tx-sender)                 ;; Contract administrator
-(define-data-var blocks-per-cycle uint u144)                  ;; Duration of each cycle (144 bitcoin blocks)
 (define-data-var min-allocation uint u1000)                ;; Minimum allocation amount for participation
 (define-data-var treasury-distribution-period uint u3)        ;; Number of cycles for distributing treasury
 (define-data-var prize-expiration-period uint u5)             ;; Cycles before unclaimed prizes expire and return to treasury
@@ -111,18 +111,6 @@
     (asserts! (is-eq contract-caller (var-get manager)) ERR-PERMISSION-DENIED)
     ;; Update the manager to the new value
     (ok (var-set manager new-manager))
-  )
-)
-
-;; Set the cycle duration - can only be called by the current manager
-(define-public (set-blocks-per-cycle (new-duration uint))
-  (begin
-    ;; Check that the caller is the current manager
-    (asserts! (is-eq contract-caller (var-get manager)) ERR-PERMISSION-DENIED)
-    ;; Validate the new duration (must be greater than 0)
-    (asserts! (> new-duration u0) ERR-INVALID-VALUE)
-    ;; Update the cycle duration to the new value
-    (ok (var-set blocks-per-cycle new-duration))
   )
 )
 
@@ -211,7 +199,11 @@
 )
 
 (define-read-only (get-blocks-per-cycle) 
-    (var-get blocks-per-cycle)
+    BLOCKS-PER-CYCLE
+)
+
+(define-read-only (get-start-block) 
+    START-BLOCK
 )
 
 (define-read-only (get-treasury) 
@@ -243,12 +235,12 @@
 )
 
 (define-read-only (get-current-cycle-id)
-    (/ (- tenure-height START-BLOCK) (var-get blocks-per-cycle))
+    (/ (- tenure-height START-BLOCK) BLOCKS-PER-CYCLE)
 )
 
 ;; Get the block number for a constellation given cycle number
 (define-read-only (get-constellation-block (cycle-id uint)) 
-    (- (+ (* (var-get blocks-per-cycle) (+ cycle-id u1)) START-BLOCK) u1)
+    (- (+ (* BLOCKS-PER-CYCLE (+ cycle-id u1)) START-BLOCK) u1)
 )
 
 (define-read-only (get-constellation (cycle-id uint))
@@ -497,7 +489,7 @@
             (current-cycle-id (get-current-cycle-id))
             (expiration-period (var-get prize-expiration-period))
             (cycles-since-update (if (> update-block u0)
-                                      (/ (- tenure-height update-block) (var-get blocks-per-cycle))
+                                      (/ (- tenure-height update-block) BLOCKS-PER-CYCLE)
                                       u0))
         )
             ;; Check if there's any reward to claim

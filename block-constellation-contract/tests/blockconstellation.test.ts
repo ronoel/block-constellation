@@ -67,26 +67,7 @@ describe("Administrative Functions Tests", () => {
 });
 
 describe("Admin Configuration Tests", () => {
-  it("Manager can set blocks per cycle", () => {
-    // Test initial value
-    const initialDuration = getBlocksPerCycle();
-    expect(initialDuration.result).toBeUint(144);
-
-    // Set new cycle duration as manager
-    const result = setBlocksPerCycle(200, deployer);
-    expect(result.result).toHaveClarityType(ClarityType.ResponseOk);
-
-    // Verify the new value
-    const updatedDuration = getBlocksPerCycle();
-    expect(updatedDuration.result).toBeUint(200);
-  });
-
-  it("Non-manager cannot set blocks per cycle", () => {
-    const result = setBlocksPerCycle(150, address1);
-    expect(result.result).toHaveClarityType(ClarityType.ResponseErr);
-    expect(result.result).toBeErr(ERR_PERMISSION_DENIED);
-  });
-
+  
   it("Manager can set minimum allocation", () => {
     // Test initial value
     const initialAllocation = getMinAllocation();
@@ -529,15 +510,6 @@ function setManager(newManager: string, sender: string) {
     CONTRACT_NAME,
     "set-manager",
     [Cl.principal(newManager)],
-    sender
-  );
-}
-
-function setBlocksPerCycle(newDuration: number, sender: string) {
-  return simnet.callPublicFn(
-    CONTRACT_NAME,
-    "set-blocks-per-cycle",
-    [Cl.uint(newDuration)],
     sender
   );
 }
