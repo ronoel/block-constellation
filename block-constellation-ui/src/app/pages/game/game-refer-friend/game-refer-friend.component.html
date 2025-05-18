@@ -1,0 +1,116 @@
+<!-- Loading State -->
+<div class="loading-state" *ngIf="isLoading">
+  <div class="container">
+    <div class="referral-skeleton skeleton"></div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="referral-program" *ngIf="!isLoading">
+  <div class="container">
+    <!-- Notification Banner -->
+    <app-transaction-notifications></app-transaction-notifications>
+
+    <!-- Status Message -->
+    <div class="status-message" *ngIf="statusMessage" [ngClass]="statusType">
+      {{ statusMessage }}
+    </div>
+
+    <!-- Wallet Connection Prompt -->
+    <div class="wallet-connection-prompt" *ngIf="!walletConnected">
+      <div class="cosmic-card">
+        <h2>Connect to the Cosmos</h2>
+        <p>Please connect your wallet to generate your referral link and start earning rewards</p>
+        <button class="cosmic-button">Connect Wallet</button>
+      </div>
+    </div>
+
+    <!-- Referral Content -->
+    <div class="referral-content" *ngIf="walletConnected">
+      <!-- Intro Section -->
+      <div class="cosmic-card intro-section">
+        <div class="cosmic-header">
+          <div class="header-icon">🌠</div>
+          <h2>Cosmic Referral Program</h2>
+        </div>
+        
+        <p class="intro-text">
+          Share the celestial experience with your friends! When someone allocates tokens through your referral link, 
+          you'll earn 5% of their allocation in cosmic rewards.
+        </p>
+      </div>
+
+      <!-- Referral Link Section -->
+      <div class="cosmic-card referral-link-section">
+        <h3>Your Cosmic Referral Link</h3>
+        <p>Share this unique link with friends to earn referral rewards:</p>
+        
+        <div class="referral-link-box">
+          <input type="text" [value]="referralLink" readonly class="referral-link-input" />
+          
+          <button class="cosmic-button copy-button" (click)="copyToClipboard()">
+            <span *ngIf="!isCopied">Copy Link</span>
+            <span *ngIf="isCopied">Copied! ✓</span>
+          </button>
+        </div>
+        
+        <div class="referral-tips">
+          <h4>How it works:</h4>
+          <ul>
+            <li>Share your referral link with friends</li>
+            <li>When they join and allocate tokens, you earn 5% rewards</li>
+            <li>No limit to how many friends you can refer</li>
+            <li>Rewards are accumulated and can be claimed at any time</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Referral Rewards Section -->
+      <div class="cosmic-card rewards-section">
+        <h3>Your Cosmic Rewards</h3>
+        
+        <div class="rewards-status" *ngIf="!hasReferralReward">
+          <div class="empty-rewards">
+            <div class="empty-icon">🔭</div>
+            <p>No referral rewards to claim yet. Share your link to start earning!</p>
+          </div>
+        </div>
+        
+        <div class="rewards-status" *ngIf="hasReferralReward && referralReward">
+          <div class="reward-available">
+            <div class="reward-icon">💫</div>
+            <div class="reward-details">
+              <h4>Cosmic Rewards Available!</h4>
+              <p class="reward-amount">{{ formatSats(referralReward.amount) }} sats ({{ formatBTC(referralReward.amount) }} BTC)</p>
+            </div>
+          </div>
+          
+          <button 
+            class="cosmic-button claim-button" 
+            [disabled]="isClaimingReward"
+            (click)="claimReferralReward()">
+            {{ isClaimingReward ? 'Claiming...' : 'Claim Cosmic Reward' }}
+          </button>
+        </div>
+      </div>
+      
+      <!-- Social Sharing Section -->
+      <div class="cosmic-card social-section">
+        <h3>Spread Across the Cosmos</h3>
+        <p>Share your referral link on your favorite platforms:</p>
+        
+        <div class="social-buttons">
+          <a class="social-button twitter" [href]="'https://twitter.com/intent/tweet?text=Join me in Block Constellation and explore the cosmic rewards! Use my referral link: ' + referralLink" target="_blank">
+            Twitter
+          </a>
+          <a class="social-button telegram" [href]="'https://t.me/share/url?url=' + referralLink + '&text=Join me in Block Constellation and explore the cosmic rewards!'" target="_blank">
+            Telegram
+          </a>
+          <a class="social-button discord" (click)="copyToClipboard()">
+            Discord
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

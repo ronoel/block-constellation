@@ -5,6 +5,7 @@ import { GameHeaderComponent, NavItem } from './game-header/game-header.componen
 import { GameFooterComponent } from './game-footer/game-footer.component';
 import { GameCurrentComponent } from './game-current/game-current.component';
 import { GameLedgerComponent } from './game-ledger/game-ledger.component';
+import { GameReferFriendComponent } from './game-refer-friend/game-refer-friend.component';
 import { WalletService } from '../../libs/wallet.service';
 
 @Component({
@@ -16,7 +17,8 @@ import { WalletService } from '../../libs/wallet.service';
     GameHeaderComponent,
     GameFooterComponent,
     GameCurrentComponent,
-    GameLedgerComponent
+    GameLedgerComponent,
+    GameReferFriendComponent
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss'
@@ -25,11 +27,12 @@ export class GameComponent {
   // Navigation items
   navigationItems: NavItem[] = [
     { label: 'Star Former', description: '(Stake)', route: '/game', active: true },
-    { label: 'Star Ledger', description: '(Claim your reward)', route: '/ledger', active: false }
+    { label: 'Star Ledger', description: '(Claim your reward)', route: '/ledger', active: false },
+    { label: 'Refer Friend', description: '(Earn rewards)', route: '/refer', active: false }
   ];
   
   // Active view tracking
-  activeView: 'current' | 'ledger' = 'current';
+  activeView: 'current' | 'ledger' | 'refer' = 'current';
   
   // UI states
   showNetworkMismatch = false;
@@ -62,6 +65,8 @@ export class GameComponent {
       this.activeView = 'current';
     } else if (navItem.label === 'Star Ledger') {
       this.activeView = 'ledger';
+    } else if (navItem.label === 'Refer Friend') {
+      this.activeView = 'refer';
     }
   }
   

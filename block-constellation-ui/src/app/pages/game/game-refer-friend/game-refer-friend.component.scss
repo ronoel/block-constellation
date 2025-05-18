@@ -1,0 +1,349 @@
+/* Referral Program Styles */
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.loading-state {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.referral-skeleton {
+  width: 100%;
+  height: 400px;
+  background: linear-gradient(90deg, rgba(31, 41, 55, 0.4) 25%, rgba(42, 56, 75, 0.5) 50%, rgba(31, 41, 55, 0.4) 75%);
+  background-size: 200% 100%;
+  border-radius: 1rem;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.status-message {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  
+  &.success {
+    background-color: rgba(0, 128, 0, 0.1);
+    border: 1px solid rgba(0, 128, 0, 0.3);
+    color: #00c853;
+  }
+  
+  &.error {
+    background-color: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #f44336;
+  }
+  
+  &.info {
+    background-color: rgba(33, 150, 243, 0.1);
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    color: #2196f3;
+  }
+}
+
+.wallet-connection-prompt {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.cosmic-card {
+  background: linear-gradient(135deg, rgba(20, 30, 48, 0.7) 0%, rgba(36, 59, 85, 0.7) 100%);
+  border: 1px solid rgba(78, 115, 223, 0.3);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('/assets/images/stars-bg.png') repeat;
+    opacity: 0.1;
+    z-index: -1;
+  }
+  
+  h2, h3, h4 {
+    margin-top: 0;
+    color: #9cb3fd;
+  }
+  
+  p {
+    color: #d1d8e6;
+    line-height: 1.6;
+  }
+}
+
+.cosmic-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  
+  .header-icon {
+    font-size: 2rem;
+    margin-right: 1rem;
+  }
+  
+  h2 {
+    margin: 0;
+    background: linear-gradient(90deg, #9cb3fd, #64b5f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.referral-content {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.intro-text {
+  font-size: 1.1rem;
+}
+
+.referral-link-section {
+  margin-top: 1rem;
+}
+
+.referral-link-box {
+  display: flex;
+  margin: 1.5rem 0;
+}
+
+.referral-link-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: rgba(20, 30, 48, 0.5);
+  border: 1px solid rgba(78, 115, 223, 0.5);
+  border-radius: 0.5rem 0 0 0.5rem;
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.cosmic-button {
+  background: linear-gradient(90deg, #4e73df, #224abe);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    background: linear-gradient(90deg, #5a7de0, #2a57d0);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(78, 115, 223, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(78, 115, 223, 0.4);
+  }
+  
+  &:disabled {
+    background: #4a5568;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+.copy-button {
+  border-radius: 0 0.5rem 0.5rem 0;
+  min-width: 120px;
+}
+
+.referral-tips {
+  margin-top: 1.5rem;
+  
+  ul {
+    padding-left: 1.5rem;
+    
+    li {
+      margin-bottom: 0.5rem;
+      color: #d1d8e6;
+    }
+  }
+}
+
+.rewards-section {
+  .empty-rewards {
+    text-align: center;
+    padding: 2rem;
+    
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.7;
+    }
+  }
+  
+  .reward-available {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    
+    .reward-icon {
+      font-size: 2.5rem;
+      margin-right: 1.5rem;
+    }
+    
+    .reward-details {
+      flex: 1;
+      
+      h4 {
+        margin: 0 0 0.5rem 0;
+        color: #4e73df;
+      }
+      
+      .reward-amount {
+        font-size: 1.25rem;
+        color: #64b5f6;
+        font-weight: 600;
+      }
+    }
+  }
+  
+  .claim-button {
+    width: 100%;
+    padding: 1rem;
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    
+    &:disabled {
+      background: #4a5568;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.social-section {
+  .social-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .social-button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    
+    &.twitter {
+      background: linear-gradient(90deg, #1da1f2, #0d95e8);
+      color: white;
+      
+      &:hover {
+        background: linear-gradient(90deg, #0d95e8, #0c85d0);
+      }
+    }
+    
+    &.telegram {
+      background: linear-gradient(90deg, #0088cc, #0077b3);
+      color: white;
+      
+      &:hover {
+        background: linear-gradient(90deg, #0077b3, #006699);
+      }
+    }
+    
+    &.discord {
+      background: linear-gradient(90deg, #7289da, #5c73c9);
+      color: white;
+      
+      &:hover {
+        background: linear-gradient(90deg, #5c73c9, #4960b8);
+      }
+    }
+  }
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .referral-link-box {
+    flex-direction: column;
+  }
+  
+  .referral-link-input {
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+  
+  .copy-button {
+    border-radius: 0 0 0.5rem 0.5rem;
+    width: 100%;
+  }
+  
+  .social-buttons {
+    flex-direction: column;
+    
+    .social-button {
+      width: 100%;
+    }
+  }
+  
+  .reward-available {
+    flex-direction: column;
+    text-align: center;
+    
+    .reward-icon {
+      margin-right: 0;
+      margin-bottom: 1rem;
+    }
+  }
+}
