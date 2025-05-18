@@ -5,7 +5,7 @@ import { GameHeaderComponent, NavItem } from './game-header/game-header.componen
 import { GameFooterComponent } from './game-footer/game-footer.component';
 import { GameCurrentComponent } from './game-current/game-current.component';
 import { GameLedgerComponent } from './game-ledger/game-ledger.component';
-import { WalletService } from '../../libs/services/wallet.service';
+import { WalletService } from '../../libs/wallet.service';
 
 @Component({
   selector: 'app-game',

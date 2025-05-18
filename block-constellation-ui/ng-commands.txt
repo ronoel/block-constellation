@@ -7,7 +7,8 @@ ng generate component /pages/game/game-current --skip-tests
 ng generate component /pages/game/game-ledger --skip-tests
 
 
-ng generate service shared/services/contract
+ng generate service shared/services/allocate-status
+
 ng generate service shared/services/fbtc-token
 ng generate service shared/services/stx-market
 ng generate service shared/services/transaction-info

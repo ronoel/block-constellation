@@ -1,7 +1,7 @@
 import { Component, Output, EventEmitter, Input, OnInit, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { WalletService } from '../../../libs/services/wallet.service';
+import { WalletService } from '../../../libs/wallet.service';
 
 export interface NavItem {
   label: string;

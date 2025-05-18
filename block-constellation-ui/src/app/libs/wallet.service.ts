@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { AppConfig, UserData, UserSession } from '@stacks/connect';
 import { showConnect } from '@stacks/connect';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 
 const appConfig = new AppConfig(['store_write', 'publish_data']);

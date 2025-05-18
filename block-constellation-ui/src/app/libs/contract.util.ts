@@ -1,6 +1,6 @@
 import { Observable, throwError } from 'rxjs';
 import { TransactionInfoService } from './components/transaction-info/transaction-info.service';
-import { WalletService } from './services/wallet.service';
+import { WalletService } from './wallet.service';
 import {
   AnchorMode, PostConditionMode,
   fetchCallReadOnlyFunction,

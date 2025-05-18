@@ -1,9 +1,12 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { WalletService } from '../../../libs/services/wallet.service';
-import { BlockConstellationContractService } from '../../../libs/services/block-constellation-contract.service';
-import { sBTCTokenService } from '../../../libs/services/sbtc-token.service';
+import { WalletService } from '../../../libs/wallet.service';
+import { BlockConstellationContractService } from '../../../libs/block-constellation-contract.service';
+import { sBTCTokenService } from '../../../libs/sbtc-token.service';
+import { AllocateStatusService, AllocationTransaction } from '../../../shared/services/allocate-status.service';
+import { TransactionNotificationsComponent } from '../../../shared/components/transaction-notifications/transaction-notifications.component';
+import { TransactionInfoService } from '../../../libs/components/transaction-info/transaction-info.service';
 import { Subscription } from 'rxjs';
 
 // Interfaces
@@ -27,7 +30,8 @@ interface UserAllocation {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    TransactionNotificationsComponent
   ],
   templateUrl: './game-current.component.html',
   styleUrl: './game-current.component.scss'
@@ -94,6 +98,8 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   public walletService = inject(WalletService);
   public blockConstellationContractService = inject(BlockConstellationContractService);
   public sbtcTokenService = inject(sBTCTokenService);
+  public allocateStatusService = inject(AllocateStatusService);
+  public transactionInfoService = inject(TransactionInfoService);
   
   // Subscriptions
   private subscriptions: Subscription[] = [];
@@ -407,8 +413,24 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
               next: (response) => {
                 console.log(`Staking transaction submitted: ${response.txid}`);
                 
+                // If we have a transaction ID, track it in the AllocateStatusService
+                if (response.txid && this.selectedConstellation) {
+                  this.allocateStatusService.addAllocationTransaction(
+                    response.txid,
+                    this.stakeAmount,
+                    this.selectedConstellation.id
+                  );
+                  
+                  // Show the transaction dialog
+                  this.transactionInfoService.showTransactionDialog(
+                    response.txid,
+                    `Stake on ${this.selectedConstellation.name}`
+                  );
+                }
+                
                 // Set success status message
-                this.statusMessage = `Stake of ${this.formatSats(this.stakeAmount)} sats successfully submitted to the ${this.selectedConstellation?.name} constellation!`;
+                const constellationName = this.selectedConstellation?.name || 'unknown';
+                this.statusMessage = `Stake of ${this.formatSats(this.stakeAmount)} sats successfully submitted to the ${constellationName} constellation!`;
                 this.statusType = 'success';
                 
                 // Clear message after 5 seconds
@@ -493,5 +515,23 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
 
   formatBTC(btc: number): string {
     return btc.toFixed(8);
+  }
+  
+  /**
+   * Get all pending allocation transactions
+   * @returns Array of pending allocation transactions
+   */
+  getPendingAllocations(): AllocationTransaction[] {
+    return this.allocateStatusService.getPendingTransactions();
+  }
+  
+  /**
+   * Check if a constellation has a pending transaction
+   * @param constellationId The constellation ID to check
+   * @returns True if the constellation has a pending transaction
+   */
+  hasPendingTransaction(constellationId: number): boolean {
+    const pendingTransactions = this.allocateStatusService.getPendingTransactions();
+    return pendingTransactions.some(tx => tx.constellation === constellationId);
   }
 }

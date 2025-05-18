@@ -1,15 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { from, Observable, map } from 'rxjs';
-import { TransactionInfoService } from '../components/transaction-info/transaction-info.service';
+import { TransactionInfoService } from './components/transaction-info/transaction-info.service';
 import { WalletService } from './wallet.service';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../environments/environment';
 import {
     Cl,
     PostConditionMode,
     FungiblePostCondition,
     cvToValue,
 } from '@stacks/transactions';
-import { ContractUtil } from '../contract.util';
+import { ContractUtil } from './contract.util';
 import { sBTCTokenService } from './sbtc-token.service';
 
 export interface BlockConstellationResponse {

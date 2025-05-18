@@ -10,6 +10,9 @@
 
 <!-- Actual Content (when loaded) -->
 <ng-container *ngIf="!loadingPage">
+  <!-- Transaction Notifications -->
+  <app-transaction-notifications></app-transaction-notifications>
+  
   <!-- Epoch Strip -->
   <div class="epoch-strip">
     <div class="container">
@@ -88,6 +91,7 @@
         <div class="constellation-card" 
              *ngFor="let constellation of constellations" 
              [class.has-stake]="constellation.yourStake > 0"
+             [class.has-pending]="hasPendingTransaction(constellation.id)"
              (click)="walletConnected && selectConstellation(constellation)">
           <div class="card-content">
             <h3 class="constellation-name">{{ constellation.name }}</h3>
@@ -104,6 +108,10 @@
               
               <div class="your-share" *ngIf="constellation.yourStake > 0">
                 Your share: {{ (constellation.yourShare * 100).toFixed(2) }}%
+              </div>
+              
+              <div class="pending-indicator" *ngIf="hasPendingTransaction(constellation.id)">
+                <span class="status-indicator pending"></span> Transaction Pending
               </div>
               
               <button class="btn-stake" *ngIf="walletConnected">

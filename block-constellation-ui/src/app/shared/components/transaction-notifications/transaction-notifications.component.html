@@ -1,0 +1,44 @@
+<div class="notification-panel" [class.expanded]="expanded" *ngIf="notificationCount > 0">
+  <div class="notification-header" (click)="toggleExpanded()">
+    <div class="notification-title">
+      <mat-icon>notifications</mat-icon>
+      <span>Transaction Updates</span>
+      <div class="badge">{{ notificationCount }}</div>
+    </div>
+    <button class="toggle-button">
+      <mat-icon>{{ expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+    </button>
+  </div>
+  
+  <div class="notification-body" *ngIf="expanded || notificationCount > 0">
+    <div class="notification-list">
+      <div 
+        class="notification-item fade-slide-in" 
+        *ngFor="let notification of notifications" 
+        [ngClass]="getStatusClass(notification.newStatus)"
+      >
+        <div class="notification-icon">
+          <mat-icon>{{ getStatusIcon(notification.newStatus) }}</mat-icon>
+        </div>
+        <div class="notification-content">
+          <div class="notification-title">
+            {{ getConstellationName(notification.constellation) }} Stake - {{ formatStatus(notification.newStatus) }}
+          </div>
+          <div class="notification-details">
+            <span class="amount">{{ formatSats(notification.amount) }} sats</span>
+            <span class="time">{{ getRelativeTime(notification.timestamp) }}</span>
+          </div>
+        </div>
+        <button class="dismiss-button" (click)="dismissNotification($event, notification.txid)">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+    
+    <div class="notification-actions" *ngIf="expanded && notificationCount > 0">
+      <button class="clear-all-button" (click)="clearAllNotifications()">
+        Clear All
+      </button>
+    </div>
+  </div>
+</div>

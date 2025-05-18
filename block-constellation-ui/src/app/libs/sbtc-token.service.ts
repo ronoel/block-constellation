@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { catchError, from, map, Observable } from 'rxjs';
-import { TransactionInfoService } from '../components/transaction-info/transaction-info.service';
+import { TransactionInfoService } from './components/transaction-info/transaction-info.service';
 import { WalletService } from './wallet.service';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../environments/environment';
 import {
   AssetString,
   Cl,
@@ -10,8 +10,8 @@ import {
   FungiblePostCondition,
   PostConditionMode,
 } from '@stacks/transactions';
-import { ClarityUtil } from '../clarity.util';
-import { ContractUtil } from '../contract.util';
+import { ClarityUtil } from './clarity.util';
+import { ContractUtil } from './contract.util';
 
 @Injectable({
   providedIn: 'root'

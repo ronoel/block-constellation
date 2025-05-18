@@ -3,6 +3,9 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+// Import the pending transaction styles
+@import './pending-transaction.scss';
+
 // Using CSS variables directly
 @mixin gradient-glow($color) {
   box-shadow: 0 0 15px rgba($color, 0.5);
