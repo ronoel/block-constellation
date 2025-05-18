@@ -10,4 +10,9 @@ export const routes: Routes = [
         path: 'play',
         loadChildren: () => import('./pages/game/game-routing.module').then(m => m.GameRoutingModule)
     },
+    {
+        path: 'game',
+        redirectTo: 'play',
+        pathMatch: 'full'
+    },
 ];
