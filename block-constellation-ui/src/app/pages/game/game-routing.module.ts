@@ -16,6 +16,10 @@ const routes: Routes = [
         loadComponent: () => import('./game-ledger/game-ledger.component').then(c => c.GameLedgerComponent)
       },
       {
+        path: 'ledger/:id',
+        loadComponent: () => import('./game-ledger/game-ledger.component').then(c => c.GameLedgerComponent)
+      },
+      {
         path: 'refer',
         loadComponent: () => import('./game-refer-friend/game-refer-friend.component').then(c => c.GameReferFriendComponent)
       },

@@ -18,7 +18,7 @@ plan:
         - contract-publish:
             contract-name: blockconstellation
             expected-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
-            cost: 280970
+            cost: 291550
             path: contracts/blockconstellation.clar
             anchor-block-only: true
             clarity-version: 3

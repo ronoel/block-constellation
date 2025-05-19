@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/wallet.service';
 import { BlockConstellationContractService } from '../../../libs/block-constellation-contract.service';
 import { AllocateStatusService } from '../../../shared/services/allocate-status.service';
-import { Subscription, forkJoin, of, switchMap, catchError, map, Observable } from 'rxjs';
+import { Subscription, forkJoin, of, switchMap, catchError, map, Observable, finalize, BehaviorSubject } from 'rxjs';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 // Interfaces for data models
 interface EpochDetails {
@@ -29,38 +30,65 @@ interface UserAllocation {
   isWinner: boolean;
 }
 
+interface StatusMessage {
+  text: string;
+  type: 'success' | 'error' | 'info' | 'warning' | '';
+}
+
 @Component({
   selector: 'app-game-ledger',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    RouterModule
   ],
   templateUrl: './game-ledger.component.html',
   styleUrl: './game-ledger.component.scss'
 })
 export class GameLedgerComponent implements OnInit, OnDestroy {
   // Service injections
-  public walletService = inject(WalletService);
-  public blockConstellationContractService = inject(BlockConstellationContractService);
-  public allocateStatusService = inject(AllocateStatusService);
+  private walletService = inject(WalletService);
+  private blockConstellationContractService = inject(BlockConstellationContractService);
+  private allocateStatusService = inject(AllocateStatusService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   
-  // Component state
+  // Component state with BehaviorSubjects for better reactivity
+  private loadingSubject = new BehaviorSubject<boolean>(true);
+  loading$ = this.loadingSubject.asObservable();
+  
+  private statusSubject = new BehaviorSubject<StatusMessage>({ text: '', type: '' });
+  status$ = this.statusSubject.asObservable();
+  
+  private claimingSubject = new BehaviorSubject<boolean>(false);
+  claiming$ = this.claimingSubject.asObservable();
+  
+  // Component state - simple variables
   walletConnected = false;
   loadingLedger = true;
   loadingPastEpoch = false;
-  statusMessage = '';
-  statusType = ''; // 'success', 'error', 'info'
-  claimingReward = false;
+  
+  get statusMessage(): string {
+    return this.statusSubject.value.text;
+  }
+  
+  get statusType(): string {
+    return this.statusSubject.value.type;
+  }
+  
+  get claimingReward(): boolean {
+    return this.claimingSubject.value;
+  }
   
   // Data for display
   currentEpochId = 0;
   selectedEpochId = 0;
-  epochs: EpochDetails[] = [];
+  epochs: Map<number, EpochDetails> = new Map();
   selectedEpoch: EpochDetails | null = null;
   
   // Constellations map
-  constellationsMap: Map<number, string> = new Map([
+  readonly constellationsMap: ReadonlyMap<number, string> = new Map([
     [0, 'Aries'], [1, 'Taurus'], [2, 'Gemini'], [3, 'Cancer'], 
     [4, 'Leo'], [5, 'Virgo'], [6, 'Libra'], [7, 'Scorpio'],
     [8, 'Sagittarius'], [9, 'Capricorn'], [10, 'Aquarius'], [11, 'Pisces'], 
@@ -70,73 +98,75 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   ]);
   
   // Subscriptions
-  private subscriptions: Subscription[] = [];
+  private subscriptions = new Subscription();
   
   ngOnInit(): void {
     // Check if wallet is connected
     this.walletConnected = this.walletService.isLoggedIn();
     
-    // Get current epoch ID
-    if (this.walletConnected) {
-      this.loadCurrentEpoch();
-    } else {
-      this.loadingLedger = false;
-      this.statusMessage = 'Please connect your wallet to view the Star Ledger';
-      this.statusType = 'info';
-    }
-  }
-  
-  /**
-   * Load the current epoch data to determine which past epoch to display
-   */
-  loadCurrentEpoch(): void {
-    this.loadingLedger = true;
-    
-    const subscription = this.blockConstellationContractService.getCurrentCycleId()
-      .pipe(
-        switchMap((currentEpochId: number | bigint) => {
-          console.log('Current Epoch ID:', currentEpochId);
-          // Convert BigInt to number if needed and ensure it's a valid number
-          this.currentEpochId = typeof currentEpochId === 'bigint' 
-            ? this.safeParseNumber(Number(currentEpochId)) 
-            : this.safeParseNumber(currentEpochId);
+    // Subscribe to route params to get the epoch ID
+    this.subscriptions.add(
+      this.route.paramMap.pipe(
+        switchMap(params => {
+          const epochIdParam = params.get('id');
           
-          // No previous epochs if current is 0
-          if (this.currentEpochId <= 0) {
-            this.statusMessage = 'No previous epochs available yet';
-            this.statusType = 'info';
-            this.loadingLedger = false;
-            return of(null);
-          }
-          
-          // Load the previous completed epoch (current - 1)
-          const completedEpochId = Math.max(0, this.currentEpochId - 1);
-          return this.loadEpochDetails(completedEpochId);
+          // Always get current epoch ID, regardless of wallet connection
+          return this.blockConstellationContractService.getCurrentCycleId().pipe(
+            map(currentEpochId => {
+              this.currentEpochId = this.safeParseNumber(
+                typeof currentEpochId === 'bigint' ? Number(currentEpochId) : currentEpochId
+              );
+              return { currentEpochId: this.currentEpochId, requestedEpochId: epochIdParam };
+            }),
+            catchError(error => {
+              console.error('Error getting current cycle ID:', error);
+              this.updateLoadingState(false);
+              this.updateStatus('Failed to load Star Ledger data', 'error');
+              return of({ currentEpochId: 0, requestedEpochId: null });
+            })
+          );
         }),
-        catchError(error => {
-          console.error('Error loading current epoch:', error);
-          this.loadingLedger = false;
-          this.statusMessage = 'Failed to load Star Ledger data';
-          this.statusType = 'error';
-          return of(null);
+        switchMap(({ currentEpochId, requestedEpochId }) => {
+          if (requestedEpochId) {
+            // If we have an epoch ID in the URL, load that specific epoch
+            const requestedId = parseInt(requestedEpochId, 10);
+            
+            // Validate the requested epoch ID
+            if (!isNaN(requestedId) && requestedId >= 0 && requestedId < currentEpochId) {
+              return this.loadEpochDetails(requestedId);
+            } else {
+              // If invalid epoch ID, redirect to the most recent completed epoch
+              const validEpochId = Math.max(0, currentEpochId - 1);
+              this.router.navigate(['/play/ledger', validEpochId]);
+              return of(null);
+            }
+          } else {
+            // No epoch ID in URL, load most recent completed epoch
+            if (currentEpochId <= 0) {
+              this.updateStatus('No previous epochs available yet', 'info');
+              this.updateLoadingState(false);
+              return of(null);
+            }
+            
+            // Load the previous completed epoch (current - 1)
+            const completedEpochId = Math.max(0, currentEpochId - 1);
+            return this.loadEpochDetails(completedEpochId);
+          }
         })
-      )
-      .subscribe({
+      ).subscribe({
         next: (epoch: EpochDetails | null) => {
           if (epoch) {
             this.selectEpoch(epoch);
           }
-          this.loadingLedger = false;
+          this.updateLoadingState(false);
         },
         error: (error) => {
-          console.error('Error in loadCurrentEpoch flow:', error);
-          this.loadingLedger = false;
-          this.statusMessage = 'Failed to load Star Ledger data';
-          this.statusType = 'error';
+          console.error('Error in route subscription:', error);
+          this.updateLoadingState(false);
+          this.updateStatus('Failed to load Star Ledger data', 'error');
         }
-      });
-    
-    this.subscriptions.push(subscription);
+      })
+    );
   }
   
   /**
@@ -152,202 +182,170 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
     this.loadingPastEpoch = true;
     
     // Check if we already have this epoch in our cache
-    const cachedEpoch = this.epochs.find(e => e.id === epochId);
+    const cachedEpoch = this.epochs.get(epochId);
     if (cachedEpoch) {
       this.loadingPastEpoch = false;
       return of(cachedEpoch);
     }
     
     // Use appropriate method based on wallet connection status
-    let cycleDataObservable: Observable<any>;
-    
-    if (this.walletConnected) {
-      // Use getCycleUserStatus when wallet is connected to get user-specific data
-      cycleDataObservable = this.blockConstellationContractService.getCycleUserStatus(
-        epochId,
-        this.walletService.getSTXAddress()
-      );
-    } else {
-      // Use getCycleStatus when wallet is not connected to get public data
-      cycleDataObservable = this.blockConstellationContractService.getCycleStatus(epochId);
-    }
+    const cycleDataObservable: Observable<any> = this.walletConnected
+      ? this.blockConstellationContractService.getCycleUserStatus(
+          epochId,
+          this.walletService.getSTXAddress()
+        )
+      : this.blockConstellationContractService.getCycleStatus(epochId);
     
     // Process the cycle data
     return cycleDataObservable.pipe(
-      map((cycleData: any) => {
-        console.log(`Epoch ${epochId} data:`, cycleData);
-        
-        // Process user allocations
-        const userAllocs: UserAllocation[] = [];
-        let userWinningAllocation = 0;
-        
-        // Get winning constellation from cycle data - ensure it's a valid number
-        const winningConstellationNum = this.safeParseNumber(cycleData.cycleWinningConstellation);
-
-        // Safely get array data with null checks
-        const constellationAllocations = Array.isArray(cycleData.cycleConstellationAllocation) 
-          ? cycleData.cycleConstellationAllocation 
-          : [];
-        
-        // Get total staked in the winning constellation from the cycleConstellationAllocation array
-        const totalWinningConstellationStake = 
-          constellationAllocations[winningConstellationNum] 
-            ? this.safeParseNumber(constellationAllocations[winningConstellationNum]) 
-            : 0;
-        
-        // Get prize information with safe number conversion
-        const prizeInSats = this.safeParseNumber(cycleData.cyclePrize);
-        const prizeClaimed = this.safeParseNumber(cycleData.cyclePrizeClaimed);
-        const allocationClaimed = this.safeParseNumber(cycleData.cycleAllocationClaimed);
-        
-        // Remaining prize and allocation
-        const prizeRemained = Math.max(0, prizeInSats - prizeClaimed);
-        const constellationAllocationRemained = Math.max(0, totalWinningConstellationStake - allocationClaimed);
-
-        // Process user allocations if available (when wallet is connected)
-        if (this.walletConnected && Array.isArray(cycleData.userConstellationAllocation)) {
-          cycleData.userConstellationAllocation.forEach((amount: number, index: number) => {
-            // Convert to number and check if greater than zero
-            const numAmount = this.safeParseNumber(amount);
-            if (numAmount > 0) {
-              const isWinner = index === winningConstellationNum;
-              userAllocs.push({
-                constellation: index,
-                constellationName: this.getConstellationName(index),
-                amount: numAmount,
-                isWinner: isWinner
-              });
-              
-              if (isWinner) {
-                userWinningAllocation = numAmount;
-              }
-            }
-          });
-        }
-        
-        // Calculate user reward based on the smart contract logic
-        let userRewardAmount = 0;
-        let userAllocationPercentage = 0;
-        
-        // First, check if we already have this epoch in cache with a reward amount (useful for claimed rewards)
-        const cachedEpoch = this.epochs.find(e => e.id === epochId && e.claimed && e.userRewardAmount > 0);
-        
-        if (cachedEpoch) {
-          // Use the cached values for claimed rewards to maintain the original amount
-          userRewardAmount = cachedEpoch.userRewardAmount;
-          userAllocationPercentage = cachedEpoch.userAllocationPercentage;
-        } else if (userWinningAllocation > 0) {
-          // Even if the reward is claimed, we want to show what it was
-          // Calculate user's percentage of the winning constellation
-          userAllocationPercentage = totalWinningConstellationStake > 0 ? 
-            (userWinningAllocation / totalWinningConstellationStake) * 100 : 0;
-          
-          // For claimed rewards where we don't have the original amount,
-          // we need to calculate an estimate based on the user's allocation percentage
-          const userClaimedStatus = cycleData.userClaimed === true;
-          
-          if (userClaimedStatus) {
-            // When reward is claimed, we estimate based on total prize and user percentage
-            userRewardAmount = (prizeInSats * userWinningAllocation) / totalWinningConstellationStake;
-          } else if (constellationAllocationRemained > 0) {
-            // For unclaimed rewards, use the original formula
-            userRewardAmount = (prizeRemained * userWinningAllocation) / constellationAllocationRemained;
-            
-            // Safety check to ensure we don't exceed available prize (same as in smart contract)
-            userRewardAmount = userRewardAmount > prizeRemained ? prizeRemained : userRewardAmount;
-          }
-          
-          // Ensure we have a valid number
-          if (isNaN(userRewardAmount)) {
-            userRewardAmount = 0;
-          }
-        }
-        
-        // Create epoch details object with safe number handling
-        const epochDetails: EpochDetails = {
-          id: epochId,
-          totalStakedPool: prizeInSats > 0 ? prizeInSats / 100000000 : 0, // Convert sats to BTC safely
-          winningConstellation: winningConstellationNum,
-          winningConstellationName: this.getConstellationName(winningConstellationNum),
-          userAllocations: userAllocs,
-          userWinningAllocation: userWinningAllocation,
-          claimed: cycleData.userClaimed === true,
-          isCurrent: epochId === this.currentEpochId,
-          // Add new properties with safe handling
-          winningConstellationTotalStake: totalWinningConstellationStake,
-          userRewardAmount: userRewardAmount,
-          userAllocationPercentage: isNaN(userAllocationPercentage) ? 0 : userAllocationPercentage
-        };
-        
-        // Add debug information about claim status and reward calculation
-        console.log(`Epoch ${epochId} details:`, {
-          rawClaimedValue: cycleData.userClaimed,
-          epochDetailsClaimed: epochDetails.claimed,
-          userWinningAllocation,
-          totalWinningConstellationStake,
-          userRewardAmount,
-          userAllocationPercentage,
-          calculationMethod: cycleData.userClaimed ? 'estimated from total prize' : 'calculated from remaining prize'
-        });
-        
-        // Add to our epochs cache - replace existing entry if found
-        const existingIndex = this.epochs.findIndex(e => e.id === epochId);
-        if (existingIndex !== -1) {
-          // If we already have this epoch in cache and it has a claim status and reward amount, 
-          // keep those values to preserve claimed rewards
-          if (this.epochs[existingIndex].claimed && this.epochs[existingIndex].userRewardAmount > 0) {
-            epochDetails.claimed = true;
-            epochDetails.userRewardAmount = this.epochs[existingIndex].userRewardAmount;
-            epochDetails.userAllocationPercentage = this.epochs[existingIndex].userAllocationPercentage;
-          }
-          this.epochs[existingIndex] = epochDetails;
-        } else {
-          this.epochs.push(epochDetails);
-        }
-        this.loadingPastEpoch = false;
-        
-        return epochDetails;
-      }),
+      map(cycleData => this.processEpochData(epochId, cycleData)),
       catchError(error => {
         console.error(`Error loading epoch ${epochId}:`, error);
         this.loadingPastEpoch = false;
-        this.statusMessage = `Failed to load data for Epoch ${epochId}`;
-        this.statusType = 'error';
+        this.updateStatus(`Failed to load data for Epoch ${epochId}`, 'error');
         return of(null);
-      })
+      }),
+      finalize(() => this.loadingPastEpoch = false)
     );
   }
   
   /**
-   * Load a specific past epoch by ID
-   * @param epochId The epoch ID to load
+   * Process epoch data from the blockchain
+   * @param epochId - The epoch ID
+   * @param cycleData - Raw data from the blockchain
+   * @returns Processed EpochDetails object
    */
-  loadPastEpoch(epochId: number): void {
-    if (epochId < 0 || epochId >= this.currentEpochId) {
-      this.statusMessage = 'Invalid epoch selected';
-      this.statusType = 'error';
-      return;
-    }
-
-    this.loadingPastEpoch = true;
+  private processEpochData(epochId: number, cycleData: any): EpochDetails {
+    console.log(`Epoch ${epochId} data:`, cycleData);
     
-    const subscription = this.loadEpochDetails(epochId)
-      .subscribe({
-        next: (epoch: EpochDetails | null) => {
-          if (epoch) {
-            this.selectEpoch(epoch);
+    // Process user allocations
+    const userAllocs: UserAllocation[] = [];
+    let userWinningAllocation = 0;
+    
+    // Get winning constellation from cycle data - ensure it's a valid number
+    const winningConstellationNum = this.safeParseNumber(cycleData.cycleWinningConstellation);
+
+    // Safely get array data with null checks
+    const constellationAllocations = Array.isArray(cycleData.cycleConstellationAllocation) 
+      ? cycleData.cycleConstellationAllocation 
+      : [];
+    
+    // Get total staked in the winning constellation from the cycleConstellationAllocation array
+    const totalWinningConstellationStake = 
+      constellationAllocations[winningConstellationNum] 
+        ? this.safeParseNumber(constellationAllocations[winningConstellationNum]) 
+        : 0;
+    
+    // Get prize information with safe number conversion
+    const prizeInSats = this.safeParseNumber(cycleData.cyclePrize);
+    const prizeClaimed = this.safeParseNumber(cycleData.cyclePrizeClaimed);
+    const allocationClaimed = this.safeParseNumber(cycleData.cycleAllocationClaimed);
+    
+    // Remaining prize and allocation
+    const prizeRemained = Math.max(0, prizeInSats - prizeClaimed);
+    const constellationAllocationRemained = Math.max(0, totalWinningConstellationStake - allocationClaimed);
+
+    // Process user allocations if available (when wallet is connected)
+    if (this.walletConnected && Array.isArray(cycleData.userConstellationAllocation)) {
+      cycleData.userConstellationAllocation.forEach((amount: number, index: number) => {
+        // Convert to number and check if greater than zero
+        const numAmount = this.safeParseNumber(amount);
+        if (numAmount > 0) {
+          const isWinner = index === winningConstellationNum;
+          userAllocs.push({
+            constellation: index,
+            constellationName: this.getConstellationName(index),
+            amount: numAmount,
+            isWinner: isWinner
+          });
+          
+          if (isWinner) {
+            userWinningAllocation = numAmount;
           }
-          this.loadingPastEpoch = false;
-        },
-        error: (error) => {
-          console.error(`Error loading epoch ${epochId}:`, error);
-          this.loadingPastEpoch = false;
-          this.statusMessage = `Failed to load data for Epoch ${epochId}`;
-          this.statusType = 'error';
         }
       });
+    }
     
-    this.subscriptions.push(subscription);
+    // Calculate reward details
+    const { userRewardAmount, userAllocationPercentage } = this.calculateReward(
+      userWinningAllocation,
+      totalWinningConstellationStake,
+      prizeInSats,
+      prizeRemained,
+      constellationAllocationRemained,
+      cycleData.userClaimed === true,
+      epochId
+    );
+    
+    // Create epoch details object with safe number handling
+    const epochDetails: EpochDetails = {
+      id: epochId,
+      totalStakedPool: prizeInSats > 0 ? prizeInSats / 100000000 : 0, // Convert sats to BTC safely
+      winningConstellation: winningConstellationNum,
+      winningConstellationName: this.getConstellationName(winningConstellationNum),
+      userAllocations: userAllocs,
+      userWinningAllocation: userWinningAllocation,
+      claimed: cycleData.userClaimed === true,
+      isCurrent: epochId === this.currentEpochId,
+      // Add new properties with safe handling
+      winningConstellationTotalStake: totalWinningConstellationStake,
+      userRewardAmount: userRewardAmount,
+      userAllocationPercentage: userAllocationPercentage
+    };
+    
+    // Add the epoch to our cache using Map
+    this.epochs.set(epochId, epochDetails);
+    
+    return epochDetails;
+  }
+  
+  /**
+   * Calculate user reward and allocation percentage
+   */
+  private calculateReward(
+    userWinningAllocation: number,
+    totalWinningConstellationStake: number,
+    prizeInSats: number,
+    prizeRemained: number,
+    constellationAllocationRemained: number,
+    isUserClaimed: boolean,
+    epochId: number
+  ): { userRewardAmount: number, userAllocationPercentage: number } {
+    let userRewardAmount = 0;
+    let userAllocationPercentage = 0;
+    
+    // First, check if we already have this epoch in cache with a reward amount (for claimed rewards)
+    const cachedEpoch = this.epochs.get(epochId);
+    
+    if (cachedEpoch?.claimed && cachedEpoch?.userRewardAmount > 0) {
+      // Use the cached values for claimed rewards to maintain the original amount
+      return {
+        userRewardAmount: cachedEpoch.userRewardAmount,
+        userAllocationPercentage: cachedEpoch.userAllocationPercentage
+      };
+    } 
+    
+    if (userWinningAllocation > 0) {
+      // Calculate user's percentage of the winning constellation
+      userAllocationPercentage = totalWinningConstellationStake > 0 ? 
+        (userWinningAllocation / totalWinningConstellationStake) * 100 : 0;
+      
+      if (isUserClaimed) {
+        // When reward is claimed, estimate based on total prize and user percentage
+        userRewardAmount = (prizeInSats * userWinningAllocation) / totalWinningConstellationStake;
+      } else if (constellationAllocationRemained > 0) {
+        // For unclaimed rewards, use the original formula
+        userRewardAmount = (prizeRemained * userWinningAllocation) / constellationAllocationRemained;
+        
+        // Safety check to ensure we don't exceed available prize (same as in smart contract)
+        userRewardAmount = Math.min(userRewardAmount, prizeRemained);
+      }
+      
+      // Ensure we have a valid number
+      userRewardAmount = isNaN(userRewardAmount) ? 0 : userRewardAmount;
+    }
+    
+    return { userRewardAmount, userAllocationPercentage };
   }
   
   /**
@@ -360,11 +358,19 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   }
   
   /**
+   * Update URL when changing epochs
+   * @param epochId The epoch ID to navigate to
+   */
+  navigateToEpoch(epochId: number): void {
+    this.router.navigate(['/play/ledger', epochId]);
+  }
+  
+  /**
    * Load the previous epoch
    */
   loadPreviousEpoch(): void {
     if (this.selectedEpochId > 0) {
-      this.loadPastEpoch(this.selectedEpochId - 1);
+      this.navigateToEpoch(this.selectedEpochId - 1);
     }
   }
   
@@ -373,7 +379,7 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    */
   loadNextEpoch(): void {
     if (this.selectedEpochId < this.currentEpochId - 1) {
-      this.loadPastEpoch(this.selectedEpochId + 1);
+      this.navigateToEpoch(this.selectedEpochId + 1);
     }
   }
   
@@ -392,10 +398,7 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    * @returns Formatted BTC amount
    */
   formatBTC(btc: number): string {
-    if (btc === undefined || btc === null || isNaN(btc)) {
-      return '0.00000000';
-    }
-    return btc.toFixed(8);
+    return this.isValidNumber(btc) ? btc.toFixed(8) : '0.00000000';
   }
   
   /**
@@ -404,10 +407,7 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    * @returns Formatted sats amount
    */
   formatSats(sats: number): string {
-    if (sats === undefined || sats === null || isNaN(sats)) {
-      return '0';
-    }
-    return sats.toLocaleString();
+    return this.isValidNumber(sats) ? sats.toLocaleString() : '0';
   }
   
   /**
@@ -416,10 +416,14 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    * @returns Formatted percentage with 2 decimal places
    */
   formatPercentage(percentage: number): string {
-    if (percentage === undefined || percentage === null || isNaN(percentage)) {
-      return '0.00%';
-    }
-    return percentage.toFixed(2) + '%';
+    return this.isValidNumber(percentage) ? percentage.toFixed(2) + '%' : '0.00%';
+  }
+  
+  /**
+   * Check if a value is a valid number
+   */
+  private isValidNumber(value: any): boolean {
+    return value !== undefined && value !== null && !isNaN(value);
   }
   
   /**
@@ -428,9 +432,8 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   claimReward(): void {
     if (!this.selectedEpoch || this.claimingReward || !this.walletConnected) return;
     
-    this.claimingReward = true;
-    this.statusMessage = 'Claiming your Cosmic Bounty...';
-    this.statusType = 'info';
+    this.claimingSubject.next(true);
+    this.updateStatus('Claiming your Cosmic Bounty...', 'info');
     
     // Make sure the epochId is converted to number if needed
     const epochId = this.selectedEpoch.id;
@@ -439,45 +442,42 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
     const claimedRewardAmount = this.selectedEpoch.userRewardAmount;
     const claimedAllocationPercentage = this.selectedEpoch.userAllocationPercentage;
     
-    const subscription = this.blockConstellationContractService.claimReward(epochId)
-      .subscribe({
+    this.subscriptions.add(
+      this.blockConstellationContractService.claimReward(epochId).pipe(
+        finalize(() => this.claimingSubject.next(false))
+      ).subscribe({
         next: (response) => {
           console.log('Claim reward response:', response);
           if (response.txid) {
-            this.statusMessage = 'Destiny aligned! Your reward has been sent.';
-            this.statusType = 'success';
+            this.updateStatus('Destiny aligned! Your reward has been sent.', 'success');
             // Mark as claimed in our local state and preserve the reward amount
             if (this.selectedEpoch) {
               this.selectedEpoch.claimed = true;
-              
               // Preserve the reward amount and allocation percentage after claiming
-              // Ensure we have valid numbers
-              this.selectedEpoch.userRewardAmount = !isNaN(claimedRewardAmount) ? claimedRewardAmount : 0;
-              this.selectedEpoch.userAllocationPercentage = !isNaN(claimedAllocationPercentage) ? claimedAllocationPercentage : 0;
+              this.selectedEpoch.userRewardAmount = this.isValidNumber(claimedRewardAmount) ? 
+                claimedRewardAmount : 0;
+              this.selectedEpoch.userAllocationPercentage = this.isValidNumber(claimedAllocationPercentage) ? 
+                claimedAllocationPercentage : 0;
               
-              // Update the cached epoch as well to keep the data consistent
-              const cachedEpochIndex = this.epochs.findIndex(e => e.id === epochId);
-              if (cachedEpochIndex !== -1) {
-                this.epochs[cachedEpochIndex].claimed = true;
-                this.epochs[cachedEpochIndex].userRewardAmount = this.selectedEpoch.userRewardAmount;
-                this.epochs[cachedEpochIndex].userAllocationPercentage = this.selectedEpoch.userAllocationPercentage;
+              // Update the cached epoch as well
+              const cachedEpoch = this.epochs.get(epochId);
+              if (cachedEpoch) {
+                cachedEpoch.claimed = true;
+                cachedEpoch.userRewardAmount = this.selectedEpoch.userRewardAmount;
+                cachedEpoch.userAllocationPercentage = this.selectedEpoch.userAllocationPercentage;
+                this.epochs.set(epochId, cachedEpoch);
               }
             }
           } else if (response.error) {
-            this.statusMessage = `Failed to claim reward: ${response.error}`;
-            this.statusType = 'error';
+            this.updateStatus(`Failed to claim reward: ${response.error}`, 'error');
           }
-          this.claimingReward = false;
         },
         error: (error) => {
           console.error('Error claiming reward:', error);
-          this.statusMessage = 'Failed to claim your Cosmic Bounty';
-          this.statusType = 'error';
-          this.claimingReward = false;
+          this.updateStatus('Failed to claim your Cosmic Bounty', 'error');
         }
-      });
-    
-    this.subscriptions.push(subscription);
+      })
+    );
   }
   
   /**
@@ -490,19 +490,6 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
            !this.selectedEpoch.claimed && 
            this.selectedEpoch.userWinningAllocation > 0 &&
            !this.selectedEpoch.isCurrent;
-    
-    // Debug claim status
-    if (this.selectedEpoch) {
-      console.log('Can claim check:', {
-        walletConnected: this.walletConnected,
-        selectedEpoch: !!this.selectedEpoch,
-        notClaimed: !this.selectedEpoch.claimed,
-        claimedValue: this.selectedEpoch.claimed,
-        hasWinningAllocation: this.selectedEpoch.userWinningAllocation > 0,
-        notCurrent: !this.selectedEpoch.isCurrent,
-        canClaim: canClaim
-      });
-    }
     
     return canClaim;
   }
@@ -521,18 +508,37 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   }
   
   /**
+   * Update loading state
+   */
+  private updateLoadingState(isLoading: boolean): void {
+    this.loadingLedger = isLoading;
+    this.loadingSubject.next(isLoading);
+  }
+  
+  /**
+   * Update status message
+   */
+  private updateStatus(message: string, type: StatusMessage['type']): void {
+    this.statusSubject.next({ text: message, type });
+    
+    // Automatically clear success and info messages after delay
+    if (type === 'success' || type === 'info') {
+      this.clearStatusMessageAfterDelay();
+    }
+  }
+  
+  /**
    * Clear status message after delay
    * @param delay Delay in milliseconds
    */
-  clearStatusMessageAfterDelay(delay: number = 5000): void {
+  private clearStatusMessageAfterDelay(delay: number = 5000): void {
     setTimeout(() => {
-      this.statusMessage = '';
-      this.statusType = '';
+      this.statusSubject.next({ text: '', type: '' });
     }, delay);
   }
   
   ngOnDestroy(): void {
     // Cleanup subscriptions
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions.unsubscribe();
   }
 }

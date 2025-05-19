@@ -15,7 +15,7 @@
     </div>
 
     <!-- Wallet Connection Prompt -->
-    <div class="wallet-connection-prompt" *ngIf="!walletConnected">
+    <div class="wallet-connection-prompt" *ngIf="!walletConnected && !selectedEpoch">
       <div class="cosmic-card">
         <h2>Connect to the Cosmos</h2>
         <p>Please connect your wallet to view the Star Ledger and claim your Cosmic Bounties</p>
@@ -24,7 +24,7 @@
     </div>
 
     <!-- Star Ledger Content -->
-    <div class="ledger-content" *ngIf="walletConnected && selectedEpoch">
+    <ng-container *ngIf="selectedEpoch">
       <!-- Navigation -->
       <div class="epoch-navigator">
         <button 
@@ -55,9 +55,8 @@
       <div class="cosmic-card epoch-details">
         <div class="epoch-details-container">
           <div class="cosmic-pool">
-            <div class="pool-icon">🌌</div>
+            <h3>Cosmic Bounty</h3>
             <div class="pool-details">
-              <h3>Cosmic Pool</h3>
               <p class="pool-value">{{ formatBTC(selectedEpoch.totalStakedPool) }} BTC</p>
             </div>
           </div>
@@ -74,13 +73,13 @@
       </div>
 
       <!-- No Allocations Message -->
-      <div class="cosmic-card no-allocations" *ngIf="selectedEpoch.userAllocations.length === 0">
+      <div class="cosmic-card no-allocations" *ngIf="walletConnected && selectedEpoch.userAllocations.length === 0">
         <h3>No Cosmic Alignments Found</h3>
         <p>You didn't stake in this epoch. Align with the cosmos in future epochs to receive rewards!</p>
       </div>
 
       <!-- Reward Claim Section -->
-      <div class="cosmic-card reward-claim" *ngIf="selectedEpoch.userWinningAllocation > 0">
+      <div class="cosmic-card reward-claim" *ngIf="walletConnected && selectedEpoch.userWinningAllocation > 0">
         <div class="reward-status">
           <!-- Status heading and message -->
           <div *ngIf="!selectedEpoch.claimed">
@@ -116,7 +115,7 @@
         <!-- Only show claim button for unclaimed rewards -->
         <button 
           class="cosmic-button claim-button" 
-          *ngIf="selectedEpoch && selectedEpoch.userWinningAllocation > 0 && !selectedEpoch.claimed && !selectedEpoch.isCurrent && walletConnected"
+          *ngIf="canClaimReward()"
           [disabled]="claimingReward"
           (click)="claimReward()">
           {{ claimingReward ? 'Claiming...' : 'Claim Cosmic Bounty' }}
@@ -129,7 +128,7 @@
       </div>
 
       <!-- User Allocations -->
-      <div class="cosmic-card user-allocations" *ngIf="selectedEpoch.userAllocations.length > 0">
+      <div class="cosmic-card user-allocations" *ngIf="walletConnected && selectedEpoch.userAllocations.length > 0">
         <h3>Your Cosmic Alignments</h3>
         <table class="allocations-table">
           <thead>
@@ -153,7 +152,6 @@
           </tbody>
         </table>
       </div>
-
-    </div>
+    </ng-container>
   </div>
 </div>
