@@ -128,72 +128,94 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     // Check if wallet is connected
     this.walletConnected = this.walletService.isLoggedIn();
     
-    // Get current epoch ID from blockchain
     if (this.walletConnected) {
-      // Fetch the user's sBTC balance
-      this.fetchUserBalance();
-      
-      const cycleSubscription = this.blockConstellationContractService.getCurrentCycleId().subscribe({
-        next: (cycleId: number) => {
-          console.log('Current Cycle ID:', cycleId);
-          this.currentEpoch = cycleId;
-          
-          // After getting the cycle ID, fetch the cycle data
-          this.fetchCycleData(cycleId);
-          
-          // Also fetch user's allocations if they're logged in
-          this.fetchUserAllocations(cycleId);
-        },
-        error: (error) => {
-          console.error('Error fetching current cycle ID:', error);
-          // Fallback to the mock data if there's an error
-          this.loadingPage = false;
-        }
-      });
+      // When wallet is connected, fetch user-specific cycle data
+      const userAddress = this.walletService.getSTXAddress();
+      if (userAddress) {
+        // Fetch the user's sBTC balance
+        this.fetchUserBalance();
+        
+        // Get current cycle data including user allocations
+        const cycleSubscription = this.blockConstellationContractService
+          .getCurrentCycleUserStatus(userAddress)
+          .subscribe({
+            next: (cycleUserStatus) => {
+              console.log('Current cycle user status:', cycleUserStatus);
+              
+              // Update cycle information - ensure it's a number
+              this.currentEpoch = Number(cycleUserStatus.cycleId) || 0;
+              
+              // Update total staked pool (convert from satoshis to BTC)
+              this.totalStakedPool = (cycleUserStatus.cyclePrize || 0) / 100000000;
+              console.log('Total staked pool (BTC):', this.totalStakedPool);
+              
+              // Update constellation allocation data
+              if (cycleUserStatus.cycleConstellationAllocation && 
+                  Array.isArray(cycleUserStatus.cycleConstellationAllocation)) {
+                this.updateConstellationAllocations(cycleUserStatus.cycleConstellationAllocation);
+              }
+              
+              // Update user allocation data
+              if (cycleUserStatus.userConstellationAllocation && 
+                  Array.isArray(cycleUserStatus.userConstellationAllocation)) {
+                this.updateUserAllocationData(cycleUserStatus.userConstellationAllocation);
+              }
+              
+              // Calculate remaining time based on blockchain data
+              this.calculateRemainingTimeFromBlockData(
+                cycleUserStatus.cycleEndBlock,
+                cycleUserStatus.blockchainTenureHeight
+              );
+              
+              this.loadingPage = false;
+            },
+            error: (error) => {
+              console.error('Error fetching current cycle user status:', error);
+              this.loadingPage = false;
+            }
+          });
+        
+        this.subscriptions.push(cycleSubscription);
+      } else {
+        this.loadingPage = false;
+      }
+    } else {
+      // When wallet is not connected, fetch only public cycle data
+      const cycleSubscription = this.blockConstellationContractService
+        .getCurrentCycle()
+        .subscribe({
+          next: (cycleData) => {
+            console.log('Current cycle data:', cycleData);
+            
+            // Update cycle information - ensure it's a number
+            this.currentEpoch = Number(cycleData.cycleId) || 0;
+            
+            // Update total staked pool (convert from satoshis to BTC)
+            this.totalStakedPool = (cycleData.cyclePrize || 0) / 100000000;
+            console.log('Total staked pool (BTC):', this.totalStakedPool);
+            
+            // Update constellation allocation data
+            if (cycleData.cycleConstellationAllocation && 
+                Array.isArray(cycleData.cycleConstellationAllocation)) {
+              this.updateConstellationAllocations(cycleData.cycleConstellationAllocation);
+            }
+            
+            // Calculate remaining time based on blockchain data
+            this.calculateRemainingTimeFromBlockData(
+              cycleData.cycleEndBlock,
+              cycleData.blockchainTenureHeight
+            );
+            
+            this.loadingPage = false;
+          },
+          error: (error) => {
+            console.error('Error fetching current cycle data:', error);
+            this.loadingPage = false;
+          }
+        });
       
       this.subscriptions.push(cycleSubscription);
-    } else {
-      // Simulate loading time when no wallet connected
-      setTimeout(() => {
-        this.loadingPage = false;
-      }, 1000);
     }
-  }
-  
-  // Fetch user allocation data for the current cycle
-  fetchUserAllocations(cycleId: number): void {
-    if (!this.walletConnected) return;
-    
-    const userAddress = this.walletService.getSTXAddress();
-    if (!userAddress) return;
-    
-    console.log(`Fetching allocation data for user ${userAddress} in cycle ${cycleId}`);
-    
-    const userAllocationSubscription = this.blockConstellationContractService
-      .getAllocatedByUser(cycleId, userAddress)
-      .subscribe({
-        next: (allocationData) => {
-          console.log('Received user allocation data:', allocationData);
-          
-          // Reset any previous mock data
-          this.resetUserAllocationData();
-          
-          // Update UI with actual data from the blockchain if available
-          if (allocationData && 
-              allocationData.constellationAllocation && 
-              Array.isArray(allocationData.constellationAllocation) && 
-              allocationData.constellationAllocation.length > 0) {
-            this.updateUserAllocationData(allocationData.constellationAllocation);
-          } else {
-            console.log('No user allocation data found or empty array - showing zero values');
-          }
-        },
-        error: (error) => {
-          console.error('Error fetching user allocation data:', error);
-        }
-      });
-      
-    this.subscriptions.push(userAllocationSubscription);
   }
   
   // Update user allocation data from blockchain
@@ -214,28 +236,29 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     // Process the allocations
     for (let i = 0; i < allocations.length; i++) {
       // Ensure allocation is a valid number
-      const allocation = allocations[i] || 0;
+      const allocation = Number(allocations[i]) || 0;
       
       if (allocation > 0) {
         count++;
         totalStaked += allocation;
         
         // Update the constellations array with user's stake
-        // Note: Contract uses 0-based index, UI uses 1-based index (add 1 to the index)
+        // Note: Contract uses 0-based index, UI uses 0-based index too
         const constellationIndex = i;
-        const constellationUiIndex = constellationIndex; // UI constellation array is 0-based index too
+        const constellationUiIndex = constellationIndex;
         
         if (constellationUiIndex < this.constellations.length) {
           this.constellations[constellationUiIndex].yourStake = allocation;
           
-          // Calculate user's share of this constellation
+          // Calculate user's share percentage if the constellation has total stakes
           if (this.constellations[constellationUiIndex].totalStaked > 0) {
-            const btcTotal = this.constellations[constellationUiIndex].totalStaked;
-            const satTotal = btcTotal * 100000000;
-            this.constellations[constellationUiIndex].yourShare = allocation / satTotal;
+            const totalStakedSats = this.constellations[constellationUiIndex].totalStaked * 100000000;
+            this.constellations[constellationUiIndex].yourShare = (allocation / totalStakedSats) * 100;
+          } else {
+            this.constellations[constellationUiIndex].yourShare = 0;
           }
           
-          // Add to the allocations list
+          // Add to allocations list for the summary display
           this.userAllocation.allocations.push({
             constellation: this.constellations[constellationUiIndex].name,
             amount: allocation
@@ -244,49 +267,25 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
       }
     }
     
-    // Update the summary data
+    // Update the allocation summary
     this.userAllocation.totalStaked = totalStaked;
     this.userAllocation.constellationCount = count;
     
-    console.log('Updated user allocation:', this.userAllocation);
+    console.log('Updated user allocation data:', this.userAllocation);
   }
   
-  // Fetch cycle data including the prize pool
-  fetchCycleData(cycleId: number): void {
-    const cycleDataSubscription = this.blockConstellationContractService.getCycle(cycleId).subscribe({
-      next: (cycleData) => {
-        console.log('Received cycle data:', cycleData);
-        
-        // Convert prize from satoshis to BTC for display
-        // Always update the totalStakedPool with the actual value from the contract,
-        // even if it's zero, to ensure we don't show mock data
-        this.totalStakedPool = cycleData.prize / 100000000;
-        
-        // Update constellation allocations from blockchain data if available
-        if (cycleData && cycleData.constellationAllocation && Array.isArray(cycleData.constellationAllocation)) {
-          // Update each constellation with real allocation data from the contract
-          this.updateConstellationAllocations(cycleData.constellationAllocation);
-        }
-        
-        // Calculate blocks remaining and estimated time
-        this.calculateRemainingTime();
-        
-        this.loadingPage = false;
-      },
-      error: (error) => {
-        console.error('Error fetching cycle data:', error);
-        this.loadingPage = false;
-      }
-    });
+  // Calculate the remaining time based on blockchain data
+  calculateRemainingTimeFromBlockData(endBlock: number, currentBlockHeight: number): void {
+    // Ensure we have valid numbers
+    endBlock = Number(endBlock) || 0;
+    currentBlockHeight = Number(currentBlockHeight) || 0;
     
-    this.subscriptions.push(cycleDataSubscription);
-  }
-  
-  // Calculate the remaining time in the current cycle
-  calculateRemainingTime(): void {
-    // In a real implementation, you'd get the current block height and calculate 
-    // the blocks remaining until the next cycle
-    // For now, we'll use the mock data
+    // Calculate blocks remaining
+    this.blocksRemaining = Math.max(0, endBlock - currentBlockHeight);
+    
+    // Get total blocks per cycle - calculate based on end block and cycle start
+    const blocksPerCycle = 144; // Default to 144 blocks per cycle
+    this.totalBlocks = blocksPerCycle;
     
     // Calculate estimated time: assuming ~10 minutes per Bitcoin block
     const minutesRemaining = this.blocksRemaining * 10;
@@ -294,6 +293,13 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     const minutes = minutesRemaining % 60;
     
     this.estimatedTimeRemaining = `≈ ${hours}h ${minutes}m`;
+    
+    console.log('Blocks data:', {
+      endBlock,
+      currentBlockHeight,
+      blocksRemaining: this.blocksRemaining,
+      totalBlocks: this.totalBlocks
+    });
   }
   
   // Update constellation data with real allocation values from the blockchain
@@ -307,9 +313,14 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     // Make sure we don't exceed the number of constellations we have in our UI
     const maxLength = Math.min(allocations.length, this.constellations.length);
     
+    let totalStakedSats = 0;
+    
     for (let i = 0; i < maxLength; i++) {
       // Ensure allocation is a valid number
-      const allocation = allocations[i] || 0;
+      const allocation = Number(allocations[i]) || 0;
+      
+      // Add to total for verification
+      totalStakedSats += allocation;
       
       // Convert satoshis to BTC for display
       const btcAmount = allocation / 100000000;
@@ -318,11 +329,18 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
       this.constellations[i].totalStaked = btcAmount;
     }
     
-    // Recalculate total staked pool
-    let totalStaked = 0;
-    allocations.forEach(allocation => {
-      totalStaked += (allocation || 0);
-    });
+    // Log the total staked amount for debugging
+    console.log('Total staked (from allocations, sats):', totalStakedSats);
+    console.log('Total staked (from allocations, BTC):', totalStakedSats / 100000000);
+    
+    // Verify total stake against the total pool value
+    const calculatedTotalBTC = totalStakedSats / 100000000;
+    if (Math.abs(calculatedTotalBTC - this.totalStakedPool) > 0.00000001) {
+      console.warn('Total stake calculation mismatch:', {
+        calculated: calculatedTotalBTC,
+        fromContract: this.totalStakedPool
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -334,6 +352,23 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     this.showAllocationSummary = !this.showAllocationSummary;
   }
 
+  selectConstellation(constellation: Constellation): void {
+    if (!this.walletConnected) return;
+    
+    this.selectedConstellation = constellation;
+    this.isDrawerOpen = true;
+    
+    // Reset stake amount to minimum or current balance (whichever is smaller)
+    this.stakeAmount = this.feeBalance >= 1000 ? 1000 : Math.min(this.feeBalance, 1000);
+    
+    // Clear any previous status messages
+    this.statusMessage = '';
+    this.statusType = '';
+    
+    // Fetch the latest sBTC balance when opening the drawer
+    this.fetchUserBalance();
+  }
+
   closeStakeDrawer(): void {
     this.isDrawerOpen = false;
     setTimeout(() => {
@@ -341,11 +376,6 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
       this.statusMessage = '';
       this.statusType = '';
     }, 300);
-  }
-
-  selectConstellation(constellation: Constellation): void {
-    this.selectedConstellation = constellation;
-    this.isDrawerOpen = true;
     
     // Fetch the latest sBTC balance when opening the drawer
     this.fetchUserBalance();
@@ -431,12 +461,38 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
                 // Clear message after 8 seconds (extended time for the user to read)
                 this.clearStatusMessageAfterDelay(8000);
                 
-                // Refresh user allocation data after a successful stake
+                // Refresh user data after a successful stake
                 setTimeout(() => {
-                  if (this.currentEpoch) {
-                    this.fetchUserAllocations(this.currentEpoch);
-                    this.fetchCycleData(this.currentEpoch);
-                    this.fetchUserBalance(); // Also refresh the balance
+                  if (this.walletConnected) {
+                    const userAddress = this.walletService.getSTXAddress();
+                    if (userAddress) {
+                      this.blockConstellationContractService
+                        .getCurrentCycleUserStatus(userAddress)
+                        .subscribe({
+                          next: (cycleUserStatus) => {
+                            this.currentEpoch = Number(cycleUserStatus.cycleId) || 0;
+                            this.totalStakedPool = (cycleUserStatus.cyclePrize || 0) / 100000000;
+                            
+                            if (cycleUserStatus.cycleConstellationAllocation && 
+                                Array.isArray(cycleUserStatus.cycleConstellationAllocation)) {
+                              this.updateConstellationAllocations(cycleUserStatus.cycleConstellationAllocation);
+                            }
+                            
+                            if (cycleUserStatus.userConstellationAllocation && 
+                                Array.isArray(cycleUserStatus.userConstellationAllocation)) {
+                              this.updateUserAllocationData(cycleUserStatus.userConstellationAllocation);
+                            }
+                            
+                            this.calculateRemainingTimeFromBlockData(
+                              cycleUserStatus.cycleEndBlock,
+                              cycleUserStatus.blockchainTenureHeight
+                            );
+                          },
+                          error: (error) => console.error('Error refreshing cycle data:', error)
+                        });
+                      
+                      this.fetchUserBalance(); // Also refresh the balance
+                    }
                   }
                 }, 2000);
                 
@@ -505,10 +561,18 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   }
 
   formatSats(sats: number): string {
-    return sats.toLocaleString();
+    // Handle NaN, undefined, null or negative values
+    if (sats === undefined || sats === null || isNaN(sats) || sats < 0) {
+      return '0';
+    }
+    return Math.floor(sats).toLocaleString();
   }
 
   formatBTC(btc: number): string {
+    // Handle NaN, undefined, null or negative values
+    if (btc === undefined || btc === null || isNaN(btc) || btc < 0) {
+      return '0.00000000';
+    }
     return btc.toFixed(8);
   }
   
@@ -530,3 +594,12 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     return pendingTransactions.some(tx => tx.constellation === constellationId);
   }
 }
+
+// Removed the following methods after refactoring:
+  // - fetchCycleData
+  // - fetchUserAllocations
+  // - calculateRemainingTime
+  
+  // These methods have been replaced with direct calls to
+  // getCurrentCycleUserStatus when the wallet is connected
+  // or getCurrentCycle when the wallet is not connected

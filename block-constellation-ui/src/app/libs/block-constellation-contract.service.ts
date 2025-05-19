@@ -113,15 +113,15 @@ export class BlockConstellationContractService extends ContractUtil {
                     if (data['constellation-allocation'] && data['constellation-allocation'].value) {
                         // Extract the array from the nested structure
                         constellationAllocation = data['constellation-allocation'].value.map((allocation: any) => {
-                            return parseInt(allocation.value);
+                            return parseInt(allocation.value) || 0;
                         });
                     }
                     
                     return {
-                        allocationClaimed: cvToValue(data['allocation-claimed']),
-                        'allocation-claimed': cvToValue(data['allocation-claimed']),
-                        prize: cvToValue(data['prize']),
-                        'prize-claimed': cvToValue(data['prize-claimed']),
+                        allocationClaimed: cvToValue(data['allocation-claimed']) || 0,
+                        'allocation-claimed': cvToValue(data['allocation-claimed']) || 0,
+                        prize: cvToValue(data['prize']) || 0,
+                        'prize-claimed': cvToValue(data['prize-claimed']) || 0,
                         constellationAllocation: constellationAllocation,
                         'constellation-allocation': data['constellation-allocation']
                     };
@@ -152,7 +152,7 @@ export class BlockConstellationContractService extends ContractUtil {
                     let constellationAllocation: number[] = [];
                     if (data['constellation-allocation'] && data['constellation-allocation'].value) {
                         constellationAllocation = data['constellation-allocation'].value.map((allocation: any) => {
-                            return parseInt(allocation.value);
+                            return parseInt(allocation.value) || 0;
                         });
                     }
                     
@@ -191,8 +191,8 @@ export class BlockConstellationContractService extends ContractUtil {
                 const data = cvToValue(result);
                 if (data) {
                     return {
-                        amount: cvToValue(data.value ? data.value.amount : 0),
-                        blockUpdate: cvToValue(data.value ? data.value['block-update'] : 0)
+                        amount: cvToValue(data.value ? data.value.amount : 0) || 0,
+                        blockUpdate: cvToValue(data.value ? data.value['block-update'] : 0) || 0
                     };
                 }
                 return { amount: 0, blockUpdate: 0 };
@@ -211,7 +211,7 @@ export class BlockConstellationContractService extends ContractUtil {
                 Cl.uint(cycleId)
             ]
         )).pipe(
-            map((result: any) => cvToValue(result))
+            map((result: any) => cvToValue(result) || 0)
         );
     }
 
@@ -237,28 +237,28 @@ export class BlockConstellationContractService extends ContractUtil {
                     let cycleConstellationAllocation: number[] = [];
                     if (data.value['cycle-constellation-allocation'] && data.value['cycle-constellation-allocation'].value) {
                         cycleConstellationAllocation = data.value['cycle-constellation-allocation'].value.map((allocation: any) => {
-                            return parseInt(allocation.value);
+                            return parseInt(allocation.value) || 0;
                         });
                     }
                     
                     let userConstellationAllocation: number[] = [];
                     if (data.value['user-constellation-allocation'] && data.value['user-constellation-allocation'].value) {
                         userConstellationAllocation = data.value['user-constellation-allocation'].value.map((allocation: any) => {
-                            return parseInt(allocation.value);
+                            return parseInt(allocation.value) || 0;
                         });
                     }
                     
                     return {
-                        cyclePrize: parseInt(data.value['cycle-prize']),
-                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']),
+                        cyclePrize: parseInt(data.value['cycle-prize']?.value) || 0,
+                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']?.value) || 0,
                         cycleConstellationAllocation: cycleConstellationAllocation,
-                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']),
-                        cycleWinningConstellation: parseInt(data.value['cycle-winning-constellation']),
-                        cycleEndBlock: parseInt(data.value['cycle-end-block']),
+                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']?.value) || 0,
+                        cycleWinningConstellation: parseInt(data.value['cycle-winning-constellation']?.value) || 0,
+                        cycleEndBlock: parseInt(data.value['cycle-end-block']?.value) || 0,
                         userConstellationAllocation: userConstellationAllocation,
-                        userClaimed: data.value['user-claimed'],
-                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']),
-                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height'])
+                        userClaimed: data.value['user-claimed'] === true || false,
+                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']?.value) || 0,
+                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height']?.value) || 0
                     };
                 }
                 
@@ -298,28 +298,28 @@ export class BlockConstellationContractService extends ContractUtil {
                     let cycleConstellationAllocation: number[] = [];
                     if (data.value['cycle-constellation-allocation'] && data.value['cycle-constellation-allocation'].value) {
                         cycleConstellationAllocation = data.value['cycle-constellation-allocation'].value.map((allocation: any) => {
-                            return parseInt(allocation.value);
+                            return parseInt(allocation.value) || 0;
                         });
                     }
                     
                     let userConstellationAllocation: number[] = [];
                     if (data.value['user-constellation-allocation'] && data.value['user-constellation-allocation'].value) {
                         userConstellationAllocation = data.value['user-constellation-allocation'].value.map((allocation: any) => {
-                            return parseInt(allocation.value);
+                            return parseInt(allocation.value) || 0;
                         });
                     }
                     
                     return {
-                        cycleId: parseInt(data.value['cycle-id']),
-                        cyclePrize: parseInt(data.value['cycle-prize']),
-                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']),
+                        cycleId: parseInt(data.value['cycle-id']?.value) || 0,
+                        cyclePrize: parseInt(data.value['cycle-prize']?.value) || 0,
+                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']?.value) || 0,
                         cycleConstellationAllocation: cycleConstellationAllocation,
-                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']),
-                        cycleEndBlock: parseInt(data.value['cycle-end-block']),
+                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']?.value) || 0,
+                        cycleEndBlock: parseInt(data.value['cycle-end-block']?.value) || 0,
                         userConstellationAllocation: userConstellationAllocation,
-                        userClaimed: data.value['user-claimed'] || false,
-                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']),
-                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height'])
+                        userClaimed: data.value['user-claimed'] === true || false,
+                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']?.value) || 0,
+                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height']?.value) || 0
                     };
                 }
                 
@@ -356,19 +356,19 @@ export class BlockConstellationContractService extends ContractUtil {
                     let cycleConstellationAllocation: number[] = [];
                     if (data.value['cycle-constellation-allocation'] && data.value['cycle-constellation-allocation'].value) {
                         cycleConstellationAllocation = data.value['cycle-constellation-allocation'].value.map((allocation: any) => {
-                            return parseInt(allocation.value);
+                            return parseInt(allocation.value) || 0;
                         });
                     }
                     
                     return {
-                        cycleId: parseInt(data.value['cycle-id']),
-                        cyclePrize: parseInt(data.value['cycle-prize']),
-                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']),
+                        cycleId: parseInt(data.value['cycle-id']?.value) || 0,
+                        cyclePrize: parseInt(data.value['cycle-prize']?.value) || 0,
+                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']?.value) || 0,
                         cycleConstellationAllocation: cycleConstellationAllocation,
-                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']),
-                        cycleEndBlock: parseInt(data.value['cycle-end-block']),
-                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']),
-                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height'])
+                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']?.value) || 0,
+                        cycleEndBlock: parseInt(data.value['cycle-end-block']?.value) || 0,
+                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']?.value) || 0,
+                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height']?.value) || 0
                     };
                 }
                 
