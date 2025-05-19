@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/wallet.service';
 import { BlockConstellationContractService, ReferralReward } from '../../../libs/block-constellation-contract.service';
-import { TransactionNotificationsComponent } from '../../../shared/components/transaction-notifications/transaction-notifications.component';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -11,8 +10,7 @@ import { Subscription } from 'rxjs';
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    TransactionNotificationsComponent
+    FormsModule
   ],
   templateUrl: './game-refer-friend.component.html',
   styleUrl: './game-refer-friend.component.scss'

@@ -5,6 +5,7 @@ import { GameHeaderComponent, NavItem } from './game-header/game-header.componen
 import { GameFooterComponent } from './game-footer/game-footer.component';
 import { WalletService } from '../../libs/wallet.service';
 import { filter } from 'rxjs/operators';
+import { TransactionNotificationsComponent } from '../../shared/components/transaction-notifications/transaction-notifications.component';
 
 @Component({
   selector: 'app-game',
@@ -13,7 +14,8 @@ import { filter } from 'rxjs/operators';
     CommonModule,
     RouterModule,
     GameHeaderComponent,
-    GameFooterComponent
+    GameFooterComponent,
+    TransactionNotificationsComponent
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss'

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/wallet.service';
 import { BlockConstellationContractService } from '../../../libs/block-constellation-contract.service';
-import { TransactionNotificationsComponent } from '../../../shared/components/transaction-notifications/transaction-notifications.component';
 import { AllocateStatusService } from '../../../shared/services/allocate-status.service';
 import { Subscription, forkJoin, of, switchMap, catchError, map, Observable } from 'rxjs';
 
@@ -35,8 +34,7 @@ interface UserAllocation {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    TransactionNotificationsComponent
+    FormsModule
   ],
   templateUrl: './game-ledger.component.html',
   styleUrl: './game-ledger.component.scss'

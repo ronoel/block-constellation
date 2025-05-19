@@ -5,7 +5,6 @@ import { WalletService } from '../../../libs/wallet.service';
 import { BlockConstellationContractService } from '../../../libs/block-constellation-contract.service';
 import { sBTCTokenService } from '../../../libs/sbtc-token.service';
 import { AllocateStatusService, AllocationTransaction } from '../../../shared/services/allocate-status.service';
-import { TransactionNotificationsComponent } from '../../../shared/components/transaction-notifications/transaction-notifications.component';
 import { TransactionInfoService } from '../../../libs/components/transaction-info/transaction-info.service';
 import { Subscription } from 'rxjs';
 
@@ -30,8 +29,7 @@ interface UserAllocation {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    TransactionNotificationsComponent
+    FormsModule
   ],
   templateUrl: './game-current.component.html',
   styleUrl: './game-current.component.scss'
