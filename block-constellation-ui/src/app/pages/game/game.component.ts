@@ -92,10 +92,4 @@ export class GameComponent implements OnInit {
       this.router.navigateByUrl(navItem.route);
     }
   }
-  
-  // Theme toggle handler
-  handleThemeToggle(theme: 'light' | 'dark'): void {
-    console.log(`Theme changed to ${theme} mode`);
-    // Here you could perform additional actions when theme changes
-  }
 }

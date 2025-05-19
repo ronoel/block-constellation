@@ -26,15 +26,11 @@ export class GameHeaderComponent implements OnInit {
   ];
   
   @Output() navItemClick = new EventEmitter<NavItem>();
-  @Output() themeToggle = new EventEmitter<'light' | 'dark'>();
   
   // Wallet state
   walletConnected = false;
   walletAddress = '';
   networkType = 'Mainnet';
-  
-  // Theme state
-  isDarkTheme = true;
   
   // Service injection
   private walletService = inject(WalletService);
@@ -57,10 +53,7 @@ export class GameHeaderComponent implements OnInit {
   }
   
   ngOnInit(): void {
-    // Check for saved theme preference
-    const savedTheme = localStorage.getItem('theme');
-    this.isDarkTheme = savedTheme !== 'light';
-    this.applyTheme();
+    // No theme-related initialization
   }
   
   // Methods for handling wallet disconnection
@@ -89,17 +82,5 @@ export class GameHeaderComponent implements OnInit {
     
     this.navItems.forEach(navItem => navItem.active = (navItem === item));
     this.navItemClick.emit(item);
-  }
-  
-  toggleTheme(): void {
-    this.isDarkTheme = !this.isDarkTheme;
-    this.applyTheme();
-    this.themeToggle.emit(this.isDarkTheme ? 'dark' : 'light');
-    localStorage.setItem('theme', this.isDarkTheme ? 'dark' : 'light');
-  }
-  
-  private applyTheme(): void {
-    document.body.classList.toggle('light-theme', !this.isDarkTheme);
-    document.body.classList.toggle('dark-theme', this.isDarkTheme);
   }
 }

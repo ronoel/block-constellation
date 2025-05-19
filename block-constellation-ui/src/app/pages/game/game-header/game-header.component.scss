@@ -213,33 +213,6 @@
   gap: 15px;
 }
 
-// Theme toggle button
-.theme-toggle {
-  background-color: transparent;
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  .theme-icon {
-    font-size: 18px;
-    transition: transform 0.5s ease;
-    
-    &.dark {
-      transform: rotate(360deg);
-    }
-  }
-}
-
 // Animation for active navigation item
 @keyframes pulse {
   0% { opacity: 0.7; }

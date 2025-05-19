@@ -22,13 +22,6 @@
     </nav>
     
     <div class="wallet-controls">
-      <!-- Theme toggle button -->
-      <button class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle theme">
-        <span class="theme-icon" [class.dark]="isDarkTheme">
-          {{ isDarkTheme ? '☀️' : '🌙' }}
-        </span>
-      </button>
-      
       <!-- Wallet section -->
       <div class="wallet-section">
         <ng-container *ngIf="walletConnected; else connectWallet">
