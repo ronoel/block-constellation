@@ -280,12 +280,39 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     endBlock = Number(endBlock) || 0;
     currentBlockHeight = Number(currentBlockHeight) || 0;
     
-    // Calculate blocks remaining
+    // Default to 144 blocks per cycle (typical Bitcoin blocks in a day)
+    const blocksPerCycle = 144; 
+    this.totalBlocks = blocksPerCycle;
+    
+    // Calculate the cycle start block
+    const startBlock = endBlock - blocksPerCycle;
+    
+    // Calculate blocks remaining in this cycle
     this.blocksRemaining = Math.max(0, endBlock - currentBlockHeight);
     
-    // Get total blocks per cycle - calculate based on end block and cycle start
-    const blocksPerCycle = 144; // Default to 144 blocks per cycle
-    this.totalBlocks = blocksPerCycle;
+    // Calculate blocks elapsed in this cycle
+    const blocksElapsed = Math.max(0, currentBlockHeight - startBlock);
+    
+    // Ensure our calculations make sense
+    if (blocksElapsed + this.blocksRemaining !== blocksPerCycle) {
+      console.warn('Block calculation mismatch:', {
+        blocksElapsed,
+        blocksRemaining: this.blocksRemaining,
+        blocksPerCycle,
+        startBlock,
+        endBlock,
+        currentBlockHeight
+      });
+      
+      // Adjust remaining blocks if necessary to ensure accurate progress bar
+      if (currentBlockHeight >= endBlock) {
+        // Cycle is complete
+        this.blocksRemaining = 0;
+      } else if (currentBlockHeight <= startBlock) {
+        // Cycle hasn't started yet
+        this.blocksRemaining = blocksPerCycle;
+      }
+    }
     
     // Calculate estimated time: assuming ~10 minutes per Bitcoin block
     const minutesRemaining = this.blocksRemaining * 10;
@@ -295,10 +322,13 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     this.estimatedTimeRemaining = `≈ ${hours}h ${minutes}m`;
     
     console.log('Blocks data:', {
+      startBlock,
       endBlock,
       currentBlockHeight,
+      blocksElapsed,
       blocksRemaining: this.blocksRemaining,
-      totalBlocks: this.totalBlocks
+      totalBlocks: this.totalBlocks,
+      progressPercentage: ((this.totalBlocks - this.blocksRemaining) / this.totalBlocks) * 100
     });
   }
   

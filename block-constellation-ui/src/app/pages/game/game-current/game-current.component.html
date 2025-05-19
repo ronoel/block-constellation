@@ -24,7 +24,7 @@
             {{ blocksRemaining }} of {{ totalBlocks }} blocks remaining
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" [style.width.%]="(1 - blocksRemaining/totalBlocks) * 100"></div>
+            <div class="progress-fill" [style.width.%]="((totalBlocks - blocksRemaining) / totalBlocks) * 100"></div>
           </div>
           <div class="eta">
             Estimated time remaining: {{ estimatedTimeRemaining }}
