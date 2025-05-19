@@ -66,6 +66,19 @@ export interface CurrentCycleData {
     blockchainTenureHeight: number;
 }
 
+// Interface for cycle status data (includes winning constellation for completed cycles)
+export interface CycleStatus {
+    cycleId: number;
+    cyclePrize: number;
+    cyclePrizeClaimed: number;
+    cycleConstellationAllocation: number[];
+    cycleAllocationClaimed: number;
+    cycleWinningConstellation: number;
+    cycleEndBlock: number;
+    blockchainStacksHeight: number;
+    blockchainTenureHeight: number;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -212,6 +225,58 @@ export class BlockConstellationContractService extends ContractUtil {
             ]
         )).pipe(
             map((result: any) => cvToValue(result) || 0)
+        );
+    }
+
+    /**
+     * Read-only function to get cycle status data without user-specific information
+     * @param cycleId The ID of the cycle
+     */
+    getCycleStatus(cycleId: number): Observable<CycleStatus> {
+        return from(this.callReadOnlyFunction(
+            'get-cycle-status',
+            [
+                Cl.uint(cycleId)
+            ]
+        )).pipe(
+            map((result: any) => {
+                const data = cvToValue(result);
+                console.log('Cycle status data:', data);
+                
+                if (data && data.value) {
+                    // Extract constellation allocation array
+                    let cycleConstellationAllocation: number[] = [];
+                    if (data.value['cycle-constellation-allocation'] && data.value['cycle-constellation-allocation'].value) {
+                        cycleConstellationAllocation = data.value['cycle-constellation-allocation'].value.map((allocation: any) => {
+                            return parseInt(allocation.value) || 0;
+                        });
+                    }
+                    
+                    return {
+                        cycleId: parseInt(data.value['cycle-id']?.value) || 0,
+                        cyclePrize: parseInt(data.value['cycle-prize']?.value) || 0,
+                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']?.value) || 0,
+                        cycleConstellationAllocation: cycleConstellationAllocation,
+                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']?.value) || 0,
+                        cycleWinningConstellation: parseInt(data.value['cycle-winning-constellation']?.value) || 0,
+                        cycleEndBlock: parseInt(data.value['cycle-end-block']?.value) || 0,
+                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']?.value) || 0,
+                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height']?.value) || 0
+                    };
+                }
+                
+                return {
+                    cycleId: 0,
+                    cyclePrize: 0,
+                    cyclePrizeClaimed: 0,
+                    cycleConstellationAllocation: [],
+                    cycleAllocationClaimed: 0,
+                    cycleWinningConstellation: 0,
+                    cycleEndBlock: 0,
+                    blockchainStacksHeight: 0,
+                    blockchainTenureHeight: 0
+                };
+            })
         );
     }
 

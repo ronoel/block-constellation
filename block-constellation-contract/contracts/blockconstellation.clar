@@ -277,6 +277,30 @@
         (map-get? cycle cycle-id))
 )
 
+;; Get data about a specific cycle without user allocation information
+(define-read-only (get-cycle-status (cycle-id uint))
+    (let
+        (
+            (cycle-data (get-cycle cycle-id))
+            (current-cycle-id (get-current-cycle-id))
+            (cycle-end-block (get-constellation-block cycle-id))
+        )
+        (asserts! (< cycle-id current-cycle-id) ERR-PRECONDITION-FAILED)
+        (ok
+                {
+                        cycle-prize: (get prize cycle-data),
+                        cycle-prize-claimed: (get prize-claimed cycle-data),
+                        cycle-constellation-allocation: (get constellation-allocation cycle-data),
+                        cycle-allocation-claimed: (get allocation-claimed cycle-data),
+                        cycle-winning-constellation: (get-constellation cycle-id),
+                        cycle-end-block: cycle-end-block,
+                        blockchain-stacks-height: stacks-block-height,
+                        blockchain-tenure-height: tenure-height
+                }
+        )
+    )
+)
+
 ;; Get combined data about a cycle, user's allocation, and blockchain status
 (define-read-only (get-cycle-user-status (cycle-id uint) (user principal))
   (let

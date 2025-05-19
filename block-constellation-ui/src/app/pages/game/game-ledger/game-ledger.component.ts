@@ -90,12 +90,24 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    * Load the current epoch data to determine which past epoch to display
    */
   loadCurrentEpoch(): void {
+    this.loadingLedger = true;
+    
     const subscription = this.blockConstellationContractService.getCurrentCycleId()
       .pipe(
         switchMap((currentEpochId: number | bigint) => {
           console.log('Current Epoch ID:', currentEpochId);
-          // Convert BigInt to number if needed
-          this.currentEpochId = typeof currentEpochId === 'bigint' ? Number(currentEpochId) : currentEpochId;
+          // Convert BigInt to number if needed and ensure it's a valid number
+          this.currentEpochId = typeof currentEpochId === 'bigint' 
+            ? this.safeParseNumber(Number(currentEpochId)) 
+            : this.safeParseNumber(currentEpochId);
+          
+          // No previous epochs if current is 0
+          if (this.currentEpochId <= 0) {
+            this.statusMessage = 'No previous epochs available yet';
+            this.statusType = 'info';
+            this.loadingLedger = false;
+            return of(null);
+          }
           
           // Load the previous completed epoch (current - 1)
           const completedEpochId = Math.max(0, this.currentEpochId - 1);
@@ -146,69 +158,68 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
       return of(cachedEpoch);
     }
     
-    // Get cycle data and winning constellation in parallel
-    return forkJoin({
-      cycleData: this.blockConstellationContractService.getCycle(epochId),
-      winningConstellation: this.blockConstellationContractService.getConstellation(epochId),
-      userAllocations: this.walletConnected ? 
-        this.blockConstellationContractService.getAllocatedByUser(
-          epochId, 
-          this.walletService.getSTXAddress()
-        ) : of({ claimed: false, constellationAllocation: [] })
-    }).pipe(
-      map(({ cycleData, winningConstellation, userAllocations }) => {
-        console.log(`Epoch ${epochId} data:`, { cycleData, winningConstellation, userAllocations });
+    // Use appropriate method based on wallet connection status
+    let cycleDataObservable: Observable<any>;
+    
+    if (this.walletConnected) {
+      // Use getCycleUserStatus when wallet is connected to get user-specific data
+      cycleDataObservable = this.blockConstellationContractService.getCycleUserStatus(
+        epochId,
+        this.walletService.getSTXAddress()
+      );
+    } else {
+      // Use getCycleStatus when wallet is not connected to get public data
+      cycleDataObservable = this.blockConstellationContractService.getCycleStatus(epochId);
+    }
+    
+    // Process the cycle data
+    return cycleDataObservable.pipe(
+      map((cycleData: any) => {
+        console.log(`Epoch ${epochId} data:`, cycleData);
         
         // Process user allocations
         const userAllocs: UserAllocation[] = [];
         let userWinningAllocation = 0;
         
-        // Convert winningConstellation from BigInt to number if needed
-        const winningConstellationNum = typeof winningConstellation === 'bigint' 
-          ? Number(winningConstellation) 
-          : winningConstellation;
+        // Get winning constellation from cycle data - ensure it's a valid number
+        const winningConstellationNum = this.safeParseNumber(cycleData.cycleWinningConstellation);
 
-        // Get total staked in the winning constellation
-        const totalWinningConstellationStake = cycleData.constellationAllocation && cycleData.constellationAllocation[winningConstellationNum] 
-          ? (typeof cycleData.constellationAllocation[winningConstellationNum] === 'bigint' 
-            ? Number(cycleData.constellationAllocation[winningConstellationNum]) 
-            : cycleData.constellationAllocation[winningConstellationNum])
-          : 0;
+        // Safely get array data with null checks
+        const constellationAllocations = Array.isArray(cycleData.cycleConstellationAllocation) 
+          ? cycleData.cycleConstellationAllocation 
+          : [];
         
-        // Get already claimed allocation amount - property is 'allocation-claimed' in the contract
-        const allocationClaimed = typeof cycleData['allocation-claimed'] === 'bigint' 
-          ? Number(cycleData['allocation-claimed']) 
-          : cycleData['allocation-claimed'] || 0;
+        // Get total staked in the winning constellation from the cycleConstellationAllocation array
+        const totalWinningConstellationStake = 
+          constellationAllocations[winningConstellationNum] 
+            ? this.safeParseNumber(constellationAllocations[winningConstellationNum]) 
+            : 0;
         
-        // Get already claimed prize amount - property is 'prize-claimed' in the contract
-        const prizeClaimed = typeof cycleData['prize-claimed'] === 'bigint' 
-          ? Number(cycleData['prize-claimed']) 
-          : cycleData['prize-claimed'] || 0;
-
-        // Get prize pool in sats
-        const prizeInSats = typeof cycleData.prize === 'bigint'
-          ? Number(cycleData.prize)
-          : cycleData.prize || 0;
+        // Get prize information with safe number conversion
+        const prizeInSats = this.safeParseNumber(cycleData.cyclePrize);
+        const prizeClaimed = this.safeParseNumber(cycleData.cyclePrizeClaimed);
+        const allocationClaimed = this.safeParseNumber(cycleData.cycleAllocationClaimed);
         
         // Remaining prize and allocation
-        const prizeRemained = prizeInSats - prizeClaimed;
-        const constellationAllocationRemained = totalWinningConstellationStake - allocationClaimed;
+        const prizeRemained = Math.max(0, prizeInSats - prizeClaimed);
+        const constellationAllocationRemained = Math.max(0, totalWinningConstellationStake - allocationClaimed);
 
-        if (userAllocations && userAllocations.constellationAllocation) {
-          userAllocations.constellationAllocation.forEach((amount, index) => {
-            if (amount > 0) {
-              // Convert amount from BigInt to number if needed
-              const amountNum = typeof amount === 'bigint' ? Number(amount) : amount;
+        // Process user allocations if available (when wallet is connected)
+        if (this.walletConnected && Array.isArray(cycleData.userConstellationAllocation)) {
+          cycleData.userConstellationAllocation.forEach((amount: number, index: number) => {
+            // Convert to number and check if greater than zero
+            const numAmount = this.safeParseNumber(amount);
+            if (numAmount > 0) {
               const isWinner = index === winningConstellationNum;
               userAllocs.push({
                 constellation: index,
                 constellationName: this.getConstellationName(index),
-                amount: amountNum,
+                amount: numAmount,
                 isWinner: isWinner
               });
               
               if (isWinner) {
-                userWinningAllocation = amountNum;
+                userWinningAllocation = numAmount;
               }
             }
           });
@@ -228,11 +239,14 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
         } else if (userWinningAllocation > 0) {
           // Even if the reward is claimed, we want to show what it was
           // Calculate user's percentage of the winning constellation
-          userAllocationPercentage = (userWinningAllocation / totalWinningConstellationStake) * 100;
+          userAllocationPercentage = totalWinningConstellationStake > 0 ? 
+            (userWinningAllocation / totalWinningConstellationStake) * 100 : 0;
           
           // For claimed rewards where we don't have the original amount,
           // we need to calculate an estimate based on the user's allocation percentage
-          if (userAllocations.claimed) {
+          const userClaimedStatus = cycleData.userClaimed === true;
+          
+          if (userClaimedStatus) {
             // When reward is claimed, we estimate based on total prize and user percentage
             userRewardAmount = (prizeInSats * userWinningAllocation) / totalWinningConstellationStake;
           } else if (constellationAllocationRemained > 0) {
@@ -242,33 +256,38 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
             // Safety check to ensure we don't exceed available prize (same as in smart contract)
             userRewardAmount = userRewardAmount > prizeRemained ? prizeRemained : userRewardAmount;
           }
+          
+          // Ensure we have a valid number
+          if (isNaN(userRewardAmount)) {
+            userRewardAmount = 0;
+          }
         }
         
-        // Create epoch details object
+        // Create epoch details object with safe number handling
         const epochDetails: EpochDetails = {
           id: epochId,
-          totalStakedPool: prizeInSats / 100000000, // Convert sats to BTC
+          totalStakedPool: prizeInSats > 0 ? prizeInSats / 100000000 : 0, // Convert sats to BTC safely
           winningConstellation: winningConstellationNum,
           winningConstellationName: this.getConstellationName(winningConstellationNum),
           userAllocations: userAllocs,
           userWinningAllocation: userWinningAllocation,
-          claimed: userAllocations.claimed,
+          claimed: cycleData.userClaimed === true,
           isCurrent: epochId === this.currentEpochId,
-          // Add new properties
+          // Add new properties with safe handling
           winningConstellationTotalStake: totalWinningConstellationStake,
           userRewardAmount: userRewardAmount,
-          userAllocationPercentage: userAllocationPercentage
+          userAllocationPercentage: isNaN(userAllocationPercentage) ? 0 : userAllocationPercentage
         };
         
         // Add debug information about claim status and reward calculation
         console.log(`Epoch ${epochId} details:`, {
-          rawClaimedValue: userAllocations.claimed,
+          rawClaimedValue: cycleData.userClaimed,
           epochDetailsClaimed: epochDetails.claimed,
           userWinningAllocation,
           totalWinningConstellationStake,
           userRewardAmount,
           userAllocationPercentage,
-          calculationMethod: userAllocations.claimed ? 'estimated from total prize' : 'calculated from remaining prize'
+          calculationMethod: cycleData.userClaimed ? 'estimated from total prize' : 'calculated from remaining prize'
         });
         
         // Add to our epochs cache - replace existing entry if found
@@ -407,7 +426,7 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    * Claim reward for the selected epoch
    */
   claimReward(): void {
-    if (!this.selectedEpoch || this.claimingReward) return;
+    if (!this.selectedEpoch || this.claimingReward || !this.walletConnected) return;
     
     this.claimingReward = true;
     this.statusMessage = 'Claiming your Cosmic Bounty...';
@@ -430,9 +449,19 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
             // Mark as claimed in our local state and preserve the reward amount
             if (this.selectedEpoch) {
               this.selectedEpoch.claimed = true;
+              
               // Preserve the reward amount and allocation percentage after claiming
-              this.selectedEpoch.userRewardAmount = claimedRewardAmount;
-              this.selectedEpoch.userAllocationPercentage = claimedAllocationPercentage;
+              // Ensure we have valid numbers
+              this.selectedEpoch.userRewardAmount = !isNaN(claimedRewardAmount) ? claimedRewardAmount : 0;
+              this.selectedEpoch.userAllocationPercentage = !isNaN(claimedAllocationPercentage) ? claimedAllocationPercentage : 0;
+              
+              // Update the cached epoch as well to keep the data consistent
+              const cachedEpochIndex = this.epochs.findIndex(e => e.id === epochId);
+              if (cachedEpochIndex !== -1) {
+                this.epochs[cachedEpochIndex].claimed = true;
+                this.epochs[cachedEpochIndex].userRewardAmount = this.selectedEpoch.userRewardAmount;
+                this.epochs[cachedEpochIndex].userAllocationPercentage = this.selectedEpoch.userAllocationPercentage;
+              }
             }
           } else if (response.error) {
             this.statusMessage = `Failed to claim reward: ${response.error}`;
@@ -476,6 +505,19 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
     }
     
     return canClaim;
+  }
+  
+  /**
+   * Helper method to safely parse numbers from blockchain data
+   * @param value The value to parse
+   * @param defaultValue The default value to return if parsing fails
+   * @returns The parsed number or default value
+   */
+  private safeParseNumber(value: any, defaultValue: number = 0): number {
+    if (value === undefined || value === null) return defaultValue;
+    
+    const parsed = Number(value);
+    return isNaN(parsed) ? defaultValue : parsed;
   }
   
   /**
