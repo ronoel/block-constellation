@@ -36,6 +36,36 @@ export interface ReferralReward {
     blockUpdate: number;
 }
 
+// New interfaces for cycle user status responses
+export interface CycleUserStatus {
+    cyclePrize: number;
+    cyclePrizeClaimed: number;
+    cycleConstellationAllocation: number[];
+    cycleAllocationClaimed: number;
+    cycleWinningConstellation: number;
+    cycleEndBlock: number;
+    userConstellationAllocation: number[];
+    userClaimed: boolean;
+    blockchainStacksHeight: number;
+    blockchainTenureHeight: number;
+}
+
+export interface CurrentCycleUserStatus extends Omit<CycleUserStatus, 'cycleWinningConstellation'> {
+    cycleId: number;
+}
+
+// New interface for current cycle data (without user-specific info)
+export interface CurrentCycleData {
+    cycleId: number;
+    cyclePrize: number;
+    cyclePrizeClaimed: number;
+    cycleConstellationAllocation: number[];
+    cycleAllocationClaimed: number;
+    cycleEndBlock: number;
+    blockchainStacksHeight: number;
+    blockchainTenureHeight: number;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -186,6 +216,177 @@ export class BlockConstellationContractService extends ContractUtil {
     }
 
     /**
+     * Read-only function to get cycle user status data
+     * @param cycleId The ID of the cycle
+     * @param userAddress The user's principal address
+     */
+    getCycleUserStatus(cycleId: number, userAddress: string): Observable<CycleUserStatus> {
+        return from(this.callReadOnlyFunction(
+            'get-cycle-user-status',
+            [
+                Cl.uint(cycleId),
+                Cl.principal(userAddress)
+            ]
+        )).pipe(
+            map((result: any) => {
+                const data = cvToValue(result);
+                console.log('Cycle user status data:', data);
+                
+                if (data && data.value) {
+                    // Extract constellation allocation array from both cycle and user
+                    let cycleConstellationAllocation: number[] = [];
+                    if (data.value['cycle-constellation-allocation'] && data.value['cycle-constellation-allocation'].value) {
+                        cycleConstellationAllocation = data.value['cycle-constellation-allocation'].value.map((allocation: any) => {
+                            return parseInt(allocation.value);
+                        });
+                    }
+                    
+                    let userConstellationAllocation: number[] = [];
+                    if (data.value['user-constellation-allocation'] && data.value['user-constellation-allocation'].value) {
+                        userConstellationAllocation = data.value['user-constellation-allocation'].value.map((allocation: any) => {
+                            return parseInt(allocation.value);
+                        });
+                    }
+                    
+                    return {
+                        cyclePrize: parseInt(data.value['cycle-prize']),
+                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']),
+                        cycleConstellationAllocation: cycleConstellationAllocation,
+                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']),
+                        cycleWinningConstellation: parseInt(data.value['cycle-winning-constellation']),
+                        cycleEndBlock: parseInt(data.value['cycle-end-block']),
+                        userConstellationAllocation: userConstellationAllocation,
+                        userClaimed: data.value['user-claimed'],
+                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']),
+                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height'])
+                    };
+                }
+                
+                return {
+                    cyclePrize: 0,
+                    cyclePrizeClaimed: 0,
+                    cycleConstellationAllocation: [],
+                    cycleAllocationClaimed: 0,
+                    cycleWinningConstellation: 0,
+                    cycleEndBlock: 0,
+                    userConstellationAllocation: [],
+                    userClaimed: false,
+                    blockchainStacksHeight: 0,
+                    blockchainTenureHeight: 0
+                };
+            })
+        );
+    }
+
+    /**
+     * Read-only function to get current cycle user status data
+     * @param userAddress The user's principal address
+     */
+    getCurrentCycleUserStatus(userAddress: string): Observable<CurrentCycleUserStatus> {
+        return from(this.callReadOnlyFunction(
+            'get-current-cycle-user-status',
+            [
+                Cl.principal(userAddress)
+            ]
+        )).pipe(
+            map((result: any) => {
+                const data = cvToValue(result);
+                console.log('Current cycle user status data:', data);
+                
+                if (data && data.value) {
+                    // Extract constellation allocation array from both cycle and user
+                    let cycleConstellationAllocation: number[] = [];
+                    if (data.value['cycle-constellation-allocation'] && data.value['cycle-constellation-allocation'].value) {
+                        cycleConstellationAllocation = data.value['cycle-constellation-allocation'].value.map((allocation: any) => {
+                            return parseInt(allocation.value);
+                        });
+                    }
+                    
+                    let userConstellationAllocation: number[] = [];
+                    if (data.value['user-constellation-allocation'] && data.value['user-constellation-allocation'].value) {
+                        userConstellationAllocation = data.value['user-constellation-allocation'].value.map((allocation: any) => {
+                            return parseInt(allocation.value);
+                        });
+                    }
+                    
+                    return {
+                        cycleId: parseInt(data.value['cycle-id']),
+                        cyclePrize: parseInt(data.value['cycle-prize']),
+                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']),
+                        cycleConstellationAllocation: cycleConstellationAllocation,
+                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']),
+                        cycleEndBlock: parseInt(data.value['cycle-end-block']),
+                        userConstellationAllocation: userConstellationAllocation,
+                        userClaimed: data.value['user-claimed'] || false,
+                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']),
+                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height'])
+                    };
+                }
+                
+                return {
+                    cycleId: 0,
+                    cyclePrize: 0,
+                    cyclePrizeClaimed: 0,
+                    cycleConstellationAllocation: [],
+                    cycleAllocationClaimed: 0,
+                    cycleEndBlock: 0,
+                    userConstellationAllocation: [],
+                    userClaimed: false,
+                    blockchainStacksHeight: 0,
+                    blockchainTenureHeight: 0
+                };
+            })
+        );
+    }
+
+    /**
+     * Read-only function to get current cycle data without user-specific information
+     */
+    getCurrentCycle(): Observable<CurrentCycleData> {
+        return from(this.callReadOnlyFunction(
+            'get-current-cycle',
+            []
+        )).pipe(
+            map((result: any) => {
+                const data = cvToValue(result);
+                console.log('Current cycle data:', data);
+                
+                if (data && data.value) {
+                    // Extract constellation allocation array
+                    let cycleConstellationAllocation: number[] = [];
+                    if (data.value['cycle-constellation-allocation'] && data.value['cycle-constellation-allocation'].value) {
+                        cycleConstellationAllocation = data.value['cycle-constellation-allocation'].value.map((allocation: any) => {
+                            return parseInt(allocation.value);
+                        });
+                    }
+                    
+                    return {
+                        cycleId: parseInt(data.value['cycle-id']),
+                        cyclePrize: parseInt(data.value['cycle-prize']),
+                        cyclePrizeClaimed: parseInt(data.value['cycle-prize-claimed']),
+                        cycleConstellationAllocation: cycleConstellationAllocation,
+                        cycleAllocationClaimed: parseInt(data.value['cycle-allocation-claimed']),
+                        cycleEndBlock: parseInt(data.value['cycle-end-block']),
+                        blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']),
+                        blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height'])
+                    };
+                }
+                
+                return {
+                    cycleId: 0,
+                    cyclePrize: 0,
+                    cyclePrizeClaimed: 0,
+                    cycleConstellationAllocation: [],
+                    cycleAllocationClaimed: 0,
+                    cycleEndBlock: 0,
+                    blockchainStacksHeight: 0,
+                    blockchainTenureHeight: 0
+                };
+            })
+        );
+    }
+
+    /**
      * Read-only function to get the current cycle ID
      */
     getCurrentCycleId(): Observable<number> {
@@ -193,7 +394,10 @@ export class BlockConstellationContractService extends ContractUtil {
             'get-current-cycle-id',
             []
         )).pipe(
-            map((result: any) => cvToValue(result))
+            map((result: any) => {
+                const data = cvToValue(result);
+                return data ? parseInt(data) : 0;
+            })
         );
     }
 

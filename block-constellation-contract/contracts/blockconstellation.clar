@@ -277,6 +277,87 @@
         (map-get? cycle cycle-id))
 )
 
+;; Get combined data about a cycle, user's allocation, and blockchain status
+(define-read-only (get-cycle-user-status (cycle-id uint) (user principal))
+  (let
+    (
+      (cycle-data (get-cycle cycle-id))
+      (user-allocation-data (get-allocated-by-user cycle-id user))
+      (current-cycle-id (get-current-cycle-id))
+      (cycle-end-block (get-constellation-block cycle-id))
+    )
+    (asserts! (< cycle-id current-cycle-id) ERR-PRECONDITION-FAILED)
+    (ok
+        {
+            cycle-prize: (get prize cycle-data),
+            cycle-prize-claimed: (get prize-claimed cycle-data),
+            cycle-constellation-allocation: (get constellation-allocation cycle-data),
+            cycle-allocation-claimed: (get allocation-claimed cycle-data),
+            cycle-winning-constellation: (get-constellation cycle-id),
+            cycle-end-block: cycle-end-block,
+            user-constellation-allocation: (get constellation-allocation user-allocation-data),
+            user-claimed: (get claimed user-allocation-data),
+            blockchain-stacks-height: stacks-block-height,
+            blockchain-tenure-height: tenure-height
+        }
+    )
+  )
+)
+
+;; Get data about the current cycle and user's allocation
+(define-read-only (get-current-cycle-user-status (user principal))
+    (let
+        (
+            (current-cycle-id (get-current-cycle-id))
+            (cycle-data (get-cycle current-cycle-id))
+            (user-allocation-data (get-allocated-by-user current-cycle-id user))
+            (cycle-end-block (get-constellation-block current-cycle-id))
+        )
+        (ok
+            {
+                cycle-id: current-cycle-id,
+                cycle-prize: 
+                    (if (is-eq (get prize cycle-data) u0)
+                        (/ (var-get treasury) (var-get treasury-distribution-period))
+                        (get prize cycle-data)),
+                cycle-prize-claimed: (get prize-claimed cycle-data),
+                cycle-constellation-allocation: (get constellation-allocation cycle-data),
+                cycle-allocation-claimed: (get allocation-claimed cycle-data),
+                cycle-end-block: cycle-end-block,
+                user-constellation-allocation: (get constellation-allocation user-allocation-data),
+                blockchain-stacks-height: stacks-block-height,
+                blockchain-tenure-height: tenure-height
+            }
+        )
+    )
+)
+
+;; Get data about the current cycle without user allocation information
+(define-read-only (get-current-cycle)
+    (let
+        (
+            (current-cycle-id (get-current-cycle-id))
+            (cycle-data (get-cycle current-cycle-id))
+            (cycle-end-block (get-constellation-block current-cycle-id))
+        )
+        (ok
+            {
+                cycle-id: current-cycle-id,
+                cycle-prize: 
+                    (if (is-eq (get prize cycle-data) u0)
+                        (/ (var-get treasury) (var-get treasury-distribution-period))
+                        (get prize cycle-data)),
+                cycle-prize-claimed: (get prize-claimed cycle-data),
+                cycle-constellation-allocation: (get constellation-allocation cycle-data),
+                cycle-allocation-claimed: (get allocation-claimed cycle-data),
+                cycle-end-block: cycle-end-block,
+                blockchain-stacks-height: stacks-block-height,
+                blockchain-tenure-height: tenure-height
+            }
+        )
+    )
+)
+
 ;; ========================================
 ;; Public Functions
 ;; ========================================
