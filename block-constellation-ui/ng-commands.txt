@@ -8,8 +8,7 @@ ng generate component /pages/game/game-ledger --skip-tests
 ng generate component /pages/game/game-refer-friend --skip-tests
 
 
-ng generate service shared/services/allocate-status
+ng generate component shared/components/connect-wallet --skip-tests
 
-ng generate service shared/services/fbtc-token
-ng generate service shared/services/stx-market
-ng generate service shared/services/transaction-info
+
+ng generate service shared/services/allocate-status

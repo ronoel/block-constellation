@@ -6,6 +6,7 @@ import { BlockConstellationContractService } from '../../../libs/block-constella
 import { sBTCTokenService } from '../../../libs/sbtc-token.service';
 import { AllocateStatusService, AllocationTransaction } from '../../../shared/services/allocate-status.service';
 import { Subscription } from 'rxjs';
+import { ConnectWalletComponent } from '../../../shared/components/connect-wallet/connect-wallet.component';
 
 // Interfaces
 interface Constellation {
@@ -28,7 +29,9 @@ interface UserAllocation {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ConnectWalletComponent,
+    ConnectWalletComponent
   ],
   templateUrl: './game-current.component.html',
   styleUrl: './game-current.component.scss'
@@ -512,9 +515,15 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   
   hasPendingTransaction(constellationId: number): boolean {
     // Don't check for pending transactions if wallet is not connected
-    if (!this.isWalletAvailable()) return false;
+    if (!this.isWalletAvailable()) {
+      return false;
+    }
     
     const pendingTransactions = this.allocateStatusService.getPendingTransactions();
     return pendingTransactions.some(tx => tx.constellation === constellationId);
+  }
+  
+  connectWallet(): void {
+    this.walletService.signIn();
   }
 }
