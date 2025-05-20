@@ -39,20 +39,34 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     
     effect(() => {
+      // We'll need to initially show the page even if wallet is not connected
+      // so we can reduce the loading time
+      setTimeout(() => {
+        this.isLoading = false;
+      }, 300);
+      
       if (this.walletService.isLoggedIn()) {
         this.walletConnected = true;
         this.walletAddress = this.walletService.getSTXAddress();
         this.generateReferralLink();
         this.checkReferralReward();
+        // Clear the info message if it was previously set
+        if (this.statusType === 'info' && this.statusMessage.includes('connect your wallet')) {
+          this.statusMessage = '';
+          this.statusType = '';
+        }
       } else {
         this.walletConnected = false;
         this.walletAddress = '';
         this.referralLink = '';
         this.hasReferralReward = false;
         this.referralReward = null;
-        this.isLoading = false;
-        this.statusMessage = 'Please connect your wallet to generate a referral link';
-        this.statusType = 'info';
+        // Since we're showing the program info even without wallet connected,
+        // we'll make the status message less prominent
+        if (!this.statusMessage) {
+          this.statusMessage = 'Connect your wallet to generate a unique referral link';
+          this.statusType = 'info';
+        }
       }
     });
   }

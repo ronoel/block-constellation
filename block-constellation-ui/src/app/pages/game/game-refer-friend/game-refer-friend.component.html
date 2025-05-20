@@ -14,6 +14,29 @@
       {{ statusMessage }}
     </div>
 
+    <!-- Intro Section - Always visible -->
+    <div class="cosmic-card intro-section">
+      <div class="cosmic-header">
+        <div class="header-icon">🌠</div>
+        <h2>Cosmic Referral Program</h2>
+      </div>
+      
+      <p class="intro-text">
+        Share the celestial experience with your friends! When someone allocates tokens through your referral link, 
+        you'll earn 5% of their allocation in cosmic rewards.
+      </p>
+      
+      <div class="referral-tips">
+        <h4>How it works:</h4>
+        <ul>
+          <li>Share your referral link with friends</li>
+          <li>When they join and allocate tokens, you earn 5% rewards</li>
+          <li>No limit to how many friends you can refer</li>
+          <li>Rewards are accumulated and can be claimed at any time</li>
+        </ul>
+      </div>
+    </div>
+  
     <!-- Wallet Connection Prompt -->
     <div class="wallet-connection-prompt" *ngIf="!walletConnected">
       <div class="cosmic-card">
@@ -25,19 +48,6 @@
 
     <!-- Referral Content -->
     <div class="referral-content" *ngIf="walletConnected">
-      <!-- Intro Section -->
-      <div class="cosmic-card intro-section">
-        <div class="cosmic-header">
-          <div class="header-icon">🌠</div>
-          <h2>Cosmic Referral Program</h2>
-        </div>
-        
-        <p class="intro-text">
-          Share the celestial experience with your friends! When someone allocates tokens through your referral link, 
-          you'll earn 5% of their allocation in cosmic rewards.
-        </p>
-      </div>
-
       <!-- Referral Link Section -->
       <div class="cosmic-card referral-link-section">
         <h3>Your Cosmic Referral Link</h3>
@@ -50,16 +60,6 @@
             <span *ngIf="!isCopied">Copy Link</span>
             <span *ngIf="isCopied">Copied! ✓</span>
           </button>
-        </div>
-        
-        <div class="referral-tips">
-          <h4>How it works:</h4>
-          <ul>
-            <li>Share your referral link with friends</li>
-            <li>When they join and allocate tokens, you earn 5% rewards</li>
-            <li>No limit to how many friends you can refer</li>
-            <li>Rewards are accumulated and can be claimed at any time</li>
-          </ul>
         </div>
       </div>
 
