@@ -516,6 +516,40 @@
     )
 )
 
+(define-public (recover-zero-winner-cycle (cycle-id uint))
+    (begin 
+        ;; This function allows recovering prizes from cycles with no winners
+        ;; Anyone can call this function
+        
+        ;; Ensure the cycle is finished
+        (asserts! (< cycle-id (get-current-cycle-id)) ERR-CYCLE-NOT-FINISHED)
+        
+        (let (
+            (cycle-data (get-cycle cycle-id))
+            (winning-constellation (get-constellation cycle-id))
+            (total-constellation-allocation (unwrap-panic (element-at? (get constellation-allocation cycle-data) winning-constellation)))
+            (unclaimed-prize (- (get prize cycle-data) (get prize-claimed cycle-data)))
+        )
+            ;; Check that there's unclaimed prize to recover
+            (asserts! (> unclaimed-prize u0) ERR-NO-UNCLAIMED-PRIZE)
+            
+            ;; Check that there was no allocation to the winning constellation
+            (asserts! (is-eq total-constellation-allocation u0) ERR-PRECONDITION-FAILED)
+            
+            ;; Update the cycle data to mark all prize as claimed
+            (map-set cycle cycle-id 
+                (merge cycle-data { 
+                    prize-claimed: (get prize cycle-data)
+                }))
+            
+            ;; Add the unclaimed prize back to the treasury
+            (var-set treasury (+ (var-get treasury) unclaimed-prize))
+            
+            (ok unclaimed-prize)
+        )
+    )
+)
+
 (define-public (allocate (amount uint) (constellation uint) (referral-user principal))
     (begin 
         ;; This is the core function for users to participate in a cycle

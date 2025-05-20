@@ -289,6 +289,57 @@ describe("Finance and Allocation Tests", () => {
     // retroactively allocate to a past cycle in our test, we'll just verify the error is not success
     expect(claimNoAllocationResult.result).toHaveClarityType(ClarityType.ResponseErr);
   });
+
+  it("Can recover prize from a cycle with zero winners", () => {
+    // Reset allocation percentages to predictable values
+    setAllocationPercentages(50, 25, 15, 10, deployer);
+    
+    // Mint tokens for user
+    const allocAmount = 5000000;
+    mintToken(allocAmount, address1);
+    
+    // Get the current cycle ID
+    const currentCycleId = Number(cvToValue(getCurrentCycleId().result));
+    
+    // Determine a constellation that won't win
+    // First, allocate a small amount to get a cycle started
+    const allocResult = allocate(allocAmount, 0, address1, deployer);
+    expect(allocResult.result).toHaveClarityType(ClarityType.ResponseOk);
+    
+    // Get prize amount in cycle
+    const cycleBeforeEnd = getCycle(currentCycleId);
+    const prizeAmount = Number(cvToJSON(cycleBeforeEnd.result).value.prize.value);
+    expect(prizeAmount).toBeGreaterThan(0);
+    
+    // Mine blocks to end the cycle
+    simnet.mineEmptyBlocks(150);
+    
+    // Get the winning constellation for the cycle that just ended
+    const winningConstellation = Number(cvToValue(getConstellation(currentCycleId).result));
+    console.log(`Winning constellation: ${winningConstellation}`);
+
+    // Get initial treasury value
+    const initialTreasury = Number(cvToValue(getTreasury().result));
+    
+    // Verify no allocation was made to winning constellation
+    const cycleAfterEnd = getCycle(currentCycleId);
+    const constellationAllocations = cvToJSON(cycleAfterEnd.result).value["constellation-allocation"].value;
+    const winningConstellationAllocation = Number(constellationAllocations[winningConstellation].value);
+    expect(winningConstellationAllocation).toBe(0);
+    
+    // Now try to recover the zero-winner cycle
+    const recoverResult = recoverZeroWinnerCycle(currentCycleId, deployer);
+    expect(recoverResult.result).toHaveClarityType(ClarityType.ResponseOk);
+    
+    // Verify prize was returned to treasury
+    const finalTreasury = Number(cvToValue(getTreasury().result));
+    expect(finalTreasury).toBe(initialTreasury + prizeAmount);
+    
+    // Verify the cycle prize is now marked as claimed
+    const cycleAfterRecover = getCycle(currentCycleId);
+    const cycleData = cvToJSON(cycleAfterRecover.result).value;
+    expect(Number(cycleData.prize.value)).toBe(Number(cycleData["prize-claimed"].value));
+  });
 });
 
 describe("Cycle and Tracking Tests", () => {
@@ -583,6 +634,15 @@ function claimReward(cycleId: number, sender: string) {
   return simnet.callPublicFn(
     CONTRACT_NAME,
     "claim-reward",
+    [Cl.uint(cycleId)],
+    sender
+  );
+}
+
+function recoverZeroWinnerCycle(cycleId: number, sender: string) {
+  return simnet.callPublicFn(
+    CONTRACT_NAME,
+    "recover-zero-winner-cycle",
     [Cl.uint(cycleId)],
     sender
   );
