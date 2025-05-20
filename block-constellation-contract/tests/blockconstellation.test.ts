@@ -339,6 +339,11 @@ describe("Finance and Allocation Tests", () => {
     const cycleAfterRecover = getCycle(currentCycleId);
     const cycleData = cvToJSON(cycleAfterRecover.result).value;
     expect(Number(cycleData.prize.value)).toBe(Number(cycleData["prize-claimed"].value));
+    
+    // Try to recover the same cycle again - should fail with ERR_NO_UNCLAIMED_PRIZE
+    const recoverAgainResult = recoverZeroWinnerCycle(currentCycleId, deployer);
+    expect(recoverAgainResult.result).toHaveClarityType(ClarityType.ResponseErr);
+    expect(recoverAgainResult.result).toBeErr(ERR_NO_UNCLAIMED_PRIZE);
   });
 });
 
