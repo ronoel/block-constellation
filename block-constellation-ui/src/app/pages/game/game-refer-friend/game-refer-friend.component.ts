@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/wallet.service';
@@ -35,19 +35,30 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
   // Subscriptions
   private subscriptions: Subscription[] = [];
   
-  ngOnInit(): void {
-    // Check if wallet is connected
-    this.walletConnected = this.walletService.isLoggedIn();
+  constructor() {
+    this.isLoading = true;
     
-    if (this.walletConnected) {
-      this.walletAddress = this.walletService.getSTXAddress();
-      this.generateReferralLink();
-      this.checkReferralReward();
-    } else {
-      this.isLoading = false;
-      this.statusMessage = 'Please connect your wallet to generate a referral link';
-      this.statusType = 'info';
-    }
+    effect(() => {
+      if (this.walletService.isLoggedIn()) {
+        this.walletConnected = true;
+        this.walletAddress = this.walletService.getSTXAddress();
+        this.generateReferralLink();
+        this.checkReferralReward();
+      } else {
+        this.walletConnected = false;
+        this.walletAddress = '';
+        this.referralLink = '';
+        this.hasReferralReward = false;
+        this.referralReward = null;
+        this.isLoading = false;
+        this.statusMessage = 'Please connect your wallet to generate a referral link';
+        this.statusType = 'info';
+      }
+    });
+  }
+  
+  ngOnInit(): void {
+    // Initialize is handled in constructor with effect
   }
   
   /**

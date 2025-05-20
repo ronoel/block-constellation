@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/wallet.service';
@@ -100,11 +100,20 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   // Subscriptions
   private subscriptions = new Subscription();
   
-  ngOnInit(): void {
-    // Check if wallet is connected
-    this.walletConnected = this.walletService.isLoggedIn();
+  constructor() {
+    this.updateLoadingState(true);
     
-    // Subscribe to route params to get the epoch ID
+    effect(() => {
+      // Update wallet connection status whenever it changes
+      this.walletConnected = this.walletService.isLoggedIn();
+      
+      // No immediate data loading here as we'll rely on the route params subscription
+      // to determine which epoch to load, regardless of wallet connection status
+    });
+  }
+  
+  ngOnInit(): void {
+    // Subscribe to route params to get the epoch ID and load appropriate data
     this.subscriptions.add(
       this.route.paramMap.pipe(
         switchMap(params => {
