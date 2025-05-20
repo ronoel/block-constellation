@@ -4,13 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/wallet.service';
 import { BlockConstellationContractService, ReferralReward } from '../../../libs/block-constellation-contract.service';
 import { Subscription } from 'rxjs';
+import { ConnectWalletComponent } from '../../../shared/components/connect-wallet/connect-wallet.component';
 
 @Component({
   selector: 'app-game-refer-friend',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    ConnectWalletComponent
   ],
   templateUrl: './game-refer-friend.component.html',
   styleUrl: './game-refer-friend.component.scss'
@@ -183,6 +185,15 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
       this.statusMessage = '';
       this.statusType = '';
     }, delay);
+  }
+  
+  /**
+   * Connect the user's wallet when button is clicked in the ConnectWalletComponent
+   */
+  connectWallet(): void {
+    this.walletService.signIn();
+    this.statusMessage = 'Connecting to your wallet...';
+    this.statusType = 'info';
   }
   
   ngOnDestroy(): void {

@@ -38,13 +38,13 @@
     </div>
   
     <!-- Wallet Connection Prompt -->
-    <div class="wallet-connection-prompt" *ngIf="!walletConnected">
-      <div class="cosmic-card">
-        <h2>Connect to the Cosmos</h2>
-        <p>Please connect your wallet to generate your referral link and start earning rewards</p>
-        <button class="cosmic-button">Connect Wallet</button>
-      </div>
-    </div>
+    <app-connect-wallet 
+      *ngIf="!walletConnected" 
+      title="Connect to the Cosmos"
+      description="Please connect your wallet to generate your referral link and start earning rewards"
+      buttonText="Connect Wallet"
+      (connectWallet)="connectWallet()">
+    </app-connect-wallet>
 
     <!-- Referral Content -->
     <div class="referral-content" *ngIf="walletConnected">
