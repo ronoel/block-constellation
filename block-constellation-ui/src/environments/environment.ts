@@ -9,6 +9,7 @@ export const environment = {
         contractAddress: 'SP3QZNX3CGT6V7PE1PBK17FCRK1TP1AT02ZHQCMVJ',
         contractName: 'blockconstellation',
     },
+    referralAddress: 'SP1E6P0KM6BEWF1CJQGGJXER0WG58JDZ32YYCN95R',
     supportedAsset: {
         sBTC: {
             contractAddress: 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4',

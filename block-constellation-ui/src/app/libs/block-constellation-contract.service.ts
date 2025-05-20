@@ -507,6 +507,7 @@ export class BlockConstellationContractService extends ContractUtil {
         
         // Determine which referral to use
         let finalReferralUser = referralUser;
+        let referralPrincipal = Cl.principal(environment.referralAddress);
         
         // If no direct referral passed but found one in localStorage
         if (!finalReferralUser && storedReferralData) {
@@ -517,12 +518,7 @@ export class BlockConstellationContractService extends ContractUtil {
                 // Check if the referral has expired
                 if (referralData.expiration && referralData.expiration > currentTime) {
                     // Referral is still valid
-                    if (ClarityUtil.isValidStacksAddress(referralData.value)) {
-                        finalReferralUser = referralData.value;
-                        console.log('Using stored referral from localStorage:', finalReferralUser);
-                    } else {
-                        console.warn('Invalid stored referral address found in localStorage:', referralData.value);
-                    }
+                    referralPrincipal = Cl.principal(referralData.value);
                 } else {
                     // Referral has expired, remove it
                     console.log('Stored referral has expired, removing it');
@@ -531,12 +527,9 @@ export class BlockConstellationContractService extends ContractUtil {
             } catch (e) {
                 console.error('Error parsing stored referral data:', e);
                 localStorage.removeItem('referral');
+                referralPrincipal = Cl.principal(this.walletService.getSTXAddress());
             }
         }
-        
-        const referralPrincipal = finalReferralUser ? 
-            Cl.principal(finalReferralUser) :
-            Cl.principal(this.walletService.getSTXAddress());
 
         const ftPostCondition: FungiblePostCondition = {
             type: 'ft-postcondition',
