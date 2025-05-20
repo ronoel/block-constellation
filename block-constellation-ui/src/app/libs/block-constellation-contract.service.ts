@@ -11,6 +11,7 @@ import {
 } from '@stacks/transactions';
 import { ContractUtil } from './contract.util';
 import { sBTCTokenService } from './sbtc-token.service';
+import { ClarityUtil } from './clarity.util';
 
 export interface BlockConstellationResponse {
     txid?: string;
@@ -501,8 +502,40 @@ export class BlockConstellationContractService extends ContractUtil {
      * @param referralUser The optional referral user address
      */
     allocate(amount: number, constellation: number, referralUser?: string): Observable<BlockConstellationResponse> {
-        const referralPrincipal = referralUser ? 
-            Cl.principal(referralUser) :
+        // Check localStorage for a stored referral
+        const storedReferralData = localStorage.getItem('referral');
+        
+        // Determine which referral to use
+        let finalReferralUser = referralUser;
+        
+        // If no direct referral passed but found one in localStorage
+        if (!finalReferralUser && storedReferralData) {
+            try {
+                const referralData = JSON.parse(storedReferralData);
+                const currentTime = new Date().getTime();
+                
+                // Check if the referral has expired
+                if (referralData.expiration && referralData.expiration > currentTime) {
+                    // Referral is still valid
+                    if (ClarityUtil.isValidStacksAddress(referralData.value)) {
+                        finalReferralUser = referralData.value;
+                        console.log('Using stored referral from localStorage:', finalReferralUser);
+                    } else {
+                        console.warn('Invalid stored referral address found in localStorage:', referralData.value);
+                    }
+                } else {
+                    // Referral has expired, remove it
+                    console.log('Stored referral has expired, removing it');
+                    localStorage.removeItem('referral');
+                }
+            } catch (e) {
+                console.error('Error parsing stored referral data:', e);
+                localStorage.removeItem('referral');
+            }
+        }
+        
+        const referralPrincipal = finalReferralUser ? 
+            Cl.principal(finalReferralUser) :
             Cl.principal(this.walletService.getSTXAddress());
 
         const ftPostCondition: FungiblePostCondition = {

@@ -56,4 +56,29 @@ export class ClarityUtil {
             throw new Error('Contract call did not return a successful response');
         }
     }
+
+    static isValidStacksAddress(address: string): boolean {
+        // Check if the address is a string and has the right length
+        if (typeof address !== 'string' || address.length !== 40) {
+            return false;
+        }
+
+        // Check if prefix is valid
+        const prefix = address.substring(0, 2);
+        const validPrefixes = ['SP', 'SM', 'ST', 'SN'];
+        if (!validPrefixes.includes(prefix)) {
+            return false;
+        }
+
+        // Check if the remaining characters are valid Base58
+        const base58Chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        const addressBody = address.substring(2);
+        for (let i = 0; i < addressBody.length; i++) {
+            if (!base58Chars.includes(addressBody[i])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
