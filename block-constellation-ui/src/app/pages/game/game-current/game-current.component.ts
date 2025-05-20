@@ -101,11 +101,12 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
 
   constructor() {
     this.loadingPage = true;
-    this.resetUserAllocationData();
+    
 
     effect(() => {
       if (this.walletService.isLoggedIn()) {
         this.walletConnected = true;
+        this.resetUserAllocationData();
         this.loadUserData();
       } else {
         this.walletConnected = false;
@@ -116,14 +117,6 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Initialize wallet status
-    this.walletConnected = this.walletService.isLoggedIn();
-    
-    // If wallet is not connected, immediately load public data
-    if (!this.walletConnected) {
-      this.resetUserAllocationData();
-      this.loadPublicData();
-    }
   }
   
   // Load data when user is logged in
