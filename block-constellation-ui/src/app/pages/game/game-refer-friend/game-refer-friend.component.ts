@@ -55,7 +55,7 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
    */
   generateReferralLink(): void {
     // Get the current URL without parameters
-    const baseUrl = window.location.origin + '/game';
+    const baseUrl = window.location.origin + '/play';
     this.referralLink = `${baseUrl}?ref=${this.walletAddress}`;
   }
   
