@@ -111,7 +111,7 @@
 
 // Top-up alert
 .top-up-alert {
-  background-color: rgba(227, 72, 80, 0.1); /* Using error color with alpha */
+  background-color: rgba(227, 72, 80, 0.1);
   border-left: 4px solid var(--error);
   padding: 10px 0;
   margin: 20px 0;
@@ -212,11 +212,6 @@
       
       td {
         border-bottom: 1px solid rgba(176, 184, 193, 0.1);
-      }
-      
-      tfoot td {
-        border-bottom: none;
-        font-weight: 600;
       }
     }
   }
@@ -328,14 +323,6 @@
       justify-content: space-between;
       margin-bottom: 8px;
       font-size: 14px;
-      
-      .label {
-        color: var(--text-secondary);
-      }
-      
-      .value {
-        font-weight: 500;
-      }
     }
     
     .btn-stake {
