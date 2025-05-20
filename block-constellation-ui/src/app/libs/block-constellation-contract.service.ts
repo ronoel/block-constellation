@@ -321,7 +321,7 @@ export class BlockConstellationContractService extends ContractUtil {
                         cycleWinningConstellation: parseInt(data.value['cycle-winning-constellation']?.value) || 0,
                         cycleEndBlock: parseInt(data.value['cycle-end-block']?.value) || 0,
                         userConstellationAllocation: userConstellationAllocation,
-                        userClaimed: data.value['user-claimed'] === true || false,
+                        userClaimed: data.value['user-claimed']?.value,
                         blockchainStacksHeight: parseInt(data.value['blockchain-stacks-height']?.value) || 0,
                         blockchainTenureHeight: parseInt(data.value['blockchain-tenure-height']?.value) || 0
                     };
