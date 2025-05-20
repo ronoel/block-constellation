@@ -330,16 +330,9 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
       userAllocationPercentage = totalWinningConstellationStake > 0 ? 
         (userWinningAllocation / totalWinningConstellationStake) * 100 : 0;
       
-      if (isUserClaimed) {
-        // When reward is claimed, estimate based on total prize and user percentage
-        userRewardAmount = (prizeInSats * userWinningAllocation) / totalWinningConstellationStake;
-      } else if (constellationAllocationRemained > 0) {
-        // For unclaimed rewards, use the original formula
-        userRewardAmount = (prizeRemained * userWinningAllocation) / constellationAllocationRemained;
-        
-        // Safety check to ensure we don't exceed available prize (same as in smart contract)
-        userRewardAmount = Math.min(userRewardAmount, prizeRemained);
-      }
+      // Calculate reward based on percentage of total prize, regardless of claimed status
+      // This ensures we always show the total amount user has the right to claim
+      userRewardAmount = (prizeInSats * userWinningAllocation) / totalWinningConstellationStake;
       
       // Ensure we have a valid number
       userRewardAmount = isNaN(userRewardAmount) ? 0 : userRewardAmount;
