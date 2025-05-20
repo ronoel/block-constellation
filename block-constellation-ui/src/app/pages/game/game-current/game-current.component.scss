@@ -235,29 +235,26 @@
     pointer-events: none;
   }
   
-  .wallet-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 5;
-    pointer-events: auto;
+  // New connect wallet banner that replaces the overlay
+  .connect-wallet-banner {
+    grid-column: 1 / -1;
+    background: linear-gradient(90deg, rgba(30, 42, 71, 0.8), rgba(30, 42, 71, 0.9));
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    @include card-shadow;
     
-    .overlay-content {
-      background-color: rgba(30, 42, 71, 0.9);
-      padding: 30px;
-      border-radius: 12px;
-      text-align: center;
-      max-width: 400px;
-      @include card-shadow;
+    .banner-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
       
       p {
-        margin: 0 0 20px;
-        font-size: 18px;
+        margin: 0;
+        font-size: 16px;
+        font-weight: 500;
       }
       
       .btn-connect {
@@ -265,18 +262,33 @@
         color: var(--text-primary);
         border: none;
         border-radius: 6px;
-        padding: 12px 30px;
-        font-size: 16px;
+        padding: 10px 25px;
+        font-size: 15px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         
         &:hover {
           transform: translateY(-2px);
-          @include card-shadow;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
       }
     }
+  }
+}
+
+// New connect prompt for individual cards when wallet is disconnected
+.connect-prompt {
+  background-color: rgba(30, 42, 71, 0.3);
+  border-radius: 6px;
+  padding: 8px;
+  margin-top: 12px;
+  text-align: center;
+  
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
   }
 }
 

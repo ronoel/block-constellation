@@ -76,10 +76,10 @@
   <!-- Constellation Grid -->
   <div class="constellation-section">
     <div class="container">
-      <div class="constellation-grid" [class.wallet-disconnected]="!walletConnected">
-        <!-- Wallet Disconnected Overlay -->
-        <div class="wallet-overlay" *ngIf="!walletConnected">
-          <div class="overlay-content">
+      <div class="constellation-grid">
+        <!-- Connect Wallet Banner (instead of overlay) -->
+        <div class="connect-wallet-banner" *ngIf="!walletConnected">
+          <div class="banner-content">
             <p>Connect your wallet to stake on constellations</p>
             <button class="btn-connect">Connect Wallet</button>
           </div>
@@ -88,8 +88,8 @@
         <!-- Constellation Cards -->
         <div class="constellation-card" 
              *ngFor="let constellation of constellations" 
-             [class.has-stake]="constellation.yourStake > 0"
-             [class.has-pending]="hasPendingTransaction(constellation.id)"
+             [class.has-stake]="walletConnected && constellation.yourStake > 0"
+             [class.has-pending]="walletConnected && hasPendingTransaction(constellation.id)"
              (click)="walletConnected && selectConstellation(constellation)">
           <div class="card-content">
             <h3 class="constellation-name">{{ constellation.name }}</h3>
@@ -100,25 +100,33 @@
                 {{ formatBTC(constellation.totalStaked) }} BTC staked
               </div>
               
-              <div class="your-stake" *ngIf="constellation.yourStake > 0">
-                Your stake: {{ formatSats(constellation.yourStake) }} sats
-              </div>
+              <!-- User-specific data only shown when wallet is connected -->
+              <ng-container *ngIf="walletConnected">
+                <div class="your-stake" *ngIf="constellation.yourStake > 0">
+                  Your stake: {{ formatSats(constellation.yourStake) }} sats
+                </div>
+                
+                <div class="your-share" *ngIf="constellation.yourStake > 0">
+                  Your share: {{ (constellation.yourShare * 100).toFixed(2) }}%
+                </div>
+                
+                <div class="pending-indicator" *ngIf="hasPendingTransaction(constellation.id)">
+                  <span class="status-indicator pending"></span> Transaction Pending
+                </div>
+                
+                <button class="btn-stake">
+                  {{ constellation.yourStake > 0 ? 'Add Stake' : 'Stake' }}
+                </button>
+              </ng-container>
               
-              <div class="your-share" *ngIf="constellation.yourStake > 0">
-                Your share: {{ (constellation.yourShare * 100).toFixed(2) }}%
+              <!-- For unconnected wallets, show a prompt instead of stake button -->
+              <div class="connect-prompt" *ngIf="!walletConnected">
+                <p>Connect wallet to stake</p>
               </div>
-              
-              <div class="pending-indicator" *ngIf="hasPendingTransaction(constellation.id)">
-                <span class="status-indicator pending"></span> Transaction Pending
-              </div>
-              
-              <button class="btn-stake" *ngIf="walletConnected">
-                {{ constellation.yourStake > 0 ? 'Add Stake' : 'Stake' }}
-              </button>
             </div>
           </div>
           
-          <div class="stake-tag" *ngIf="constellation.yourStake > 0">
+          <div class="stake-tag" *ngIf="walletConnected && constellation.yourStake > 0">
             Staked
           </div>
         </div>

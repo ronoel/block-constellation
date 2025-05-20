@@ -84,7 +84,7 @@ export abstract class ContractUtil {
       network: environment.network as StacksNetworkName, // This is now properly typed
       // client: { baseUrl: environment.blockchainAPIUrl }, // optional, defaults inferred from network
       // client: { baseUrl: 'https://api.platform.hiro.so/v1/ext/d1087667a742b16e54ea8a64f12dbc28/stacks-blockchain-api' }, // optional, defaults inferred from network
-      senderAddress: this.walletService.getSTXAddress()
+      senderAddress: this.contractAddress
     };
   }
   // { contractName, contractAddress, functionName, functionArgs, senderAddress, network, client: _client, 

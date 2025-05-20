@@ -109,13 +109,21 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
         this.loadUserData();
       } else {
         this.walletConnected = false;
+        this.resetUserAllocationData(); // Reset user data when wallet is disconnected
         this.loadPublicData();
       }
     });
   }
 
   ngOnInit(): void {
+    // Initialize wallet status
+    this.walletConnected = this.walletService.isLoggedIn();
     
+    // If wallet is not connected, immediately load public data
+    if (!this.walletConnected) {
+      this.resetUserAllocationData();
+      this.loadPublicData();
+    }
   }
   
   // Load data when user is logged in
@@ -150,18 +158,27 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Error fetching current cycle user status:', error);
-            this.loadingPage = false;
+            this.resetUserAllocationData();
+            // Fall back to public data on error
+            this.loadPublicData();
           }
         });
       
       this.subscriptions.push(cycleSubscription);
     } else {
+      // Reset user data when wallet address is not available
+      this.resetUserAllocationData();
       this.loadingPage = false;
+      // Load public data instead
+      this.loadPublicData();
     }
   }
   
   // Load data when user is not logged in
   private loadPublicData(): void {
+    // Make sure we reset user data when loading public data
+    this.resetUserAllocationData();
+    
     const cycleSubscription = this.blockConstellationContractService
       .getCurrentCycle()
       .subscribe({
@@ -321,7 +338,11 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   
   // Fetch the user's sBTC balance
   fetchUserBalance(): void {
-    if (!this.walletConnected) return;
+    if (!this.walletConnected || !this.walletService.isLoggedIn()) {
+      this.feeBalance = 0;
+      this.isLoadingBalance = false;
+      return;
+    }
     
     this.isLoadingBalance = true;
     
@@ -415,7 +436,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   
   // Refresh user data after successful stake
   private refreshUserData(): void {
-    if (this.walletConnected) {
+    if (this.walletConnected && this.walletService.isLoggedIn()) {
       const userAddress = this.walletService.getSTXAddress();
       if (userAddress) {
         this.blockConstellationContractService
@@ -440,11 +461,19 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
                 cycleUserStatus.blockchainTenureHeight
               );
             },
-            error: (error) => console.error('Error refreshing cycle data:', error)
+            error: (error) => {
+              console.error('Error refreshing cycle data:', error);
+              // Fall back to public data on error
+              this.loadPublicData();
+            }
           });
         
         this.fetchUserBalance();
+      } else {
+        this.loadPublicData();
       }
+    } else {
+      this.loadPublicData();
     }
   }
   
@@ -483,7 +512,15 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     return btc.toFixed(8);
   }
   
+  // Check if wallet is actively connected and available
+  private isWalletAvailable(): boolean {
+    return this.walletConnected && this.walletService.isLoggedIn() && !!this.walletService.getSTXAddress();
+  }
+  
   hasPendingTransaction(constellationId: number): boolean {
+    // Don't check for pending transactions if wallet is not connected
+    if (!this.isWalletAvailable()) return false;
+    
     const pendingTransactions = this.allocateStatusService.getPendingTransactions();
     return pendingTransactions.some(tx => tx.constellation === constellationId);
   }
