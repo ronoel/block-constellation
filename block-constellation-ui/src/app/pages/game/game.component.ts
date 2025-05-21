@@ -6,6 +6,7 @@ import { GameFooterComponent } from './game-footer/game-footer.component';
 import { WalletService } from '../../libs/wallet.service';
 import { filter } from 'rxjs/operators';
 import { TransactionNotificationsComponent } from '../../shared/components/transaction-notifications/transaction-notifications.component';
+import { ParticleBackgroundComponent } from '../../shared/components/particle-background/particle-background.component';
 
 @Component({
   selector: 'app-game',
@@ -15,7 +16,8 @@ import { TransactionNotificationsComponent } from '../../shared/components/trans
     RouterModule,
     GameHeaderComponent,
     GameFooterComponent,
-    TransactionNotificationsComponent
+    TransactionNotificationsComponent,
+    ParticleBackgroundComponent
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss'
@@ -27,6 +29,8 @@ export class GameComponent implements OnInit {
     { label: 'Star Ledger', description: '(Claim your reward)', route: '/play/ledger', active: false },
     { label: 'Refer Friend', description: '(Earn rewards)', route: '/play/refer', active: false }
   ];
+  
+  // Using shared particle background component
   
   // Active view tracking
   activeView: 'current' | 'ledger' | 'refer' = 'current';
