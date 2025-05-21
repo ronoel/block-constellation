@@ -329,7 +329,14 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     this.stakeAmount = this.feeBalance >= 1000 ? 1000 : Math.min(this.feeBalance, 1000);
     this.statusMessage = '';
     this.statusType = '';
+    
+    // Refresh user balance and ensure we have the latest BTC price
     this.fetchUserBalance();
+    
+    // If BTC price isn't available or is older than 5 minutes, refresh it
+    if (this.btcPrice <= 0 || !this.binanceService.getCacheExpiryTime()) {
+      this.fetchBTCPrice();
+    }
   }
 
   closeStakeDrawer(): void {
@@ -415,6 +422,40 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
       return '$0.00';
     }
     return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  /**
+   * Convert satoshis to BTC
+   * @param sats Satoshi amount
+   * @returns BTC amount 
+   */
+  satsToBTC(sats: number): number {
+    if (sats === undefined || sats === null || isNaN(sats) || sats < 0) {
+      return 0;
+    }
+    return sats / 100000000;
+  }
+  
+  /**
+   * Calculate USD value from satoshis
+   * @param sats Satoshi amount
+   * @returns USD value
+   */
+  calculateUSDFromSats(sats: number): number {
+    if (sats === undefined || sats === null || isNaN(sats) || sats < 0 || this.btcPrice <= 0) {
+      return 0;
+    }
+    const btc = this.satsToBTC(sats);
+    return btc * this.btcPrice;
+  }
+  
+  /**
+   * Format USD value from satoshis for display
+   * @param sats Satoshi amount
+   * @returns Formatted USD string
+   */
+  formatUSDFromSats(sats: number): string {
+    return this.formatUSD(this.calculateUSDFromSats(sats));
   }
 
   confirmStake(): void {

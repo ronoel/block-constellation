@@ -694,6 +694,29 @@
       }
     }
   }
+  
+  .usd-value {
+    font-size: 0.85em; 
+    opacity: 0.6;
+    color: #a5c3ff;
+    margin-left: 6px;
+    font-style: italic;
+    transition: opacity 0.3s ease;
+    
+    &:hover {
+      opacity: 1;
+    }
+  }
+  
+  .amount-usd-value {
+    text-align: right;
+    margin-top: 4px;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #a5c3ff;
+    opacity: 0.8;
+    font-style: italic;
+  }
 }
 
 // Responsive styles

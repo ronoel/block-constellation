@@ -149,11 +149,11 @@
       <div class="constellation-snapshot">
         <div class="snapshot-item">
           <span class="label">Total Staked:</span>
-          <span class="value">{{ formatBTC(selectedConstellation.totalStaked) }} BTC</span>
+          <span class="value">{{ formatBTC(selectedConstellation.totalStaked) }} BTC <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(selectedConstellation.totalStaked * btcPrice) }})</span></span>
         </div>
         <div class="snapshot-item" *ngIf="selectedConstellation.yourStake > 0">
           <span class="label">You Already Staked:</span>
-          <span class="value">{{ formatSats(selectedConstellation.yourStake) }} sats</span>
+          <span class="value">{{ formatSats(selectedConstellation.yourStake) }} sats <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSDFromSats(selectedConstellation.yourStake) }})</span></span>
         </div>
       </div>
 
@@ -161,6 +161,9 @@
         <label for="stakeAmount">Amount (sats)</label>
         <input type="number" id="stakeAmount" [(ngModel)]="stakeAmount" min="1000" step="1000" [max]="feeBalance"
           class="stake-input" [class.invalid]="stakeAmount < 1000 || stakeAmount > feeBalance">
+        <div class="amount-usd-value" *ngIf="btcPrice > 0">
+          <span>≈ {{ formatUSDFromSats(stakeAmount) }}</span>
+        </div>
 
         <div class="quick-adjust">
           <button class="btn-quick" (click)="stakeAmount = 1000" [disabled]="feeBalance < 1000">MIN</button>
@@ -176,7 +179,7 @@
         <div class="balance-info" [class.insufficient]="feeBalance < 1000">
           <span class="balance-label">Your balance:</span>
           <div class="balance-value-container">
-            <span class="balance-value" *ngIf="!isLoadingBalance">{{ formatSats(feeBalance) }} sats</span>
+            <span class="balance-value" *ngIf="!isLoadingBalance">{{ formatSats(feeBalance) }} sats <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSDFromSats(feeBalance) }})</span></span>
             <span class="balance-value loading" *ngIf="isLoadingBalance">Loading...</span>
             <button class="btn-refresh" (click)="fetchUserBalance()" [disabled]="isLoadingBalance"
               title="Refresh Balance">
