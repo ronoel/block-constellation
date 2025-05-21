@@ -57,7 +57,10 @@
           <div class="cosmic-pool">
             <h3>Cosmic Bounty</h3>
             <div class="pool-details">
-              <p class="pool-value">{{ formatBTC(selectedEpoch.totalStakedPool) }} BTC</p>
+              <p class="pool-value">
+                {{ formatBTC(selectedEpoch.totalStakedPool) }} BTC
+                <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(selectedEpoch.totalStakedPool * btcPrice) }})</span>
+              </p>
             </div>
           </div>
 
@@ -99,7 +102,10 @@
             </div>
             <div class="reward-item">
               <span class="label">Your Cosmic Bounty:</span>
-              <span class="value">{{ formatSats(selectedEpoch.userRewardAmount) }} sats</span>
+              <span class="value">
+                {{ formatSats(selectedEpoch.userRewardAmount) }} sats
+                <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD((selectedEpoch.userRewardAmount / 100000000) * btcPrice) }})</span>
+              </span>
             </div>
             <div class="reward-item">
               <span class="label">Total Staked in {{ selectedEpoch.winningConstellationName }}:</span>

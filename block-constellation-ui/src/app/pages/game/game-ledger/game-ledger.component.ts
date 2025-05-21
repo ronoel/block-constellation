@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/wallet.service';
 import { BlockConstellationContractService } from '../../../libs/block-constellation-contract.service';
+import { BinanceService } from '../../../libs/binance.service';
 import { AllocateStatusService } from '../../../shared/services/allocate-status.service';
 import { Subscription, forkJoin, of, switchMap, catchError, map, Observable, finalize, BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -51,6 +52,7 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   private walletService = inject(WalletService);
   private blockConstellationContractService = inject(BlockConstellationContractService);
   private allocateStatusService = inject(AllocateStatusService);
+  private binanceService = inject(BinanceService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   
@@ -86,6 +88,7 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   selectedEpochId = 0;
   epochs: Map<number, EpochDetails> = new Map();
   selectedEpoch: EpochDetails | null = null;
+  btcPrice = 0; // Store the BTC price in USD
   
   // Constellations map
   readonly constellationsMap: ReadonlyMap<number, string> = new Map([
@@ -357,6 +360,22 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   selectEpoch(epoch: EpochDetails): void {
     this.selectedEpoch = epoch;
     this.selectedEpochId = epoch.id;
+    
+    // Fetch current Bitcoin price when selecting an epoch
+    const currentTimestamp = Date.now();
+    this.subscriptions.add(
+      this.binanceService.getBitcoinPrice(currentTimestamp)
+        .subscribe({
+          next: (price) => {
+            this.btcPrice = price;
+            console.log('Current BTC price:', this.btcPrice);
+          },
+          error: (error) => {
+            console.error('Error fetching BTC price:', error);
+            this.btcPrice = 0;
+          }
+        })
+    );
   }
   
   /**
@@ -419,6 +438,26 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    */
   formatPercentage(percentage: number): string {
     return this.isValidNumber(percentage) ? percentage.toFixed(2) + '%' : '0.00%';
+  }
+  
+  /**
+   * Format USD price for display
+   * @param price USD price
+   * @returns Formatted price with dollar sign and two decimal places
+   */
+  formatUSDPrice(price: number): string {
+    return this.isValidNumber(price) ? `$${price.toFixed(2)}` : '$0.00';
+  }
+  
+  /**
+   * Format USD amount for display
+   * @param usd USD amount
+   * @returns Formatted USD amount
+   */
+  formatUSD(usd: number): string {
+    return this.isValidNumber(usd) ? 
+      `$${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
+      '$0.00';
   }
   
   /**
