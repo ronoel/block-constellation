@@ -3,35 +3,58 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  z-index: -1;
-  background-color: var(--bg-main);
+  height: 100vh;
+  z-index: -1; /* Make sure it's behind all content */
+  background-color: transparent; /* Let the canvas handle background */
+  pointer-events: none; /* Allow clicks to pass through */
+  overflow: hidden;
   
+  /* Debug mode - uncomment to see the particle container */
+  /* border: 3px solid red; */
+  
+  /* Fallback stars using CSS for better initial performance */
   &::before, &::after {
     content: '';
     position: absolute;
     width: 100%;
     height: 100%;
     background-image: 
-      radial-gradient(1px 1px at 30px 100px, var(--secondary) 50%, transparent 100%),
-      radial-gradient(1px 1px at 40px 70px, var(--text-secondary) 50%, transparent 100%),
-      radial-gradient(1.5px 1.5px at 90px 40px, var(--primary) 50%, transparent 100%),
-      radial-gradient(1px 1px at 150px 30px, var(--secondary) 50%, transparent 100%),
-      radial-gradient(1.5px 1.5px at 220px 70px, var(--primary) 50%, transparent 100%),
-      radial-gradient(1px 1px at 280px 120px, var(--text-secondary) 50%, transparent 100%);
+      radial-gradient(1px 1px at 30px 100px, var(--secondary, #F2C84B) 50%, transparent 100%),
+      radial-gradient(1px 1px at 40px 70px, var(--text-secondary, #B0B8C1) 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 90px 40px, var(--primary, #F7931A) 50%, transparent 100%),
+      radial-gradient(1px 1px at 150px 30px, var(--secondary, #F2C84B) 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 220px 70px, var(--primary, #F7931A) 50%, transparent 100%),
+      radial-gradient(1px 1px at 280px 120px, var(--text-secondary, #B0B8C1) 50%, transparent 100%);
     background-repeat: repeat;
     background-size: 300px 300px;
     opacity: 0.3;
     animation: twinkle 8s infinite alternate;
+    will-change: opacity; /* Optimize animation performance */
   }
   
   &::after {
     background-position: 50px 50px;
     animation-delay: -4s;
   }
+
+  /* Hide CSS fallback stars when JS stars are ready */
+  &.canvas-active {
+    &::before, &::after {
+      display: none;
+    }
+  }
 }
 
 @keyframes twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.5; }
+}
+
+/* Optimize animation performance for low-end devices */
+@media (prefers-reduced-motion: reduce), (max-width: 768px) {
+  .particle-background {
+    &::before, &::after {
+      animation-duration: 16s; /* Slower animation for better performance */
+    }
+  }
 }

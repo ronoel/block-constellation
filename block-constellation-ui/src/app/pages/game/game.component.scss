@@ -12,11 +12,14 @@
 
 // Game page container
 .game-page {
-  background-color: var(--bg-main);
+  background-color: transparent;
   color: var(--text-primary);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  /* Ensure the page is transparent to show the background */
+  box-sizing: border-box;
 }
 
 // Container
@@ -32,6 +35,9 @@
 .main-content {
   flex: 1;
   padding-bottom: 30px;
+  position: relative;
+  z-index: 1;
+  background-color: transparent; /* Ensure transparency to see particle background */
 }
 
 // Loading state
