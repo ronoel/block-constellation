@@ -383,12 +383,22 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     
     const priceSubscription = this.binanceService.getBitcoinPrice(timestamp).subscribe({
       next: (price) => {
-        this.btcPrice = price;
+        if (price > 0) {
+          this.btcPrice = price;
+          console.log(`BTC price updated: $${price.toLocaleString()}`);
+        } else {
+          console.warn('Received an invalid BTC price (zero or negative)');
+          if (this.btcPrice <= 0) {
+            this.btcPrice = 70000; // Default fallback
+          }
+        }
       },
       error: (error) => {
         console.error('Error fetching BTC price:', error);
         // Default to a reasonable price if API fails
-        this.btcPrice = 70000;
+        if (this.btcPrice <= 0) {
+          this.btcPrice = 70000;
+        }
       }
     });
     
