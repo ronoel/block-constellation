@@ -361,10 +361,9 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
     this.selectedEpoch = epoch;
     this.selectedEpochId = epoch.id;
     
-    // Fetch current Bitcoin price when selecting an epoch
-    const currentTimestamp = Date.now();
+    // Fetch current average Bitcoin price when selecting an epoch
     this.subscriptions.add(
-      this.binanceService.getBitcoinPrice(currentTimestamp)
+      this.binanceService.getBitcoinPrice()
         .subscribe({
           next: (price) => {
             this.btcPrice = price;

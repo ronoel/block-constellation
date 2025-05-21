@@ -13,7 +13,11 @@ export class BinanceService {
 
   constructor(private http: HttpClient) {}
 
-  getBitcoinPrice(startTime: number): Observable<number> {
+  /**
+   * Get the current average Bitcoin price
+   * @returns Observable with the current average Bitcoin price in USDT
+   */
+  getBitcoinPrice(): Observable<number> {
     const now = Date.now();
     
     // If we have a cached price and it's not expired, return it
@@ -29,19 +33,16 @@ export class BinanceService {
       return this.apiRequest$;
     }
     
-    console.log('Making new BTC price API request');
+    console.log('Making new BTC average price API request');
     
-    // Otherwise make a new API request
-    this.apiRequest$ = this.http.get<any[]>(`${this.baseUrl}/klines`, {
+    // Get the current average price
+    this.apiRequest$ = this.http.get<{mins: number; price: string; closeTime: number}>(`${this.baseUrl}/avgPrice`, {
       params: {
-        symbol: 'BTCUSDT',
-        interval: '1d',
-        startTime: startTime,
-        limit: 1
+        symbol: 'BTCUSDT'
       }
     }).pipe(
       map(response => {
-        const price = Number(response[0][4]); // Close price from kline data
+        const price = Number(response.price);
         
         // Update the cache
         this.cachedBitcoinPrice = {

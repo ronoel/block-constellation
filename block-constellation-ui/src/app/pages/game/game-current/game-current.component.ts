@@ -383,12 +383,8 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
    */
   private fetchBTCPrice(): void {
     // Get yesterday's timestamp to ensure we have data
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const timestamp = this.binanceService.getTimestampFromDate(yesterday);
-    
-    const priceSubscription = this.binanceService.getBitcoinPrice(timestamp).subscribe({
+    // Get the current average Bitcoin price
+    const priceSubscription = this.binanceService.getBitcoinPrice().subscribe({
       next: (price) => {
         if (price > 0) {
           this.btcPrice = price;
