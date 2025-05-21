@@ -32,7 +32,7 @@
         </div>
 
         <div class="cosmic-pool">
-          <p>Total in Cosmic Pool: {{ formatBTC(totalStakedPool) }} BTC</p>
+          <p>Total in Cosmic Pool: {{ formatBTC(totalStakedPool) }} BTC <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(totalStakedPool * btcPrice) }})</span></p>
         </div>
       </div>
     </div>

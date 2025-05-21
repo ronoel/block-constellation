@@ -5,6 +5,7 @@ import { WalletService } from '../../../libs/wallet.service';
 import { BlockConstellationContractService } from '../../../libs/block-constellation-contract.service';
 import { sBTCTokenService } from '../../../libs/sbtc-token.service';
 import { AllocateStatusService, AllocationTransaction } from '../../../shared/services/allocate-status.service';
+import { BinanceService } from '../../../libs/binance.service';
 import { Subscription } from 'rxjs';
 import { ConnectWalletComponent } from '../../../shared/components/connect-wallet/connect-wallet.component';
 
@@ -50,6 +51,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   totalBlocks = 144;
   estimatedTimeRemaining = '';
   totalStakedPool = 0;
+  btcPrice = 0; // BTC to USDT price
   
   // UI states
   isDrawerOpen = false;
@@ -100,6 +102,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   public blockConstellationContractService = inject(BlockConstellationContractService);
   public sbtcTokenService = inject(sBTCTokenService);
   public allocateStatusService = inject(AllocateStatusService);
+  public binanceService = inject(BinanceService);
   
   // Subscriptions
   private subscriptions: Subscription[] = [];
@@ -107,6 +110,8 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   constructor() {
     this.loadingPage = true;
     
+    // Fetch BTC price on component initialization
+    this.fetchBTCPrice();
 
     effect(() => {
       if (this.walletService.isLoggedIn()) {
@@ -122,6 +127,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.fetchBTCPrice();
   }
   
   // Load data when user is logged in
@@ -363,6 +369,42 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     });
     
     this.subscriptions.push(balanceSubscription);
+  }
+
+  /**
+   * Fetch current BTC price from Binance
+   */
+  private fetchBTCPrice(): void {
+    // Get yesterday's timestamp to ensure we have data
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const timestamp = this.binanceService.getTimestampFromDate(yesterday);
+    
+    const priceSubscription = this.binanceService.getBitcoinPrice(timestamp).subscribe({
+      next: (price) => {
+        this.btcPrice = price;
+      },
+      error: (error) => {
+        console.error('Error fetching BTC price:', error);
+        // Default to a reasonable price if API fails
+        this.btcPrice = 70000;
+      }
+    });
+    
+    this.subscriptions.push(priceSubscription);
+  }
+  
+  /**
+   * Format USD amount for display
+   * @param amount USD amount
+   * @returns Formatted USD amount
+   */
+  formatUSD(amount: number): string {
+    if (amount === undefined || amount === null || isNaN(amount) || amount < 0) {
+      return '$0.00';
+    }
+    return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   confirmStake(): void {
