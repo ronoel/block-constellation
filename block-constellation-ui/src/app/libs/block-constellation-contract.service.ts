@@ -477,7 +477,7 @@ export class BlockConstellationContractService extends ContractUtil {
             type: 'ft-postcondition',
             address: this.getContractAddress(),
             condition: 'gt',
-            amount: 0,
+            amount: 1,
             asset: this.sbtcTokenService.getAsset()
         };
 

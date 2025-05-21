@@ -30,13 +30,15 @@ interface UserAllocation {
   imports: [
     CommonModule,
     FormsModule,
-    ConnectWalletComponent,
     ConnectWalletComponent
   ],
   templateUrl: './game-current.component.html',
   styleUrl: './game-current.component.scss'
 })
 export class GameCurrentComponent implements OnInit, OnDestroy {
+  // Math utility for use in template
+  Math = Math;
+  
   // Wallet state
   walletConnected = false;
   feeBalance = 0;
@@ -243,7 +245,9 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
           
           if (this.constellations[constellationIndex].totalStaked > 0) {
             const totalStakedSats = this.constellations[constellationIndex].totalStaked * 100000000;
-            this.constellations[constellationIndex].yourShare = (allocation / totalStakedSats) * 100;
+            // Calculate the percentage but cap it at 100%
+            const share = (allocation / totalStakedSats) * 100;
+            this.constellations[constellationIndex].yourShare = Math.min(share, 100);
           } else {
             this.constellations[constellationIndex].yourShare = 0;
           }
