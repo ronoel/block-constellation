@@ -560,14 +560,23 @@ export class BlockConstellationContractService extends ContractUtil {
      * Public function to claim referral rewards
      */
     claimReferralReward(): Observable<BlockConstellationResponse> {
+
+        const ftPostCondition: FungiblePostCondition = {
+            type: 'ft-postcondition',
+            address: this.getContractAddress(),
+            condition: 'gt',
+            amount: 1,
+            asset: this.sbtcTokenService.getAsset()
+        };
+        
         return from(new Promise<BlockConstellationResponse>((resolve, reject) => {
             this.callPublicFunction(
                 'claim-referral-reward',
                 [],
                 (txid: string) => resolve({ txid }),
                 reject,
-                [],
-                PostConditionMode.Allow
+                [ftPostCondition],
+                PostConditionMode.Deny
             );
         }));
     }

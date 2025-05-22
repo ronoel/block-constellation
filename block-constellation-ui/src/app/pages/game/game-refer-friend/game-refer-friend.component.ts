@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/wallet.service';
 import { BlockConstellationContractService, ReferralReward } from '../../../libs/block-constellation-contract.service';
+import { BinanceService } from '../../../libs/binance.service';
 import { Subscription } from 'rxjs';
 import { ConnectWalletComponent } from '../../../shared/components/connect-wallet/connect-wallet.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-game-refer-friend',
@@ -21,6 +23,7 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
   // Service injections
   private walletService = inject(WalletService);
   private blockConstellationContractService = inject(BlockConstellationContractService);
+  private binanceService = inject(BinanceService);
   
   // Component state
   walletConnected = false;
@@ -33,6 +36,11 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
   isClaimingReward = false;
   statusMessage = '';
   statusType = ''; // 'success', 'error', 'info'
+  
+  // Fee information
+  rewardClaimFee = environment.gameContract.rewardClaimFee;
+  btcUsdPrice = 0;
+  usdLoaded = false;
   
   // Subscriptions
   private subscriptions: Subscription[] = [];
@@ -75,6 +83,27 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
   
   ngOnInit(): void {
     // Initialize is handled in constructor with effect
+    
+    // Load BTC price
+    this.loadBtcPrice();
+  }
+  
+  /**
+   * Load current BTC price in USD
+   */
+  loadBtcPrice(): void {
+    const subscription = this.binanceService.getBitcoinPrice().subscribe({
+      next: (price) => {
+        this.btcUsdPrice = price;
+        this.usdLoaded = true;
+      },
+      error: (err) => {
+        console.error('Error fetching BTC price:', err);
+        this.usdLoaded = false;
+      }
+    });
+    
+    this.subscriptions.push(subscription);
   }
   
   /**
@@ -82,7 +111,7 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
    */
   generateReferralLink(): void {
     // Get the current URL without parameters
-    const baseUrl = window.location.origin + '/play';
+    const baseUrl = environment.referralLink;
     this.referralLink = `${baseUrl}?ref=${this.walletAddress}`;
   }
   
@@ -158,6 +187,28 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
       });
     
     this.subscriptions.push(subscription);
+  }
+  
+  /**
+   * Calculate net reward (reward amount minus claim fee)
+   * @returns The net reward amount in sats
+   */
+  getNetReward(): number {
+    if (!this.referralReward) return 0;
+    const netAmount = this.referralReward.amount - this.rewardClaimFee;
+    return netAmount > 0 ? netAmount : 0;
+  }
+  
+  /**
+   * Format USD amount for display
+   * @param sats Satoshi amount
+   * @returns Formatted USD amount
+   */
+  formatUSD(sats: number): string {
+    if (!this.usdLoaded || this.btcUsdPrice <= 0) return 'Loading...';
+    const btc = sats / 100000000;
+    const usd = btc * this.btcUsdPrice;
+    return usd.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   }
   
   /**

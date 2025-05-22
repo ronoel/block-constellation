@@ -255,8 +255,57 @@
         font-size: 1.25rem;
         color: #64b5f6;
         font-weight: 600;
+        
+        .usd-amount {
+          display: block;
+          font-size: 0.9rem;
+          color: #a3c5fd;
+          margin-top: 0.25rem;
+        }
       }
     }
+  }
+  
+  .fee-details {
+    background: rgba(17, 25, 40, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    
+    .fee-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(78, 115, 223, 0.1);
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &.total {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(78, 115, 223, 0.2);
+        font-weight: 600;
+        color: #64b5f6;
+      }
+      
+      .fee-label {
+        color: #d1d8e6;
+      }
+      
+      .fee-value {
+        color: #9cb3fd;
+      }
+    }
+  }
+  
+  .fee-note {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #a3c5fd;
+    margin-top: 0.75rem;
+    font-style: italic;
   }
   
   .claim-button {

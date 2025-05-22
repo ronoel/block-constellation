@@ -30,16 +30,36 @@
             <div class="reward-icon">💫</div>
             <div class="reward-details">
               <h4>Cosmic Rewards Available!</h4>
-              <p class="reward-amount">{{ formatSats(referralReward.amount) }} sats ({{ formatBTC(referralReward.amount) }} BTC)</p>
+              <p class="reward-amount">
+                {{ formatSats(referralReward.amount) }} sats ({{ formatBTC(referralReward.amount) }} BTC)
+                <span *ngIf="usdLoaded" class="usd-amount">≈ {{ formatUSD(referralReward.amount) }}</span>
+              </p>
+            </div>
+          </div>
+          
+          <div class="fee-details">
+            <div class="fee-row">
+              <span class="fee-label">Reward Amount:</span>
+              <span class="fee-value">{{ formatSats(referralReward.amount) }} sats ≈ {{ formatUSD(referralReward.amount) }}</span>
+            </div>
+            <div class="fee-row">
+              <span class="fee-label">Claim Fee:</span>
+              <span class="fee-value">{{ formatSats(rewardClaimFee) }} sats ≈ {{ formatUSD(rewardClaimFee) }}</span>
+            </div>
+            <div class="fee-row total">
+              <span class="fee-label">You Will Receive:</span>
+              <span class="fee-value">{{ formatSats(getNetReward()) }} sats ≈ {{ formatUSD(getNetReward()) }}</span>
             </div>
           </div>
           
           <button 
             class="cosmic-button claim-button" 
-            [disabled]="isClaimingReward"
+            [disabled]="isClaimingReward || getNetReward() <= 0"
             (click)="claimReferralReward()">
             {{ isClaimingReward ? 'Claiming...' : 'Claim Cosmic Reward' }}
           </button>
+          
+          <p class="fee-note">A fee of {{ formatSats(rewardClaimFee) }} sats is required to claim rewards.</p>
         </div>
       </div>
 
