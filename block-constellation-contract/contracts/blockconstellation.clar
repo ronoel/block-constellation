@@ -34,7 +34,7 @@
 ;; System constants
 (define-constant START-BLOCK tenure-height)          ;; Contract deployment block
 (define-constant TOTAL-CONSTELLATIONS u24)           ;; Total number of available constellations
-(define-constant BLOCKS-PER-CYCLE u30)              ;; Duration of each cycle (144 bitcoin blocks)
+(define-constant BLOCKS-PER-CYCLE u144)              ;; Duration of each cycle (144 bitcoin blocks)
 
 ;; ========================================
 ;; Data Variables

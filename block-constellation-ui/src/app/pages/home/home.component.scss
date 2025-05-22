@@ -1,24 +1,45 @@
-
 .landing-page {
   width: 100%;
   min-height: 100vh;
   position: relative;
-  overflow-x: hidden; /* Prevent horizontal scrolling */
-  
+  overflow-x: hidden;
+  /* Prevent horizontal scrolling */
+
   // Basic Animation Keyframes
   @keyframes twinkle {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
+
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+
+    50% {
+      opacity: 1;
+    }
   }
-  
+
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-15px);
+    }
   }
-  
+
   @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.05);
+    }
   }
 }
 
@@ -33,18 +54,16 @@
   padding: 80px 0;
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
     width: 100%;
     height: 100%;
-    background: 
-      radial-gradient(
-        circle at center, 
-        rgba(247, 147, 26, 0.15) 0%, 
-        transparent 70%
-      );
+    background:
+      radial-gradient(circle at center,
+        rgba(247, 147, 26, 0.15) 0%,
+        transparent 70%);
     opacity: 0.8;
     z-index: -1;
   }
@@ -56,29 +75,18 @@
   animation: float 6s ease-in-out infinite;
   width: 100%;
   box-sizing: border-box;
-  
+
   .hero-headline {
     margin-bottom: 20px;
     word-wrap: break-word;
-    
+
     .highlight {
       color: var(--primary);
       position: relative;
       display: inline-block;
-      
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: 5px;
-        left: 0;
-        width: 100%;
-        height: 8px;
-        background-color: rgba(247, 147, 26, 0.3);
-        z-index: -1;
-      }
     }
   }
-  
+
   .tagline {
     font-size: 24px;
     margin-bottom: 40px;
@@ -86,7 +94,7 @@
     font-family: "Space Grotesk", sans-serif;
     font-weight: 500;
   }
-  
+
   .cta-button {
     padding: 15px 35px;
     font-size: 20px;
@@ -94,7 +102,7 @@
     position: relative;
     overflow: hidden;
     z-index: 1;
-    
+
     &::before {
       content: '';
       position: absolute;
@@ -102,16 +110,14 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(
-        90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.2), 
-        transparent
-      );
+      background: linear-gradient(90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent);
       transition: left 0.7s;
       z-index: -1;
     }
-    
+
     &:hover::before {
       left: 100%;
     }
@@ -124,11 +130,11 @@
   background-color: rgba(30, 42, 71, 0.4);
   position: relative;
   overflow: hidden;
-  
+
   .section-title {
     text-align: center;
     margin-bottom: 60px;
-    
+
     .highlight {
       color: var(--secondary);
     }
@@ -141,7 +147,7 @@
   background-color: rgba(13, 17, 23, 0.95);
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -149,11 +155,9 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(
-      circle at center, 
-      rgba(255, 159, 45, 0.1) 0%, 
-      transparent 70%
-    );
+    background: radial-gradient(circle at center,
+        rgba(255, 159, 45, 0.1) 0%,
+        transparent 70%);
     z-index: 0;
   }
 }
@@ -174,7 +178,7 @@
   border-left: 3px solid var(--primary);
   transform: translateZ(0);
   transition: all 0.3s ease;
-  
+
   @media (min-width: 769px) {
     &:hover {
       transform: translateY(-5px);
@@ -182,20 +186,20 @@
       background-color: rgba(30, 42, 71, 0.8);
     }
   }
-  
+
   @media (max-width: 768px) {
     &:active {
       background-color: rgba(30, 42, 71, 0.8);
     }
   }
-  
+
   &.final-block {
     border-left: 3px solid var(--secondary);
     font-weight: 600;
-    
+
     .body-text {
       font-size: 20px;
-      
+
       @media (max-width: 768px) {
         font-size: 18px;
       }
@@ -216,16 +220,16 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 30px;
-  
+
   .bolt-icon {
     height: 40px;
     margin-right: 15px;
   }
-  
+
   .section-title {
     margin-bottom: 0;
   }
-  
+
   .bolt-highlight {
     font-family: Inter, sans-serif;
     color: #FF9F2D;
@@ -243,7 +247,7 @@
   padding: 20px;
   border-radius: 12px;
   border: 1px solid rgba(247, 147, 26, 0.2);
-  
+
   .btc-icon {
     width: 50px;
     height: 50px;
@@ -251,7 +255,7 @@
     flex-shrink: 0;
     filter: drop-shadow(0 0 5px rgba(247, 147, 26, 0.4));
   }
-  
+
   .bolt-description {
     margin-bottom: 0;
     text-align: left;
@@ -280,16 +284,16 @@
   border: 1px solid rgba(255, 159, 45, 0.3);
   border-radius: 30px;
   transition: all 0.3s ease;
-  
+
   .arrow-icon {
     margin-left: 8px;
     transition: transform 0.3s ease;
   }
-  
+
   &:hover {
     background-color: rgba(255, 159, 45, 0.1);
     border-color: #FF9F2D;
-    
+
     .arrow-icon {
       transform: translateX(5px);
     }
@@ -300,11 +304,11 @@
 .features-section {
   padding: 100px 0;
   position: relative;
-  
+
   .section-title {
     text-align: center;
     margin-bottom: 60px;
-    
+
     .highlight {
       color: var(--primary);
     }
@@ -329,7 +333,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-sizing: border-box;
   width: 100%;
-  
+
   @media (min-width: 769px) {
     &:hover {
       transform: translateY(-10px);
@@ -337,36 +341,36 @@
       border-color: var(--primary);
     }
   }
-  
+
   @media (max-width: 768px) {
     &:active {
       border-color: var(--primary);
     }
   }
-  
+
   .feature-icon {
     margin-bottom: 20px;
     height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     svg {
       filter: drop-shadow(0 0 8px rgba(242, 200, 75, 0.5));
     }
   }
-  
+
   h3 {
     margin-bottom: 15px;
     font-family: "Space Grotesk", sans-serif;
     font-weight: 600;
     font-size: 24px;
-    
+
     @media (max-width: 768px) {
       font-size: 20px;
     }
   }
-  
+
   p {
     color: var(--text-secondary);
     line-height: 1.6;
@@ -384,21 +388,23 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 40px;
-  
-  &::before, &::after {
+
+  &::before,
+  &::after {
     content: '';
     height: 1px;
     background: linear-gradient(to right, transparent, var(--text-secondary), transparent);
     flex-grow: 1;
   }
-  
+
   .star {
     width: 30px;
     height: 30px;
     margin: 0 20px;
     position: relative;
-    
-    &::before, &::after {
+
+    &::before,
+    &::after {
       content: '';
       position: absolute;
       top: 0;
@@ -406,24 +412,20 @@
       width: 100%;
       height: 100%;
     }
-    
+
     &::before {
-      background: 
-        radial-gradient(
-          circle at center, 
-          var(--secondary) 0%, 
-          transparent 70%
-        );
+      background:
+        radial-gradient(circle at center,
+          var(--secondary) 0%,
+          transparent 70%);
       animation: pulse 4s infinite;
     }
-    
+
     &::after {
-      background-image: 
-        radial-gradient(
-          circle at center, 
-          var(--secondary) 0%, 
-          transparent 50%
-        );
+      background-image:
+        radial-gradient(circle at center,
+          var(--secondary) 0%,
+          transparent 50%);
       opacity: 0.7;
       animation: pulse 4s infinite reverse;
     }
@@ -437,62 +439,64 @@
   .hero-section {
     padding: 40px 0;
   }
-  
+
   .hero-content .tagline {
     font-size: 18px;
     margin-bottom: 30px;
   }
-  
-  .story-section, .features-section, .bolt-protocol-section {
+
+  .story-section,
+  .features-section,
+  .bolt-protocol-section {
     padding: 60px 0;
   }
-  
+
   .bolt-description {
     font-size: 18px;
   }
-  
+
   .bolt-header {
     flex-direction: column;
-    
+
     .bolt-icon {
       margin-right: 0;
       margin-bottom: 15px;
     }
   }
-  
+
   .btc-indicator {
     flex-direction: column;
     padding: 15px;
-    
+
     .btc-icon {
       margin-right: 0;
       margin-bottom: 15px;
     }
-    
+
     .bolt-description {
       text-align: center;
     }
   }
-  
+
   .story-block {
     padding: 15px;
     margin-bottom: 20px;
   }
-  
+
   .features-grid {
     gap: 20px;
   }
-  
+
   .feature-card {
     padding: 20px;
   }
-  
+
   .footer-content {
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
-  
+
   .footer-links ul {
     justify-content: center;
   }
@@ -502,36 +506,36 @@
   .feature-card {
     padding: 15px;
   }
-  
+
   .story-block {
     padding: 12px;
   }
-  
+
   .hero-content .cta-button {
     padding: 12px 25px;
     font-size: 16px;
   }
-  
+
   .star-divider {
     margin-bottom: 25px;
   }
-  
+
   .section-title {
     margin-bottom: 30px;
   }
-  
+
   .bolt-description {
     font-size: 16px;
   }
-  
+
   .bolt-link {
     padding: 8px 15px;
     font-size: 14px;
   }
-  
+
   .btc-indicator {
     padding: 12px;
-    
+
     .btc-icon {
       width: 40px;
       height: 40px;

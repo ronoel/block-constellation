@@ -32,12 +32,24 @@
 .logo {
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 700;
+  position: relative;
   
   .logo-link {
     color: var(--text-primary);
     text-decoration: none;
     font-size: 24px;
     position: relative;
+    
+    .highlight {
+      color: var(--primary);
+      position: relative;
+      display: inline-block;
+    }
+    
+    &:hover .highlight {
+      text-shadow: 0 0 8px rgba(247, 147, 26, 0.4);
+      transition: text-shadow 0.3s ease;
+    }
     
     &::after {
       content: '';
