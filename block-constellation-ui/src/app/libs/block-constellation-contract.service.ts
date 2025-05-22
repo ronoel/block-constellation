@@ -203,10 +203,11 @@ export class BlockConstellationContractService extends ContractUtil {
         )).pipe(
             map((result: any) => {
                 const data = cvToValue(result);
+                console.log('Referral reward data:', data);
                 if (data) {
                     return {
-                        amount: cvToValue(data.value ? data.value.amount : 0) || 0,
-                        blockUpdate: cvToValue(data.value ? data.value['block-update'] : 0) || 0
+                        amount: Number(data['amount'].value),
+                        blockUpdate: Number(data['block-update'].value)
                     };
                 }
                 return { amount: 0, blockUpdate: 0 };

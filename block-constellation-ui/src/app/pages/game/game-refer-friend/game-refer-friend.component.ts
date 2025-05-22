@@ -106,6 +106,9 @@ export class GameReferFriendComponent implements OnInit, OnDestroy {
       .getReferralReward(this.walletAddress)
       .subscribe({
         next: (reward) => {
+          // print wallet address and referral reward
+          console.log('Wallet address:', this.walletAddress);
+          console.log('Referral reward:', reward);
           this.referralReward = reward;
           this.hasReferralReward = reward && reward.amount > 0;
           this.isLoading = false;

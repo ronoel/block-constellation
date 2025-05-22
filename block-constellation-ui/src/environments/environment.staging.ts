@@ -8,7 +8,8 @@ export const environment = {
     blockchainAPIUrl: 'https://api.testnet.hiro.so',
     gameContract: {
         contractAddress: 'ST3QZNX3CGT6V7PE1PBK17FCRK1TP1AT02W1N0YJF',
-        contractName: 'blockconstellation'
+        contractName: 'blockconstellation',
+        rewardClaimFee: 100, // 100 satoshis
     },
     referralAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
     supportedAsset: {
