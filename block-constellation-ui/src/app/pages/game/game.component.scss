@@ -1,34 +1,13 @@
 
-// Shared mixins
-@mixin card-shadow {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-// Using CSS variables directly
-@mixin gradient-glow($color) {
-  box-shadow: 0 0 15px rgba($color, 0.5);
-  border: 1px solid $color;
-}
-
 // Game page container
 .game-page {
-  background-color: transparent;
-  color: var(--text-primary);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
+  box-sizing: border-box;
+  background-color: transparent;
   /* Ensure the page is transparent to show the background */
-  box-sizing: border-box;
-}
-
-// Container
-.container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  box-sizing: border-box;
 }
 
 // Main content
@@ -40,43 +19,15 @@
   background-color: transparent; /* Ensure transparency to see particle background */
 }
 
-// Loading state
+// Loading state - extending global loading state
 .loading-state {
   .skeleton {
-    background: linear-gradient(90deg, rgba(30, 42, 71, 0.6) 0%, rgba(30, 42, 71, 0.9) 50%, rgba(30, 42, 71, 0.6) 100%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 8px;
-    
-    &.epoch-strip {
-      height: 120px;
-      margin: 20px 0;
-    }
-    
     &.constellation-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 20px;
-      
       .constellation-card {
         height: 220px;
       }
     }
   }
-  
-  @keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-}
-
-// Epoch strip
-.epoch-strip {
-  background-color: rgba(30, 42, 71, 0.5);
-  padding: 20px 0;
-  margin: 20px 0;
-  border-radius: 8px;
-  @include card-shadow;
 }
 
 .epoch-info {
@@ -152,7 +103,7 @@
       
       &:hover {
         transform: translateY(-2px);
-        @include card-shadow;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
     }
   }
@@ -198,7 +149,7 @@
     z-index: 10;
     width: 90%;
     max-width: 500px;
-    @include card-shadow;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     
     &::before {
       content: '';
@@ -240,9 +191,6 @@
 }
 
 .constellation-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 20px;
   position: relative;
   
   &.wallet-disconnected {
@@ -251,27 +199,8 @@
 }
 
 .wallet-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(13, 17, 23, 0.7); /* Using actual bg-main color with alpha */
-  backdrop-filter: blur(4px);
-  z-index: 5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  
+  // Extended from global wallet-overlay
   .overlay-content {
-    text-align: center;
-    
-    p {
-      margin-bottom: 20px;
-      font-size: 20px;
-      font-weight: 600;
-    }
-    
     .btn-connect {
       background-color: var(--primary);
       color: var(--text-primary);
@@ -285,28 +214,13 @@
       
       &:hover {
         transform: translateY(-2px);
-        @include card-shadow;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
     }
   }
 }
 
 .constellation-card {
-  background-color: var(--bg-surface);
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  @include card-shadow;
-  height: 100%;
-  
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0 15px rgba(247, 147, 26, 0.5);
-    border: 1px solid var(--primary);
-  }
-  
   &.has-stake {
     border: 1px solid rgba(242, 200, 75, 0.5);
     
@@ -314,27 +228,6 @@
       box-shadow: 0 0 15px rgba(242, 200, 75, 0.5);
       border: 1px solid var(--secondary);
     }
-  }
-  
-  .card-content {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    box-sizing: border-box;
-  }
-  
-  .constellation-name {
-    margin: 0 0 5px;
-    font-size: 20px;
-    font-weight: 600;
-  }
-  
-  .constellation-meaning {
-    color: var(--text-secondary);
-    margin: 0 0 15px;
-    font-size: 14px;
-    flex-grow: 1;
   }
   
   .stake-info {
@@ -381,55 +274,11 @@
     }
   }
   
-  .stake-tag {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: rgba(242, 200, 75, 0.2);
-    color: var(--secondary);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 4px;
-  }
+  /* stake-tag moved to global styles */
 }
 
-// Stake drawer
+// Stake drawer - extends global stake-drawer
 .stake-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 200;
-  width: 100%;
-  max-width: 0;
-  overflow: hidden;
-  transition: max-width 0.3s ease;
-  
-  &.open {
-    max-width: 500px;
-  }
-  
-  .drawer-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(13, 17, 23, 0.8);
-    backdrop-filter: blur(4px);
-    z-index: -1;
-  }
-  
-  .drawer-content {
-    background-color: var(--bg-surface);
-    height: 100%;
-    width: 100%;
-    max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    @include card-shadow;
-  }
   
   .drawer-header {
     padding: 20px;

@@ -1,7 +1,7 @@
 // Star Ledger cosmic-themed SCSS for Block Constellation app
 // Designed for displaying past epochs, winning constellations, and claiming rewards
 
-// Variables
+// Ledger-specific variables 
 $cosmic-background: #0f0e17;
 $cosmic-text: #fffffe;
 $cosmic-card-bg: rgba(17, 15, 36, 0.85);
@@ -18,7 +18,7 @@ $cosmic-divider: rgba(255, 255, 255, 0.15);
 $cosmic-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 $cosmic-gradient: linear-gradient(135deg, #7f5af0, #4033c0);
 
-// Animations
+// Ledger-specific animations
 @keyframes cosmic-glow {
   0% {
     box-shadow: 0 0 5px rgba(127, 90, 240, 0.5), 
@@ -40,11 +40,6 @@ $cosmic-gradient: linear-gradient(135deg, #7f5af0, #4033c0);
   100% { opacity: 0.4; }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 @keyframes constellation-reveal {
   0% { 
     opacity: 0; 
@@ -62,10 +57,12 @@ $cosmic-gradient: linear-gradient(135deg, #7f5af0, #4033c0);
 
 // Base styles
 .star-ledger {
-  color: $cosmic-text;
   min-height: 100vh;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
   position: relative;
+  box-sizing: border-box;
+  color: $cosmic-text;
   
   &:before {
     content: '';
@@ -77,12 +74,6 @@ $cosmic-gradient: linear-gradient(135deg, #7f5af0, #4033c0);
     background: $cosmic-background url('/assets/images/cosmos-bg.jpg') no-repeat center center / cover;
     opacity: 0.4;
     z-index: -1;
-  }
-  
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem 1rem;
   }
 }
 
