@@ -2,11 +2,11 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { GameHeaderComponent, NavItem } from './game-header/game-header.component';
-import { GameFooterComponent } from './game-footer/game-footer.component';
 import { WalletService } from '../../libs/wallet.service';
 import { filter } from 'rxjs/operators';
 import { TransactionNotificationsComponent } from '../../shared/components/transaction-notifications/transaction-notifications.component';
 import { ParticleBackgroundComponent } from '../../shared/components/particle-background/particle-background.component';
+import { SiteFooterComponent } from '../../shared/components/site-footer/site-footer.component';
 
 @Component({
   selector: 'app-game',
@@ -15,7 +15,7 @@ import { ParticleBackgroundComponent } from '../../shared/components/particle-ba
     CommonModule,
     RouterModule,
     GameHeaderComponent,
-    GameFooterComponent,
+    SiteFooterComponent,
     TransactionNotificationsComponent,
     ParticleBackgroundComponent
   ],
@@ -37,18 +37,6 @@ export class GameComponent implements OnInit {
   
   // UI states
   showNetworkMismatch = false;
-  
-  // Footer links
-  footerLinks = [
-    { label: 'About', route: '/about' },
-    { label: 'Rules', route: '/rules' },
-    { label: 'FAQ', route: '/faq' },
-    { label: 'Support', url: 'mailto:support@blockconstellation.com', isExternal: true },
-    { label: 'Twitter', url: 'https://twitter.com/blockconstellation', isExternal: true },
-    { label: 'Discord', url: 'https://discord.gg/blockconstellation', isExternal: true }
-  ];
-
-  footerCopyright = '© 2025 Block Constellation - All rights reserved';
   
   // Service injection
   private router = inject(Router);
