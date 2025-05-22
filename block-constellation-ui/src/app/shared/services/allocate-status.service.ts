@@ -155,7 +155,7 @@ export class AllocateStatusService {
   private checkPendingTransactionsStatus(pendingTransactions: AllocationTransaction[]): void {
     // Create an array of observables for checking each transaction
     const statusChecks = pendingTransactions.map(tx => 
-      this.transactionInfoService.getTransactionStatus(tx.txid).pipe(
+      this.transactionInfoService.fetchTransactionStatus(tx.txid).pipe(
         catchError(error => {
           console.error(`Error checking status for transaction ${tx.txid}:`, error);
           return of({ status: tx.status as any });

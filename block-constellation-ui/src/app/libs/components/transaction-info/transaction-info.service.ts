@@ -62,7 +62,7 @@ export class TransactionInfoService {
    * @returns Observable of TransactionResponse
    * @throws Error if the status is invalid
    */
-  private fetchTransactionStatus(txId: string): Observable<TransactionResponse> {
+  fetchTransactionStatus(txId: string): Observable<TransactionResponse> {
     return from(fetch(`${environment.blockchainAPIUrl}/extended/v1/tx/${txId}`))
       .pipe(
         switchMap(response => from(response.json())),
