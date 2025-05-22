@@ -72,12 +72,79 @@
   .cosmic-pool {
     font-weight: 600;
     
+    .cosmic-bounty-container {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      position: relative;
+      background: linear-gradient(to right, rgba(156, 39, 176, 0.1), rgba(103, 58, 183, 0.2));
+      border-radius: 10px;
+      padding: 8px 15px;
+      box-shadow: 0 0 15px rgba(156, 39, 176, 0.3);
+      animation: cosmicGlow 3s infinite alternate;
+      max-width: fit-content;
+      margin-left: auto;
+    }
+    
+    .cosmic-stars {
+      display: flex;
+      align-items: center;
+      margin: 0 8px;
+      
+      i {
+        font-style: normal;
+        color: #ffeb3b;
+        margin: 0 2px;
+        
+        &:nth-child(1) {
+          font-size: 10px;
+          animation: starTwinkle 2s infinite 0.3s;
+        }
+        
+        &:nth-child(2) {
+          font-size: 14px;
+          animation: starTwinkle 2s infinite;
+        }
+        
+        &:nth-child(3) {
+          font-size: 12px;
+          animation: starTwinkle 2s infinite 0.7s;
+        }
+      }
+    }
+    
     p {
       margin: 0;
+      position: relative;
+      z-index: 1;
+      
+      .bounty-label {
+        color: #e4c6ff;
+        font-weight: bold;
+      }
+      
+      .bounty-amount {
+        color: #ffeb3b;
+        font-size: 1.2em;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+        position: relative;
+        
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background: linear-gradient(to right, transparent, #ffeb3b, transparent);
+        }
+      }
       
       .usd-value {
         font-size: 0.85em; 
-        opacity: 0.6;
+        opacity: 0.7;
         color: #a5c3ff;
         margin-left: 6px;
         font-style: italic;
@@ -787,6 +854,19 @@
   }
 }
 
+// Add cosmicGlow animation for the Cosmic Bounty
+@keyframes cosmicGlow {
+  0% {
+    box-shadow: 0 0 15px rgba(156, 39, 176, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(156, 39, 176, 0.5), 0 0 30px rgba(255, 235, 59, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(156, 39, 176, 0.3);
+  }
+}
+
 // Responsive styles
 @media (max-width: 768px) {
   .epoch-info {
@@ -805,5 +885,17 @@
   .stake-drawer {
     width: 100%;
     right: -100%;
+  }
+  
+  // Add responsive styling for the Cosmic Bounty
+  .epoch-info {
+    .cosmic-pool {
+      width: 100%;
+      
+      .cosmic-bounty-container {
+        margin: 0 auto;
+        justify-content: center;
+      }
+    }
   }
 }

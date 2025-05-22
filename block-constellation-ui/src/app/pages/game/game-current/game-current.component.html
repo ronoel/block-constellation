@@ -32,7 +32,11 @@
         </div>
 
         <div class="cosmic-pool">
-          <p>Total in Cosmic Pool: {{ formatBTC(totalStakedPool) }} BTC <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(totalStakedPool * btcPrice) }})</span></p>
+          <div class="cosmic-bounty-container">
+            <div class="cosmic-stars left"><i>✧</i><i>★</i><i>✦</i></div>
+            <p><span class="bounty-label">Cosmic Bounty: </span> <span class="bounty-amount">{{ formatBTC(totalStakedPool) }} BTC</span> <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(totalStakedPool * btcPrice) }})</span></p>
+            <div class="cosmic-stars right"><i>✦</i><i>★</i><i>✧</i></div>
+          </div>
         </div>
       </div>
     </div>
