@@ -57,192 +57,49 @@
       padding: 0 4px;
       margin-left: 4px;
     }
-  }
-  
-  .toggle-button {
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
     
-    &:hover {
-      color: #9c27b0;
+    .expand-icon {
+      font-size: 18px;
+      margin-left: 6px;
+      opacity: 0.6;
+      transition: opacity 0.2s;
     }
-  }
-}
-
-.notification-body {
-  transition: max-height 0.3s ease;
-}
-
-.notification-list {
-  padding: 8px 0;
-}
-
-/* Native CSS animations for fade-slide effect */
-@keyframes fadeSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.fade-slide-in {
-  animation: fadeSlideIn 300ms ease-out forwards;
-}
-
-.notification-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  position: relative;
-  
-  &:last-child {
-    border-bottom: none;
-  }
-  
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
     
-    .dismiss-button {
+    &:hover .expand-icon {
       opacity: 1;
     }
   }
   
-  &.success .notification-icon mat-icon {
-    color: #4caf50; // Green for success
-  }
-  
-  &.error .notification-icon mat-icon {
-    color: #f44336; // Red for error
-  }
-  
-  &.pending .notification-icon mat-icon {
-    color: #ff9800; // Orange for pending
-  }
-}
-
-.notification-icon {
-  margin-right: 12px;
-  
-  mat-icon {
-    font-size: 24px;
-    height: 24px;
-    width: 24px;
-  }
-}
-
-.notification-content {
-  flex: 1;
-  
-  .notification-title {
-    font-weight: 500;
-    margin-bottom: 4px;
-  }
-  
-  .notification-details {
-    display: flex;
-    justify-content: space-between;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 12px;
-    
-    .amount {
-      font-family: monospace;
-    }
-  }
-}
-
-.dismiss-button {
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  padding: 4px;
-  opacity: 0;
-  transition: opacity 0.2s, color 0.2s;
-  
-  &:hover {
-    color: white;
-  }
-  
-  mat-icon {
-    font-size: 16px;
-    height: 16px;
-    width: 16px;
-  }
-}
-
-.notification-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  /* Toggle button replaced with Clear All button */
   
   .clear-all-button {
-    background: none;
-    border: none;
-    color: #9c27b0;
-    font-size: 14px;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    
-    &:hover {
-      background-color: rgba(156, 39, 176, 0.1);
-    }
-  }
-}
-
-.notification-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  
-  &:hover {
-    background-color: #222;
-  }
-  
-  .notification-title {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    
-    mat-icon {
-      color: #9c27b0; // Purple for notifications
-    }
-    
-    .badge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #9c27b0;
-      color: white;
-      border-radius: 50%;
-      min-width: 20px;
-      height: 20px;
-      font-size: 12px;
-      padding: 0 4px;
-      margin-left: 4px;
-    }
-  }
-  
-  .toggle-button {
+    gap: 4px;
     background: none;
     border: none;
     color: white;
     cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+    font-size: 12px;
     
     &:hover {
+      background-color: rgba(156, 39, 176, 0.2);
       color: #9c27b0;
+    }
+    
+    mat-icon {
+      font-size: 16px;
+      height: 16px;
+      width: 16px;
+      line-height: 16px;
+    }
+    
+    span {
+      font-size: 12px;
+      white-space: nowrap;
     }
   }
 }

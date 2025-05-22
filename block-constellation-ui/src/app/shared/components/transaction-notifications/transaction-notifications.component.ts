@@ -118,7 +118,10 @@ export class TransactionNotificationsComponent implements OnInit {
   }
   
   // Clear all notifications
-  clearAllNotifications(): void {
+  clearAllNotifications(event?: Event): void {
+    if (event) {
+      event.stopPropagation(); // Prevent the click from triggering toggleExpanded()
+    }
     this.notificationsSignal = [];
     this.expanded = false;
   }

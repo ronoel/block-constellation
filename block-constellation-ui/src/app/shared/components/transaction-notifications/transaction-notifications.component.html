@@ -4,9 +4,11 @@
       <mat-icon>notifications</mat-icon>
       <span>Transaction Updates</span>
       <div class="badge">{{ notificationCount }}</div>
+      <mat-icon class="expand-icon">{{ expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
     </div>
-    <button class="toggle-button">
-      <mat-icon>{{ expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+    <button class="clear-all-button" (click)="clearAllNotifications($event)">
+      <mat-icon>clear_all</mat-icon>
+      <span>Clear All</span>
     </button>
   </div>
   
@@ -35,10 +37,6 @@
       </div>
     </div>
     
-    <div class="notification-actions" *ngIf="expanded && notificationCount > 0">
-      <button class="clear-all-button" (click)="clearAllNotifications()">
-        Clear All
-      </button>
-    </div>
+    <!-- Removed duplicate Clear All button -->
   </div>
 </div>
