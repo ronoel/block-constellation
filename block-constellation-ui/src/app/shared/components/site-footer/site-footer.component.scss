@@ -65,9 +65,41 @@
   }
 }
 
-.footer-copyright {
+.footer-bolt {
   text-align: center;
   margin-top: 30px;
+  
+  .bolt-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    transition: opacity 0.2s ease;
+    
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+  
+  .bolt-protocol {
+    font-family: Inter, sans-serif;
+    color: #FF9F2D;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 600;
+    line-height: 1;
+    
+    .bolt-icon {
+      height: 18px;
+      margin-right: 6px;
+      display: inline-block;
+    }
+  }
+}
+
+.footer-copyright {
+  text-align: center;
+  margin-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 20px;
 }
@@ -82,5 +114,13 @@
   
   .footer-links ul {
     justify-content: center;
+  }
+  
+  .footer-bolt {
+    margin-top: 25px;
+    
+    .bolt-protocol .bolt-icon {
+      height: 16px;
+    }
   }
 }
