@@ -12,6 +12,7 @@ import {
 import { ContractUtil } from './contract.util';
 import { sBTCTokenService } from './sbtc-token.service';
 import { ClarityUtil } from './clarity.util';
+import { BoltProtocolService } from './bolt-protocol.service';
 
 export interface BlockConstellationResponse {
     txid?: string;
@@ -86,6 +87,7 @@ export interface CycleStatus {
 export class BlockConstellationContractService extends ContractUtil {
 
     private sbtcTokenService = inject(sBTCTokenService);
+    private transactionService = inject(BoltProtocolService);
 
     constructor(
         walletService: WalletService,
@@ -483,12 +485,15 @@ export class BlockConstellationContractService extends ContractUtil {
         };
 
         return from(new Promise<BlockConstellationResponse>((resolve, reject) => {
-            this.callPublicFunction(
+            this.callSponsoredFunction(
                 'claim-reward',
                 [
                     Cl.uint(cycleId)
                 ],
-                (txid: string) => resolve({ txid }),
+                (tx: any) => this.transactionService.sponsorTransaction(tx).subscribe({
+                        next: (txid: string) => resolve({ txid }),
+                        error: reject
+                    }),
                 reject,
                 [ftPostCondition],
                 PostConditionMode.Deny
@@ -541,14 +546,17 @@ export class BlockConstellationContractService extends ContractUtil {
         };
 
         return from(new Promise<BlockConstellationResponse>((resolve, reject) => {
-            this.callPublicFunction(
+            this.callSponsoredFunction(
                 'allocate',
                 [
                     Cl.uint(amount),
                     Cl.uint(constellation),
                     referralPrincipal
                 ],
-                (txid: string) => resolve({ txid }),
+                (tx: any) => this.transactionService.sponsorTransaction(tx).subscribe({
+                        next: (txid: string) => resolve({ txid }),
+                        error: reject
+                    }),
                 reject,
                 [ftPostCondition],
                 PostConditionMode.Deny
@@ -570,10 +578,13 @@ export class BlockConstellationContractService extends ContractUtil {
         };
         
         return from(new Promise<BlockConstellationResponse>((resolve, reject) => {
-            this.callPublicFunction(
+            this.callSponsoredFunction(
                 'claim-referral-reward',
                 [],
-                (txid: string) => resolve({ txid }),
+                (tx: any) => this.transactionService.sponsorTransaction(tx).subscribe({
+                        next: (txid: string) => resolve({ txid }),
+                        error: reject
+                    }),
                 reject,
                 [ftPostCondition],
                 PostConditionMode.Deny
