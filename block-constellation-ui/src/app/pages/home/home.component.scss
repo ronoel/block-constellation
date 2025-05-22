@@ -135,6 +135,29 @@
   }
 }
 
+/* Bolt Protocol Section */
+.bolt-protocol-section {
+  padding: 100px 0;
+  background-color: rgba(13, 17, 23, 0.95);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      circle at center, 
+      rgba(255, 159, 45, 0.1) 0%, 
+      transparent 70%
+    );
+    z-index: 0;
+  }
+}
+
 .story-content {
   max-width: 800px;
   margin: 0 auto;
@@ -176,6 +199,74 @@
       @media (max-width: 768px) {
         font-size: 18px;
       }
+    }
+  }
+}
+
+.bolt-content {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.bolt-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+  
+  .bolt-icon {
+    height: 40px;
+    margin-right: 15px;
+  }
+  
+  .section-title {
+    margin-bottom: 0;
+  }
+  
+  .bolt-highlight {
+    font-family: Inter, sans-serif;
+    color: #FF9F2D;
+    font-weight: 600;
+  }
+}
+
+.bolt-description {
+  font-size: 20px;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  color: var(--text-secondary);
+}
+
+.bolt-link-container {
+  margin-top: 30px;
+}
+
+.bolt-link {
+  display: inline-flex;
+  align-items: center;
+  color: #FF9F2D;
+  font-family: Inter, sans-serif;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 10px 20px;
+  border: 1px solid rgba(255, 159, 45, 0.3);
+  border-radius: 30px;
+  transition: all 0.3s ease;
+  
+  .arrow-icon {
+    margin-left: 8px;
+    transition: transform 0.3s ease;
+  }
+  
+  &:hover {
+    background-color: rgba(255, 159, 45, 0.1);
+    border-color: #FF9F2D;
+    
+    .arrow-icon {
+      transform: translateX(5px);
     }
   }
 }
@@ -327,8 +418,21 @@
     margin-bottom: 30px;
   }
   
-  .story-section, .features-section {
+  .story-section, .features-section, .bolt-protocol-section {
     padding: 60px 0;
+  }
+  
+  .bolt-description {
+    font-size: 18px;
+  }
+  
+  .bolt-header {
+    flex-direction: column;
+    
+    .bolt-icon {
+      margin-right: 0;
+      margin-bottom: 15px;
+    }
   }
   
   .story-block {
@@ -375,5 +479,14 @@
   
   .section-title {
     margin-bottom: 30px;
+  }
+  
+  .bolt-description {
+    font-size: 16px;
+  }
+  
+  .bolt-link {
+    padding: 8px 15px;
+    font-size: 14px;
   }
 }
