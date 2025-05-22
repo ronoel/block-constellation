@@ -15,13 +15,12 @@
     </div>
 
     <!-- Wallet Connection Prompt -->
-    <div class="wallet-connection-prompt" *ngIf="!walletConnected && !selectedEpoch">
-      <div class="cosmic-card">
-        <h2>Connect to the Cosmos</h2>
-        <p>Please connect your wallet to view the Star Ledger and claim your Cosmic Bounties</p>
-        <button class="cosmic-button">Connect Wallet</button>
-      </div>
-    </div>
+    <app-connect-wallet 
+      *ngIf="!walletConnected && !selectedEpoch"
+      title="Connect to the Cosmos"
+      description="Please connect your wallet to view the Star Ledger and claim your Cosmic Bounties"
+      (connectWallet)="connectWallet()">
+    </app-connect-wallet>
 
     <!-- Star Ledger Content -->
     <ng-container *ngIf="selectedEpoch">

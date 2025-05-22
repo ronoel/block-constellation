@@ -7,6 +7,7 @@ import { BinanceService } from '../../../libs/binance.service';
 import { AllocateStatusService } from '../../../shared/services/allocate-status.service';
 import { Subscription, forkJoin, of, switchMap, catchError, map, Observable, finalize, BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ConnectWalletComponent } from '../../../shared/components/connect-wallet/connect-wallet.component';
 
 // Interfaces for data models
 interface EpochDetails {
@@ -42,7 +43,8 @@ interface StatusMessage {
   imports: [
     CommonModule,
     FormsModule,
-    RouterModule
+    RouterModule,
+    ConnectWalletComponent
   ],
   templateUrl: './game-ledger.component.html',
   styleUrl: './game-ledger.component.scss'
@@ -520,6 +522,14 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
     );
   }
   
+  /**
+   * Connect the user's wallet when button is clicked in the ConnectWalletComponent
+   */
+  connectWallet(): void {
+    this.walletService.signIn();
+    this.statusSubject.next({ text: 'Connecting to your wallet...', type: 'info' });
+  }
+
   /**
    * Check if user can claim reward for the selected epoch
    * @returns True if user can claim reward
