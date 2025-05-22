@@ -124,6 +124,11 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
         this.loadPublicData();
       }
     });
+
+    effect(() => {
+      console.log(`Notifications`, this.allocateStatusService.notificationsSignal());
+       this.refreshUserData()
+    });
   }
 
   ngOnInit(): void {
@@ -490,7 +495,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
                 this.statusType = 'success';
                 this.clearStatusMessageAfterDelay(8000);
                 
-                setTimeout(() => this.refreshUserData(), 2000);
+                // setTimeout(() => this.refreshUserData(), 2000);
                 this.closeStakeDrawer();
               },
               error: (error) => {

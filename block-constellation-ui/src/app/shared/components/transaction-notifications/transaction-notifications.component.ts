@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, effect, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { AllocateStatusService, TransactionNotification } from '../../services/allocate-status.service';
@@ -19,21 +19,13 @@ export class TransactionNotificationsComponent implements OnInit {
   
   // Maximum number of notifications to display
   private readonly maxNotifications = 5;
+
+  private notificationsSignal: TransactionNotification[] = [];
   
   // Flag to determine if notification panel is expanded
   expanded = false;
-  
-  // Getter for notifications
-  get notifications(): TransactionNotification[] {
-    return this.allocateStatusService.getNotifications(this.expanded ? undefined : this.maxNotifications);
-  }
-  
-  // Getter for notification count
-  get notificationCount(): number {
-    return this.allocateStatusService.notificationsSignal().length;
-  }
-  
-  ngOnInit(): void {
+
+  constructor() {
     // Initialize constellation map - this would ideally come from a service
     // but for now we'll hardcode the names
     const constellationNames = [
@@ -46,6 +38,26 @@ export class TransactionNotificationsComponent implements OnInit {
     for (let i = 0; i < constellationNames.length; i++) {
       this.constellationsMap.set(i, constellationNames[i]);
     }
+
+    effect(() => {
+      // Subscribe to notifications signal from the service
+      this.notificationsSignal = this.allocateStatusService.notificationsSignal();
+    });
+  }
+  
+  // Getter for notifications
+  get notifications(): TransactionNotification[] {
+    // return this.allocateStatusService.getNotifications(this.expanded ? undefined : this.maxNotifications);
+    return this.notificationsSignal.slice(0, this.expanded ? undefined : this.maxNotifications);
+  }
+  
+  // Getter for notification count
+  get notificationCount(): number {
+    return this.notificationsSignal.length;
+  }
+  
+  ngOnInit(): void {
+    
   }
   
   // Get constellation name by ID
@@ -98,13 +110,16 @@ export class TransactionNotificationsComponent implements OnInit {
   
   // Dismiss a specific notification
   dismissNotification(event: Event, txid: string): void {
+    // event.stopPropagation();
+    // this.allocateStatusService.dismissNotification(txid);
     event.stopPropagation();
-    this.allocateStatusService.dismissNotification(txid);
+    // Filter out the notification with the provided txid
+    this.notificationsSignal = this.notificationsSignal.filter(notification => notification.txid !== txid);
   }
   
   // Clear all notifications
   clearAllNotifications(): void {
-    this.allocateStatusService.clearNotifications();
+    this.notificationsSignal = [];
     this.expanded = false;
   }
   
