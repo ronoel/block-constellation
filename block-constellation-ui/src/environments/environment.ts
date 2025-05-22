@@ -2,8 +2,8 @@ export const environment = {
     production: true,
     applicationName: 'Block Constellation',
     network: "mainnet", // 'mainnet', 'testnet', 'devnet', 'mocknet'
-    // apiUrl: 'https://boltproto.org/api/v1',
-    apiUrl: '/api/v1',
+    apiUrl: 'https://boltproto.org/api/v1',
+    // apiUrl: '/api/v1',
     blockchainAPIUrl: 'https://api.hiro.so',
     gameContract: {
         contractAddress: 'SP3QZNX3CGT6V7PE1PBK17FCRK1TP1AT02ZHQCMVJ',
