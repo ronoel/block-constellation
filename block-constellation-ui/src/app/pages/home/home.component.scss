@@ -233,6 +233,31 @@
   }
 }
 
+.btc-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 30px;
+  max-width: 680px;
+  background: rgba(247, 147, 26, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(247, 147, 26, 0.2);
+  
+  .btc-icon {
+    width: 50px;
+    height: 50px;
+    margin-right: 20px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 5px rgba(247, 147, 26, 0.4));
+  }
+  
+  .bolt-description {
+    margin-bottom: 0;
+    text-align: left;
+  }
+}
+
 .bolt-description {
   font-size: 20px;
   line-height: 1.6;
@@ -435,6 +460,20 @@
     }
   }
   
+  .btc-indicator {
+    flex-direction: column;
+    padding: 15px;
+    
+    .btc-icon {
+      margin-right: 0;
+      margin-bottom: 15px;
+    }
+    
+    .bolt-description {
+      text-align: center;
+    }
+  }
+  
   .story-block {
     padding: 15px;
     margin-bottom: 20px;
@@ -488,5 +527,14 @@
   .bolt-link {
     padding: 8px 15px;
     font-size: 14px;
+  }
+  
+  .btc-indicator {
+    padding: 12px;
+    
+    .btc-icon {
+      width: 40px;
+      height: 40px;
+    }
   }
 }
