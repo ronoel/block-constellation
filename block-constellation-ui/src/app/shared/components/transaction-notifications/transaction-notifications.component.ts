@@ -41,7 +41,7 @@ export class TransactionNotificationsComponent implements OnInit {
 
     effect(() => {
       // Subscribe to notifications signal from the service
-      this.notificationsSignal = this.allocateStatusService.notificationsSignal();
+      this.notificationsSignal = this.allocateStatusService.getNotificationsSignal();
     });
   }
   
@@ -114,7 +114,8 @@ export class TransactionNotificationsComponent implements OnInit {
     // this.allocateStatusService.dismissNotification(txid);
     event.stopPropagation();
     // Filter out the notification with the provided txid
-    this.notificationsSignal = this.notificationsSignal.filter(notification => notification.txid !== txid);
+    // this.notificationsSignal = this.notificationsSignal.filter(notification => notification.txid !== txid);
+    this.allocateStatusService.dismissNotification(txid);
   }
   
   // Clear all notifications
@@ -122,7 +123,8 @@ export class TransactionNotificationsComponent implements OnInit {
     if (event) {
       event.stopPropagation(); // Prevent the click from triggering toggleExpanded()
     }
-    this.notificationsSignal = [];
+    // this.notificationsSignal = [];
+    this.allocateStatusService.clearNotifications();
     this.expanded = false;
   }
   

@@ -41,7 +41,7 @@ export const environment = {
         rewardClaimFee: 100, // 100 satoshis
     },
     referralAddress: 'SP1E6P0KM6BEWF1CJQGGJXER0WG58JDZ32YYCN95R',
-    referralLink: 'https://boltproto.org/games/block-constellation',
+    referralLink: 'https://boltproto.org/games/block-constellation/',
     supportedAsset: {
         sBTC: {
             contractAddress: 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4',
