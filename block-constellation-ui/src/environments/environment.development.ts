@@ -29,7 +29,7 @@
 // };
 
 export const environment = {
-    production: false,
+    production: true,
     applicationName: 'Block Constellation',
     network: "mainnet", // 'mainnet', 'testnet', 'devnet', 'mocknet'
     apiUrl: 'https://boltproto.org/api/v1',

@@ -17,7 +17,7 @@ export class BoltProtocolService {
   private http = inject(HttpClient);
   private apiUrl = environment.apiUrl;
   private feeRateCache = new Map<string, Observable<number>>();
-  
+
   private getClientHeaders(): HttpHeaders {
     return new HttpHeaders().set('x-client-source', 'boltproto-website');
   }
@@ -25,7 +25,7 @@ export class BoltProtocolService {
   sendTransaction(transaction: any): Observable<any> {
     const serializedTx = bytesToHex(transaction.serializeBytes());
     return this.http.post(
-      `${this.apiUrl}/transaction/${environment.supportedAsset.sBTC.contractToken}`, 
+      `${this.apiUrl}/transaction/${environment.supportedAsset.sBTC.contractToken}`,
       { serializedTx },
       { headers: this.getClientHeaders() }
     );
@@ -49,12 +49,14 @@ export class BoltProtocolService {
     // );
   }
 
-  sponsorTransaction(transaction: any): Observable<any> {
+  sponsorTransaction(transaction: any): Observable<string> {
     const serializedTx = bytesToHex(transaction.serializeBytes());
-    return this.http.post(
-      `${this.apiUrl}/sponsor/${environment.supportedAsset.sBTC.contractToken}/transaction`, 
+    return this.http.post<{ txid: string }>(
+      `${this.apiUrl}/sponsor/${environment.supportedAsset.sBTC.contractToken}/transaction`,
       { serializedTx, fee: 50, sponsor: environment.gameContract.contractAddress },
       { headers: this.getClientHeaders() }
+    ).pipe(
+      map(response => response.txid)
     );
   }
 
