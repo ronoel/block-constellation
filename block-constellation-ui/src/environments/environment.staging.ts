@@ -12,7 +12,7 @@ export const environment = {
         rewardClaimFee: 100, // 100 satoshis
     },
     referralAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
-    referralLink: 'http://localhost:4200',
+    referralLink: 'http://localhost:4200/',
     supportedAsset: {
         sBTC: {
             contractAddress: 'ST3QZNX3CGT6V7PE1PBK17FCRK1TP1AT02W1N0YJF',
