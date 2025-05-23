@@ -1,4 +1,4 @@
-<div class="notification-panel" [class.expanded]="expanded" *ngIf="notificationCount > 0">
+<div class="notification-panel" [class.expanded]="expanded" [class.hidden]="!showNotifications()" *ngIf="notificationCount > 0">
   <div class="notification-header" (click)="toggleExpanded()">
     <div class="notification-title">
       <mat-icon>notifications</mat-icon>

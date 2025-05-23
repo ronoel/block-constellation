@@ -335,6 +335,9 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     this.statusMessage = '';
     this.statusType = '';
     
+    // Hide notifications when drawer is open (especially important on mobile)
+    this.allocateStatusService.setNotificationsVisibility(false);
+    
     // Refresh user balance and ensure we have the latest BTC price
     this.fetchUserBalance();
     
@@ -346,6 +349,10 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
 
   closeStakeDrawer(): void {
     this.isDrawerOpen = false;
+    
+    // Show notifications again when drawer is closed
+    this.allocateStatusService.setNotificationsVisibility(true);
+    
     setTimeout(() => {
       this.selectedConstellation = null;
       this.statusMessage = '';

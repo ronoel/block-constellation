@@ -31,6 +31,9 @@ export class AllocateStatusService {
   // Signal for notifications about transaction status changes
   public readonly notificationsSignal = signal<TransactionNotification[]>([]);
   
+  // Signal to control notification visibility when drawer is open
+  public readonly showNotifications = signal<boolean>(true);
+  
   // Interval to check transaction status (in milliseconds)
   private readonly TRANSACTION_CHECK_INTERVAL = 5000;
   
@@ -202,6 +205,14 @@ export class AllocateStatusService {
    */
   getTransaction(txid: string): AllocationTransaction | undefined {
     return this.allocationsSignal().find(tx => tx.txid === txid);
+  }
+  
+  /**
+   * Sets notification visibility
+   * Used to hide notifications when drawer is open on mobile
+   */
+  public setNotificationsVisibility(show: boolean): void {
+    this.showNotifications.set(show);
   }
   
   /**

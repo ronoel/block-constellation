@@ -147,4 +147,10 @@ export class TransactionNotificationsComponent implements OnInit {
     const days = Math.floor(hours / 24);
     return `${days} day${days !== 1 ? 's' : ''} ago`;
   }
+  
+  // Method to check if notifications should be shown
+  // Uses the signal from AllocateStatusService
+  showNotifications(): boolean {
+    return this.allocateStatusService.showNotifications();
+  }
 }
