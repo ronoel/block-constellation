@@ -112,7 +112,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     this.loadingPage = true;
     
     // Fetch BTC price on component initialization
-    this.fetchBTCPrice();
+    // this.fetchBTCPrice();
 
     effect(() => {
       if (this.walletService.isLoggedIn()) {
@@ -126,14 +126,20 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
       }
     });
 
-    effect(() => {
-      console.log(`Notifications`, this.allocateStatusService.notificationsSignal());
-       this.refreshUserData()
-    });
+    // effect(() => {
+    //   console.log(`Notifications`, this.allocateStatusService.notificationsSignal());
+    //    this.refreshUserData()
+    // });
   }
 
   ngOnInit(): void {
     this.fetchBTCPrice();
+    this.allocateStatusService.getTransactionStatusChanges()
+      .subscribe((notifications) => {
+        console.log('Transaction status changed:', notifications);
+        this.refreshUserData();
+      }
+    );
   }
   
   // Load data when user is logged in
@@ -531,7 +537,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
       return false;
     }
     
-    const pendingTransactions = this.allocateStatusService.getPendingTransactions();
+    const pendingTransactions = this.allocateStatusService.getPendingTransactionsSignal();
     return pendingTransactions.some(tx => tx.constellation === constellationId);
   }
   

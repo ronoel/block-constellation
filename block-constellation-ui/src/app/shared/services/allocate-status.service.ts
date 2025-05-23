@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { TransactionInfoService } from '../../libs/components/transaction-info/transaction-info.service';
-import { BehaviorSubject, Observable, catchError, forkJoin, from, of, timer } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, forkJoin, of, timer } from 'rxjs';
 
 // Interface to represent an allocation transaction
 export interface AllocationTransaction {
@@ -25,30 +25,32 @@ export interface TransactionNotification {
   providedIn: 'root'
 })
 export class AllocateStatusService {
-  // Signal for the allocation transactions
-  public readonly allocationsSignal = signal<AllocationTransaction[]>([]);
+  // Signal for the pending transactions only
+  private readonly pendingTransactionsSignal = signal<AllocationTransaction[]>([]);
   
-  // Signal for notifications about transaction status changes
-  public readonly notificationsSignal = signal<TransactionNotification[]>([]);
+  // Signal for all transaction notifications (pending and finished)
+  private readonly notificationsSignal = signal<TransactionNotification[]>([]);
   
-  // Signal to control notification visibility when drawer is open
+  // Signal to control notification visibility when drawer is open on mobile
   public readonly showNotifications = signal<boolean>(true);
+  
+  // Subject for transaction status changes
+  private transactionStatusChanged = new BehaviorSubject<TransactionNotification[]>([]);
   
   // Interval to check transaction status (in milliseconds)
   private readonly TRANSACTION_CHECK_INTERVAL = 5000;
   
-  // Local storage keys
-  private readonly STORAGE_KEY = 'block-constellation-allocations';
-  private readonly NOTIFICATION_KEY = 'block-constellation-notifications';
+  // Local storage key for pending transactions
+  private readonly STORAGE_KEY = 'block-constellation-pending';
   
   // Inject the transaction info service
   private transactionInfoService = inject(TransactionInfoService);
   
   constructor() {
-    // Load transactions from local storage when the service is initialized
+    // Load transactions from local storage
     this.loadFromStorage();
     
-    // Set up the timer to check transaction statuses at regular intervals
+    // Set up the timer to check transaction statuses every 5 seconds
     this.setupStatusCheckTimer();
   }
 
@@ -59,51 +61,121 @@ export class AllocateStatusService {
    * @param constellation The constellation ID (0-23)
    */
   addAllocationTransaction(txid: string, amount: number, constellation: number): void {
+    const timestamp = Date.now();
+    
+    // Create new pending transaction
     const newTransaction: AllocationTransaction = {
       txid,
       amount,
       constellation,
       status: 'pending',
-      timestamp: Date.now()
+      timestamp
     };
     
-    // Get current transactions
-    const currentTransactions = this.allocationsSignal();
+    // Create notification for the new transaction
+    const notification: TransactionNotification = {
+      txid,
+      oldStatus: '',
+      newStatus: 'pending',
+      amount,
+      constellation,
+      timestamp
+    };
     
-    // Add the new transaction
-    const updatedTransactions = [...currentTransactions, newTransaction];
+    // Add to pending transactions
+    const currentTransactions = this.pendingTransactionsSignal();
+    this.pendingTransactionsSignal.set([...currentTransactions, newTransaction]);
     
-    // Update the signal
-    this.allocationsSignal.set(updatedTransactions);
+    // Add to notifications - ensuring there's only one notification per txid
+    const currentNotifications = this.notificationsSignal();
+    // Filter out any existing notification with the same txid
+    const filteredNotifications = currentNotifications.filter(n => n.txid !== txid);
+    this.notificationsSignal.set([...filteredNotifications, notification]);
     
     // Save to local storage
-    this.saveTransactionsToStorage(updatedTransactions);
+    this.savePendingToStorage();
   }
   
   /**
-   * Save transactions to local storage
-   * @param transactions The transactions to save
+   * Returns an Observable that emits when transactions change status from pending
+   * @returns Observable of TransactionNotification arrays
    */
-  private saveTransactionsToStorage(transactions: AllocationTransaction[]): void {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(transactions));
+  getTransactionStatusChanges(): Observable<TransactionNotification[]> {
+    return this.transactionStatusChanged.asObservable();
   }
   
   /**
-   * Load transactions from local storage
+   * Sets notification visibility
+   * Used to hide notifications when drawer is open on mobile
+   */
+  setNotificationsVisibility(show: boolean): void {
+    this.showNotifications.set(show);
+  }
+  
+  /**
+   * Clear all notifications
+   */
+  clearNotifications(): void {
+    this.notificationsSignal.set([]);
+  }
+  
+  /**
+   * Dismiss a specific notification by txid
+   * @param txid The transaction ID to dismiss
+   */
+  dismissNotification(txid: string): void {
+    const currentNotifications = this.notificationsSignal();
+    const updatedNotifications = currentNotifications.filter(n => n.txid !== txid);
+    this.notificationsSignal.set(updatedNotifications);
+  }
+  
+  /**
+   * Get all notifications (pending and finished transactions)
+   * @returns Array of TransactionNotification
+   */
+  getNotificationsSignal(): TransactionNotification[] {
+    return this.notificationsSignal();
+  }
+
+  getPendingTransactionsSignal(): AllocationTransaction[] {
+    return this.pendingTransactionsSignal();
+  }
+  
+  /**
+   * Save pending transactions to local storage
+   */
+  private savePendingToStorage(): void {
+    const pendingTransactions = this.pendingTransactionsSignal();
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(pendingTransactions));
+  }
+  
+  /**
+   * Load pending transactions from local storage
    */
   private loadFromStorage(): void {
     try {
-      // Load transactions
       const storedData = localStorage.getItem(this.STORAGE_KEY);
       if (storedData) {
         const transactions = JSON.parse(storedData) as AllocationTransaction[];
-        this.allocationsSignal.set(transactions);
+        this.pendingTransactionsSignal.set(transactions);
+        
+        // Create notifications for pending transactions loaded from storage
+        const notifications: TransactionNotification[] = transactions.map(tx => ({
+          txid: tx.txid,
+          oldStatus: '',
+          newStatus: tx.status,
+          amount: tx.amount,
+          constellation: tx.constellation,
+          timestamp: tx.timestamp
+        }));
+        
+        this.notificationsSignal.set(notifications);
       }
     } catch (error) {
       console.error('Error loading data from local storage:', error);
-      // If there's an error, clear the storage to prevent future errors
       localStorage.removeItem(this.STORAGE_KEY);
-      this.allocationsSignal.set([]);
+      this.pendingTransactionsSignal.set([]);
+      this.notificationsSignal.set([]);
     }
   }
   
@@ -111,11 +183,8 @@ export class AllocateStatusService {
    * Set up a timer to check transaction statuses at regular intervals
    */
   private setupStatusCheckTimer(): void {
-    // Check for pending transactions every TRANSACTION_CHECK_INTERVAL milliseconds
-    timer(0, this.TRANSACTION_CHECK_INTERVAL).subscribe(() => {
-      const allTransactions = this.allocationsSignal();
-      const pendingTransactions = this.getPendingTransactions();
-      
+    timer(5000, this.TRANSACTION_CHECK_INTERVAL).subscribe(() => {
+      const pendingTransactions = this.pendingTransactionsSignal();
       if (pendingTransactions.length > 0) {
         this.checkPendingTransactionsStatus(pendingTransactions);
       }
@@ -127,7 +196,6 @@ export class AllocateStatusService {
    * @param pendingTransactions The pending transactions to check
    */
   private checkPendingTransactionsStatus(pendingTransactions: AllocationTransaction[]): void {
-    // Create an array of observables for checking each transaction
     const statusChecks = pendingTransactions.map(tx => 
       this.transactionInfoService.fetchTransactionStatus(tx.txid).pipe(
         catchError(error => {
@@ -137,22 +205,17 @@ export class AllocateStatusService {
       )
     );
     
-    // Execute all status checks in parallel
     forkJoin(statusChecks).subscribe(results => {
-      // Get current transactions
-      const currentTransactions = this.allocationsSignal();
-      let updatedTransactions = [...currentTransactions];
-      const notCompletedTransactions: AllocationTransaction[] = [];
+      let stillPendingTransactions: AllocationTransaction[] = [];
       const newNotifications: TransactionNotification[] = [];
+      const txidsToUpdate: string[] = [];
       
-      // Process each transaction
       pendingTransactions.forEach((tx, index) => {
         if (results[index]) {
           const newStatus = results[index].status;
           
           // If status has changed from pending to something else
           if (newStatus !== 'pending' && tx.status === 'pending') {
-            // Create notification for status change
             newNotifications.push({
               txid: tx.txid,
               oldStatus: tx.status,
@@ -161,64 +224,36 @@ export class AllocateStatusService {
               constellation: tx.constellation,
               timestamp: Date.now()
             });
-            
-            // Update transaction status
-            const transactionIndex = updatedTransactions.findIndex(t => t.txid === tx.txid);
-            if (transactionIndex !== -1) {
-              updatedTransactions[transactionIndex] = { 
-                ...updatedTransactions[transactionIndex], 
-                status: newStatus 
-              };
-            }
+            // Keep track of which txids are getting updated
+            txidsToUpdate.push(tx.txid);
           } else if (newStatus === 'pending') {
-            // Keep track of transactions that are still pending
-            notCompletedTransactions.push(tx);
+            // Keep in pending transactions list
+            stillPendingTransactions.push(tx);
           }
+        } else {
+          // If status check failed, keep in pending
+          stillPendingTransactions.push(tx);
         }
       });
       
-      // Update notifications signal if we have new notifications
+      // Update pending transactions signal
+      this.pendingTransactionsSignal.set(stillPendingTransactions);
+      
+      // Update notifications and emit changes
       if (newNotifications.length > 0) {
         const currentNotifications = this.notificationsSignal();
-        this.notificationsSignal.set([...currentNotifications, ...newNotifications]);
+        
+        // Remove old notifications for the transactions that are being updated
+        const filteredNotifications = currentNotifications.filter(n => !txidsToUpdate.includes(n.txid));
+        
+        // Add the new notifications
+        const updatedNotifications = [...filteredNotifications, ...newNotifications];
+        this.notificationsSignal.set(updatedNotifications);
+        this.transactionStatusChanged.next(newNotifications);
       }
       
-      // Update the allocations signal and storage - only keep pending transactions
-      updatedTransactions = updatedTransactions.filter(tx => tx.status === 'pending');
-      this.allocationsSignal.set(updatedTransactions);
-      this.saveTransactionsToStorage(updatedTransactions);
+      // Save pending transactions to storage
+      this.savePendingToStorage();
     });
   }
-  
-  /**
-   * Get all pending transactions
-   * @returns Array of pending transactions
-   */
-  getPendingTransactions(): AllocationTransaction[] {
-    return this.allocationsSignal().filter(tx => tx.status === 'pending');
-  }
-  
-  /**
-   * Get a specific transaction by txid
-   * @param txid The transaction ID to find
-   * @returns The transaction or undefined if not found
-   */
-  getTransaction(txid: string): AllocationTransaction | undefined {
-    return this.allocationsSignal().find(tx => tx.txid === txid);
-  }
-  
-  /**
-   * Sets notification visibility
-   * Used to hide notifications when drawer is open on mobile
-   */
-  public setNotificationsVisibility(show: boolean): void {
-    this.showNotifications.set(show);
-  }
-  
-  /**
-   * Clear all notifications
-   */
-  // clearNotifications(): void {
-  //   this.notificationsSignal.set([]);
-  // }
 }
