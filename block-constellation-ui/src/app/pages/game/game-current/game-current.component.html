@@ -34,7 +34,7 @@
         <div class="cosmic-pool">
           <div class="cosmic-bounty-container">
             <div class="cosmic-stars left"><i>✧</i><i>★</i><i>✦</i></div>
-            <p><span class="bounty-label">Cosmic Bounty: </span> <span class="bounty-amount">{{ formatBTC(totalStakedPool) }} BTC</span> <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(totalStakedPool * btcPrice) }})</span></p>
+            <p><span class="bounty-label">Cosmic Bounty: </span> <span class="bounty-amount">{{ formatBTC(totalStakedPool) }} BTC</span> <br> <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(totalStakedPool * btcPrice) }})</span></p>
             <div class="cosmic-stars right"><i>✦</i><i>★</i><i>✧</i></div>
           </div>
         </div>
@@ -92,116 +92,24 @@
 
       <div class="constellation-grid">
         <!-- Constellation Cards -->
-        <div class="constellation-card" *ngFor="let constellation of constellations"
-          [class.has-stake]="walletConnected && constellation.yourStake > 0"
-          [class.has-pending]="walletConnected && hasPendingTransaction(constellation.id)"
-          (click)="walletConnected && selectConstellation(constellation)">
-          <div class="card-content">
-            <h3 class="constellation-name">{{ constellation.name }}</h3>
-            <p class="constellation-meaning">{{ constellation.meaning }}</p>
-
-            <div class="stake-info">
-              <div class="total-staked">
-                {{ formatBTC(constellation.totalStaked) }} BTC staked
-              </div>
-
-              <!-- User-specific data only shown when wallet is connected -->
-              <ng-container *ngIf="walletConnected">
-                <div class="your-stake" *ngIf="constellation.yourStake > 0">
-                  Your stake: {{ formatSats(constellation.yourStake) }} sats
-                </div>
-
-                <div class="your-share" *ngIf="constellation.yourStake > 0">
-                  Your share: {{ Math.min(constellation.yourShare, 100).toFixed(2) }}%
-                </div>
-
-                <div class="pending-indicator" *ngIf="hasPendingTransaction(constellation.id)">
-                  <span class="status-indicator pending"></span> Transaction Pending
-                </div>
-
-                <button class="btn-stake">
-                  {{ constellation.yourStake > 0 ? 'Add Stake' : 'Stake' }}
-                </button>
-              </ng-container>
-
-              <!-- For unconnected wallets, show a prompt instead of stake button -->
-              <div class="connect-prompt" *ngIf="!walletConnected">
-                <p>Connect wallet to stake</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="stake-tag" *ngIf="walletConnected && constellation.yourStake > 0">
-            <i class="cosmic-star">★</i> Staked
-          </div>
-        </div>
+        <app-game-constellation-card
+          *ngFor="let constellation of constellations"
+          [constellation]="constellation"
+          [walletConnected]="walletConnected"
+          [hasPendingTransaction]="hasPendingTransaction(constellation.id)"
+          (selectCard)="selectConstellation($event)">
+        </app-game-constellation-card>
       </div>
     </div>
   </div>
 </ng-container>
 
-<!-- Stake Drawer -->
-<div class="stake-drawer" [class.open]="isDrawerOpen" *ngIf="selectedConstellation">
-  <div class="drawer-backdrop" (click)="closeStakeDrawer()"></div>
-  <div class="drawer-content">
-    <div class="drawer-header">
-      <h3>Stake on {{ selectedConstellation.name }}</h3>
-      <button class="btn-close" (click)="closeStakeDrawer()">×</button>
-    </div>
-
-    <div class="drawer-body">
-      <div class="constellation-snapshot">
-        <div class="snapshot-item">
-          <span class="label">Total Staked:</span>
-          <span class="value">{{ formatBTC(selectedConstellation.totalStaked) }} BTC <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(selectedConstellation.totalStaked * btcPrice) }})</span></span>
-        </div>
-        <div class="snapshot-item" *ngIf="selectedConstellation.yourStake > 0">
-          <span class="label">You Already Staked:</span>
-          <span class="value">{{ formatSats(selectedConstellation.yourStake) }} sats <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSDFromSats(selectedConstellation.yourStake) }})</span></span>
-        </div>
-      </div>
-
-      <div class="stake-input-section">
-        <label for="stakeAmount">Amount (sats)</label>
-        <input type="number" id="stakeAmount" [(ngModel)]="stakeAmount" min="1000" step="1000" [max]="feeBalance"
-          class="stake-input" [class.invalid]="stakeAmount < 1000 || stakeAmount > feeBalance">
-        <div class="amount-usd-value" *ngIf="btcPrice > 0">
-          <span>≈ {{ formatUSDFromSats(stakeAmount) }}</span>
-        </div>
-
-        <div class="quick-adjust">
-          <button class="btn-quick" (click)="stakeAmount = 1000" [disabled]="feeBalance < 1000">MIN</button>
-          <button class="btn-quick" (click)="increaseStakeAmount(2)"
-            [disabled]="stakeAmount * 2 > feeBalance">2×</button>
-          <button class="btn-quick" (click)="increaseStakeAmount(5)"
-            [disabled]="stakeAmount * 5 > feeBalance">5×</button>
-          <button class="btn-quick" (click)="increaseStakeAmount(10)"
-            [disabled]="stakeAmount * 10 > feeBalance">10×</button>
-          <button class="btn-quick" (click)="setMaxStake()" [disabled]="feeBalance < 1000">MAX</button>
-        </div>
-
-        <div class="balance-info" [class.insufficient]="feeBalance < 1000">
-          <span class="balance-label">Your balance:</span>
-          <div class="balance-value-container">
-            <span class="balance-value" *ngIf="!isLoadingBalance">{{ formatSats(feeBalance) }} sats <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSDFromSats(feeBalance) }})</span></span>
-            <span class="balance-value loading" *ngIf="isLoadingBalance">Loading...</span>
-            <button class="btn-refresh" (click)="fetchUserBalance()" [disabled]="isLoadingBalance"
-              title="Refresh Balance">
-              <span class="refresh-icon">↻</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="drawer-footer">
-      <div *ngIf="statusMessage" class="status-message" [ngClass]="statusType">
-        {{ statusMessage }}
-      </div>
-      <button class="btn-cancel" (click)="closeStakeDrawer()">Cancel</button>
-      <button class="btn-confirm" [disabled]="stakeAmount < 1000 || stakeAmount > feeBalance" (click)="confirmStake()">
-        Confirm Stake
-      </button>
-    </div>
-  </div>
-</div>
+<!-- Stake Action Component -->
+<app-game-stake-action
+  [isOpen]="isDrawerOpen"
+  [constellation]="selectedConstellation"
+  [feeBalance]="feeBalance"
+  [btcPrice]="btcPrice"
+  (close)="closeStakeDrawer()"
+  (stakeConfirmed)="handleStakeConfirmed($event)">
+</app-game-stake-action>
