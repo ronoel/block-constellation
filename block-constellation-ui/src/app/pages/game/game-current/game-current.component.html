@@ -34,7 +34,7 @@
         <div class="cosmic-pool">
           <div class="cosmic-bounty-container">
             <div class="cosmic-stars left"><i>✧</i><i>★</i><i>✦</i></div>
-            <p><span class="bounty-label">Cosmic Bounty: </span> <span class="bounty-amount">{{ formatBTC(totalStakedPool) }} BTC</span> <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(totalStakedPool * btcPrice) }})</span></p>
+            <p><span class="bounty-label">Cosmic Bounty: </span> <span class="bounty-amount">{{ formatBTC(totalStakedPool) }} BTC</span> <br> <span class="usd-value" *ngIf="btcPrice > 0">(≈ {{ formatUSD(totalStakedPool * btcPrice) }})</span></p>
             <div class="cosmic-stars right"><i>✦</i><i>★</i><i>✧</i></div>
           </div>
         </div>
@@ -92,49 +92,13 @@
 
       <div class="constellation-grid">
         <!-- Constellation Cards -->
-        <div class="constellation-card" *ngFor="let constellation of constellations"
-          [class.has-stake]="walletConnected && constellation.yourStake > 0"
-          [class.has-pending]="walletConnected && hasPendingTransaction(constellation.id)"
-          (click)="walletConnected && selectConstellation(constellation)">
-          <div class="card-content">
-            <h3 class="constellation-name">{{ constellation.name }}</h3>
-            <p class="constellation-meaning">{{ constellation.meaning }}</p>
-
-            <div class="stake-info">
-              <div class="total-staked">
-                {{ formatBTC(constellation.totalStaked) }} BTC staked
-              </div>
-
-              <!-- User-specific data only shown when wallet is connected -->
-              <ng-container *ngIf="walletConnected">
-                <div class="your-stake" *ngIf="constellation.yourStake > 0">
-                  Your stake: {{ formatSats(constellation.yourStake) }} sats
-                </div>
-
-                <div class="your-share" *ngIf="constellation.yourStake > 0">
-                  Your share: {{ Math.min(constellation.yourShare, 100).toFixed(2) }}%
-                </div>
-
-                <div class="pending-indicator" *ngIf="hasPendingTransaction(constellation.id)">
-                  <span class="status-indicator pending"></span> Transaction Pending
-                </div>
-
-                <button class="btn-stake">
-                  {{ constellation.yourStake > 0 ? 'Add Stake' : 'Stake' }}
-                </button>
-              </ng-container>
-
-              <!-- For unconnected wallets, show a prompt instead of stake button -->
-              <div class="connect-prompt" *ngIf="!walletConnected">
-                <p>Connect wallet to stake</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="stake-tag" *ngIf="walletConnected && constellation.yourStake > 0">
-            <i class="cosmic-star">★</i> Staked
-          </div>
-        </div>
+        <app-game-constellation-card
+          *ngFor="let constellation of constellations"
+          [constellation]="constellation"
+          [walletConnected]="walletConnected"
+          [hasPendingTransaction]="hasPendingTransaction(constellation.id)"
+          (selectCard)="selectConstellation($event)">
+        </app-game-constellation-card>
       </div>
     </div>
   </div>

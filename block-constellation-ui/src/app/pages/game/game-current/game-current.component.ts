@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WalletService } from '../../../libs/wallet.service';
@@ -8,6 +8,7 @@ import { AllocateStatusService, AllocationTransaction } from '../../../shared/se
 import { BinanceService } from '../../../libs/binance.service';
 import { Subscription } from 'rxjs';
 import { ConnectWalletComponent } from '../../../shared/components/connect-wallet/connect-wallet.component';
+import { GameConstellationCardComponent } from '../game-constellation-card/game-constellation-card.component';
 
 // Interfaces
 interface Constellation {
@@ -31,7 +32,8 @@ interface UserAllocation {
   imports: [
     CommonModule,
     FormsModule,
-    ConnectWalletComponent
+    ConnectWalletComponent,
+    GameConstellationCardComponent
   ],
   templateUrl: './game-current.component.html',
   styleUrl: './game-current.component.scss'

@@ -6,6 +6,7 @@ ng generate component /pages/game/game-footer --skip-tests
 ng generate component /pages/game/game-current --skip-tests
 ng generate component /pages/game/game-ledger --skip-tests
 ng generate component /pages/game/game-refer-friend --skip-tests
+ng generate component /pages/game/game-constellation-card --skip-tests
 
 
 ng generate component shared/components/connect-wallet --skip-tests

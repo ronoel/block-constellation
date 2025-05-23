@@ -1,5 +1,5 @@
-// Import the pending transaction styles
-@import 'pending-transaction';
+// Import the pending transaction styles from shared location
+@import '../shared/pending-transaction';
 
 // Loading state - extending global loading-state
 .loading-state {
@@ -354,150 +354,7 @@
   }
 }
 
-// New connect prompt for individual cards when wallet is disconnected
-.connect-prompt {
-  background-color: rgba(30, 42, 71, 0.3);
-  border-radius: 6px;
-  padding: 8px;
-  margin-top: 12px;
-  text-align: center;
-  
-  p {
-    margin: 0;
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
-}
-
-.constellation-card {
-  background-color: var(--bg-surface);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  
-  &.has-stake {
-    box-shadow: 0 0 20px rgba(156, 39, 176, 0.6);
-    border: 1px solid #9c27b0;
-    background: linear-gradient(to bottom, rgba(30, 42, 71, 1), rgba(30, 42, 71, 0.9)), 
-                url('/assets/images/stars-bg.png');
-    background-blend-mode: overlay;
-    background-size: cover;
-    
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-image: 
-        radial-gradient(1px 1px at 20px 30px, white, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 40px 70px, white, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 50px 160px, white, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 90px 40px, white, rgba(0,0,0,0)),
-        radial-gradient(2px 2px at 130px 80px, white, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 160px 120px, white, rgba(0,0,0,0));
-      background-repeat: repeat;
-      background-size: 200px 200px;
-      opacity: 0.3;
-      z-index: 1;
-      pointer-events: none;
-      mix-blend-mode: screen;
-      animation: starTwinkle 4s infinite alternate;
-    }
-  }
-  
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-  
-  .card-content {
-    padding: 20px;
-    
-    .constellation-name {
-      margin: 0 0 8px;
-      font-size: 18px;
-      font-weight: 600;
-      
-      &.has-stake {
-        color: #e4c6ff !important;
-        text-shadow: 0 0 5px rgba(156, 39, 176, 0.5);
-      }
-    }
-    
-    .constellation-meaning {
-      margin: 0 0 15px;
-      font-size: 13px;
-      color: var(--text-secondary);
-      min-height: 40px;
-    }
-  }
-  
-  .stake-info {
-    margin-top: 15px;
-    
-    .total-staked, .your-stake, .your-share {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-    
-    .btn-stake {
-      width: 100%;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      color: var(--text-primary);
-      border: none;
-      border-radius: 6px;
-      padding: 8px 0;
-      margin-top: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      
-      &:hover:not(:disabled) {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      }
-      
-      &:disabled {
-        background: linear-gradient(90deg, rgba(30, 42, 71, 0.3), rgba(30, 42, 71, 0.3));
-        cursor: not-allowed;
-      }
-    }
-  }
-  
-  .stake-tag {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: linear-gradient(90deg, #9c27b0, #673ab7);
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 12px;
-    z-index: 1;
-    box-shadow: 0 0 10px rgba(156, 39, 176, 0.8);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    animation: cosmicPulse 2s infinite alternate;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    
-    .cosmic-star {
-      color: #ffeb3b;
-      font-size: 14px;
-      animation: starTwinkle 1.5s infinite;
-      display: inline-block;
-    }
-  }
-}
+// Card styling moved to game-constellation-card.component.scss
 
 // Stake drawer
 .stake-drawer {
@@ -830,29 +687,7 @@
   }
 }
 
-// Add cosmic animations and effects
-@keyframes cosmicPulse {
-  0% {
-    box-shadow: 0 0 10px rgba(156, 39, 176, 0.7);
-    transform: scale(1);
-  }
-  100% {
-    box-shadow: 0 0 15px rgba(156, 39, 176, 1);
-    transform: scale(1.05);
-  }
-}
-
-@keyframes starTwinkle {
-  0% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.8;
-  }
-  100% {
-    opacity: 0.3;
-  }
-}
+// Animations moved to game-constellation-card.component.scss
 
 // Add cosmicGlow animation for the Cosmic Bounty
 @keyframes cosmicGlow {
