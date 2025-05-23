@@ -9,6 +9,7 @@ import { BinanceService } from '../../../libs/binance.service';
 import { Subscription } from 'rxjs';
 import { ConnectWalletComponent } from '../../../shared/components/connect-wallet/connect-wallet.component';
 import { GameConstellationCardComponent } from '../game-constellation-card/game-constellation-card.component';
+import { GameStakeActionComponent } from '../game-stake-action/game-stake-action.component';
 
 // Interfaces
 interface Constellation {
@@ -33,7 +34,8 @@ interface UserAllocation {
     CommonModule,
     FormsModule,
     ConnectWalletComponent,
-    GameConstellationCardComponent
+    GameConstellationCardComponent,
+    GameStakeActionComponent
   ],
   templateUrl: './game-current.component.html',
   styleUrl: './game-current.component.scss'
@@ -58,9 +60,6 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   // UI states
   isDrawerOpen = false;
   selectedConstellation: Constellation | null = null;
-  stakeAmount = 1000;
-  statusMessage = '';
-  statusType = '';
   showAllocationSummary = false;
   loadingPage = false;
   
@@ -333,9 +332,6 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     
     this.selectedConstellation = constellation;
     this.isDrawerOpen = true;
-    this.stakeAmount = this.feeBalance >= 1000 ? 1000 : Math.min(this.feeBalance, 1000);
-    this.statusMessage = '';
-    this.statusType = '';
     
     // Hide notifications when drawer is open (especially important on mobile)
     this.allocateStatusService.setNotificationsVisibility(false);
@@ -357,10 +353,13 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     
     setTimeout(() => {
       this.selectedConstellation = null;
-      this.statusMessage = '';
-      this.statusType = '';
     }, 300);
     this.fetchUserBalance();
+  }
+  
+  handleStakeConfirmed(event: {amount: number, constellationId: number, txId: string}): void {
+    // When a stake is confirmed by the stake action component
+    this.refreshUserData();
   }
   
   // Fetch the user's sBTC balance
@@ -377,10 +376,6 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
       next: (balance) => {
         this.feeBalance = Number(balance);
         this.isLoadingBalance = false;
-        
-        if (this.stakeAmount > this.feeBalance) {
-          this.stakeAmount = this.feeBalance > 1000 ? this.feeBalance : 1000;
-        }
       },
       error: (error) => {
         console.error('Error fetching sBTC balance:', error);
@@ -468,75 +463,6 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     return this.formatUSD(this.calculateUSDFromSats(sats));
   }
 
-  confirmStake(): void {
-    if (!this.walletConnected) {
-      this.statusMessage = 'Please connect your wallet first';
-      this.statusType = 'error';
-      this.clearStatusMessageAfterDelay();
-      return;
-    }
-    
-    this.isLoadingBalance = true;
-    
-    const balanceSubscription = this.sbtcTokenService.getBalance().subscribe({
-      next: (balance) => {
-        this.feeBalance = Number(balance);
-        this.isLoadingBalance = false;
-        
-        if (this.selectedConstellation && this.stakeAmount >= 1000 && this.stakeAmount <= this.feeBalance) {
-          this.statusMessage = 'Submitting your stake...';
-          this.statusType = 'info';
-          
-          this.blockConstellationContractService
-            .allocate(this.stakeAmount, this.selectedConstellation.id)
-            .subscribe({
-              next: (response) => {
-                if (response.txid && this.selectedConstellation) {
-                  this.allocateStatusService.addAllocationTransaction(
-                    response.txid,
-                    this.stakeAmount,
-                    this.selectedConstellation.id
-                  );
-                }
-                
-                const constellationName = this.selectedConstellation?.name || 'unknown';
-                this.statusMessage = `Stake of ${this.formatSats(this.stakeAmount)} sats successfully submitted to the ${constellationName} constellation! Your transaction is now processing. Check the notifications panel for updates.`;
-                this.statusType = 'success';
-                this.clearStatusMessageAfterDelay(8000);
-                
-                // setTimeout(() => this.refreshUserData(), 2000);
-                this.closeStakeDrawer();
-              },
-              error: (error) => {
-                this.statusMessage = `Failed to stake on constellation: ${error.message || 'Unknown error'}`;
-                this.statusType = 'error';
-                this.clearStatusMessageAfterDelay();
-              }
-            });
-        } else {
-          if (this.feeBalance < 1000) {
-            this.statusMessage = 'Insufficient sBTC balance. You need at least 1000 sats to stake.';
-          } else if (this.stakeAmount > this.feeBalance) {
-            this.statusMessage = `Insufficient balance. You only have ${this.formatSats(this.feeBalance)} sats available.`;
-          } else {
-            this.statusMessage = 'Please enter a valid stake amount (min 1000 sats).';
-          }
-          this.statusType = 'error';
-          this.clearStatusMessageAfterDelay();
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching sBTC balance:', error);
-        this.isLoadingBalance = false;
-        this.statusMessage = 'Could not verify your balance. Please try again.';
-        this.statusType = 'error';
-        this.clearStatusMessageAfterDelay();
-      }
-    });
-    
-    this.subscriptions.push(balanceSubscription);
-  }
-  
   // Refresh user data after successful stake
   private refreshUserData(): void {
     if (this.walletConnected && this.walletService.isLoggedIn()) {
@@ -578,27 +504,6 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     } else {
       this.loadPublicData();
     }
-  }
-  
-  clearStatusMessageAfterDelay(delay: number = 5000): void {
-    setTimeout(() => {
-      this.statusMessage = '';
-      this.statusType = '';
-    }, delay);
-  }
-
-  increaseStakeAmount(factor: number): void {
-    const newAmount = this.stakeAmount * factor;
-    
-    if (newAmount <= this.feeBalance) {
-      this.stakeAmount = newAmount;
-    } else {
-      this.stakeAmount = this.feeBalance;
-    }
-  }
-
-  setMaxStake(): void {
-    this.stakeAmount = this.feeBalance;
   }
 
   formatSats(sats: number): string {
