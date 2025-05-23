@@ -46,9 +46,9 @@ export abstract class ContractUtil {
       reject,
       postConditions,
       postConditionMode);
-      return openContractCall(options).then(() => {
-        window.scrollTo({ top: 0, behavior: 'instant' });
-      });
+    return openContractCall(options).then(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
   }
 
   protected callSponsoredFunction(
@@ -67,9 +67,9 @@ export abstract class ContractUtil {
       reject,
       postConditions,
       postConditionMode);
-      return openContractCall(options).then(() => {
-        window.scrollTo({ top: 0, behavior: 'instant' });
-      });
+    return openContractCall(options).then(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
   }
 
   protected createGenericReadOnlyFunctionOptions(functionName: string, functionArgs: ClarityValue[]): ReadOnlyFunctionOptions {
@@ -84,7 +84,7 @@ export abstract class ContractUtil {
       network: environment.network as StacksNetworkName, // This is now properly typed
       // client: { baseUrl: environment.blockchainAPIUrl }, // optional, defaults inferred from network
       // client: { baseUrl: 'https://api.platform.hiro.so/v1/ext/d1087667a742b16e54ea8a64f12dbc28/stacks-blockchain-api' }, // optional, defaults inferred from network
-      senderAddress: this.contractAddress
+      senderAddress: this.walletService.getSTXAddress() ? this.walletService.getSTXAddress() : this.contractAddress
     };
   }
   // { contractName, contractAddress, functionName, functionArgs, senderAddress, network, client: _client, 
