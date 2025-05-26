@@ -63,12 +63,16 @@ export class TransactionInfoService {
    * @throws Error if the status is invalid
    */
   fetchTransactionStatus(txId: string): Observable<TransactionResponse> {
-    return from(fetch(`${environment.blockchainAPIUrl}/extended/v1/tx/${txId}`))
+    return from(fetch(`${environment.blockchainAPIUrl}/extended/v1/tx/${txId}`, {
+      headers: {
+        'X-API-Key': environment.hiroApiKey
+      }
+    }))
       .pipe(
         switchMap(response => from(response.json())),
         map(data => {
           const status = data.tx_status;
-          
+
           if (!this.isValidStatus(status)) {
             throw new Error(`Invalid transaction status: ${status}`);
           }
@@ -108,8 +112,8 @@ export class TransactionInfoService {
   getTransactionStatus(txId: string): Observable<TransactionResponse> {
     return timer(this.TRANSACTION_CHECK_INTERVAL).pipe(
       switchMap(() => this.fetchTransactionStatus(txId)),
-      expand(result => 
-        result.status === 'pending' 
+      expand(result =>
+        result.status === 'pending'
           ? timer(this.TRANSACTION_CHECK_INTERVAL).pipe(switchMap(() => this.fetchTransactionStatus(txId)))
           : of(result)
       ),
