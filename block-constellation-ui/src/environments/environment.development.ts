@@ -34,6 +34,7 @@ export const environment = {
     network: "mainnet", // 'mainnet', 'testnet', 'devnet', 'mocknet'
     apiUrl: 'https://boltproto.org/api/v1',
     // apiUrl: '/api/v1',
+    hiroApiKey: '06be121cbb2d828b463e9bc108cdb169',
     blockchainAPIUrl: 'https://api.hiro.so',
     gameContract: {
         contractAddress: 'SP3QZNX3CGT6V7PE1PBK17FCRK1TP1AT02ZHQCMVJ',

@@ -8,6 +8,7 @@ import {
   ClarityValue,
   PostCondition,
 } from '@stacks/transactions';
+import { createApiKeyMiddleware, createFetchFn } from "@stacks/common";
 import { openContractCall, ContractCallOptions, ContractCallSponsoredOptions, SponsoredFinishedTxData } from '@stacks/connect';
 import { StacksNetworkName } from '@stacks/network';
 import { environment } from '../../environments/environment';
@@ -73,6 +74,14 @@ export abstract class ContractUtil {
   }
 
   protected createGenericReadOnlyFunctionOptions(functionName: string, functionArgs: ClarityValue[]): ReadOnlyFunctionOptions {
+
+    const apiMiddleware = createApiKeyMiddleware({
+      apiKey: environment.hiroApiKey,
+    });
+
+
+    const customFetchFn = createFetchFn(apiMiddleware);
+
     return {
       contractAddress: this.contractAddress,
       contractName: this.contractName,
@@ -84,7 +93,11 @@ export abstract class ContractUtil {
       network: environment.network as StacksNetworkName, // This is now properly typed
       // client: { baseUrl: environment.blockchainAPIUrl }, // optional, defaults inferred from network
       // client: { baseUrl: 'https://api.platform.hiro.so/v1/ext/d1087667a742b16e54ea8a64f12dbc28/stacks-blockchain-api' }, // optional, defaults inferred from network
-      senderAddress: this.walletService.getSTXAddress() ? this.walletService.getSTXAddress() : this.contractAddress
+      senderAddress: this.walletService.getSTXAddress() ? this.walletService.getSTXAddress() : this.contractAddress,
+      client: {
+        baseUrl: environment.blockchainAPIUrl, // This is now properly typed
+        fetch: customFetchFn, // Use the custom fetch function with API key middleware
+      }
     };
   }
   // { contractName, contractAddress, functionName, functionArgs, senderAddress, network, client: _client, 
