@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: block-constellation-ui
+  namespace: default
+  labels:
+    app: block-constellation-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: block-constellation-ui
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: block-constellation-ui
+    spec:
+      containers:
+      - name: nginx
+        image: southamerica-east1-docker.pkg.dev/smiling-stock-373320/pulseb-containers/block-constellation-ui:0.0.11
+        ports:
+        - containerPort: 4200
+          protocol: TCP
