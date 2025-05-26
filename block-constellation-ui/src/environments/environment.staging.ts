@@ -5,6 +5,7 @@ export const environment = {
     // apiUrl: 'http://localhost:3000/api/v1',
     // apiUrl: 'https://boltproto.org/api/v1',
     apiUrl: '/api/v1',
+    hiroApiKey: '06be121cbb2d828b463e9bc108cdb169',
     blockchainAPIUrl: 'https://api.testnet.hiro.so',
     gameContract: {
         contractAddress: 'ST3QZNX3CGT6V7PE1PBK17FCRK1TP1AT02W1N0YJF',

@@ -113,3 +113,6 @@
   (close)="closeStakeDrawer()"
   (stakeConfirmed)="handleStakeConfirmed($event)">
 </app-game-stake-action>
+
+<!-- Onboarding (shown for first-time users) -->
+<app-game-onboard *ngIf="showOnboarding" (closeOnboarding)="closeOnboarding()"></app-game-onboard>

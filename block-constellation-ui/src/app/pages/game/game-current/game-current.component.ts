@@ -10,6 +10,7 @@ import { Subscription } from 'rxjs';
 import { ConnectWalletComponent } from '../../../shared/components/connect-wallet/connect-wallet.component';
 import { GameConstellationCardComponent } from '../game-constellation-card/game-constellation-card.component';
 import { GameStakeActionComponent } from '../game-stake-action/game-stake-action.component';
+import { GameOnboardComponent } from '../game-onboard/game-onboard.component';
 
 // Interfaces
 interface Constellation {
@@ -35,7 +36,8 @@ interface UserAllocation {
     FormsModule,
     ConnectWalletComponent,
     GameConstellationCardComponent,
-    GameStakeActionComponent
+    GameStakeActionComponent,
+    GameOnboardComponent
   ],
   templateUrl: './game-current.component.html',
   styleUrl: './game-current.component.scss'
@@ -62,6 +64,7 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   selectedConstellation: Constellation | null = null;
   showAllocationSummary = false;
   loadingPage = false;
+  showOnboarding = true; // Show onboarding by default for first-time users
   
   // Constellation data
   constellations: Constellation[] = [
@@ -110,6 +113,10 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
 
   constructor() {
     this.loadingPage = true;
+    
+    // Check if the user has seen the onboarding
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    this.showOnboarding = !hasSeenOnboarding;
     
     // Fetch BTC price on component initialization
     // this.fetchBTCPrice();
@@ -543,5 +550,11 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   
   connectWallet(): void {
     this.walletService.signIn();
+  }
+  
+  closeOnboarding(): void {
+    this.showOnboarding = false;
+    // Store in localStorage that the user has seen the onboarding
+    localStorage.setItem('hasSeenOnboarding', 'true');
   }
 }
