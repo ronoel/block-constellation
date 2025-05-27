@@ -53,7 +53,6 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   // Service injections
   private walletService = inject(WalletService);
   private blockConstellationContractService = inject(BlockConstellationContractService);
-  private allocateStatusService = inject(AllocateStatusService);
   private binanceService = inject(BinanceService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
