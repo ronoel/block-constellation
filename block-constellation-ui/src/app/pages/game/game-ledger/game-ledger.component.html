@@ -5,6 +5,12 @@
   </div>
 </div>
 
+<!-- Debug Message -->
+<div style="position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px; z-index: 9999; font-size: 12px;">
+  Loading: {{loadingLedger}} | Selected: {{!!selectedEpoch}} | Wallet: {{walletConnected}} | Current Epoch: {{currentEpochId}}
+  <br>Component State: {{ loadingLedger ? 'Loading...' : selectedEpoch ? 'Showing Epoch' : 'No Epoch Selected' }}
+</div>
+
 <!-- Main Content -->
 <div class="star-ledger" *ngIf="!loadingLedger">
   <div class="container">
@@ -157,6 +163,25 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Zero Winner Recovery Button - only shown when appropriate -->
+      <div class="zero-winner-recovery" *ngIf="walletConnected && hasZeroWinnerValue">
+        <div style="margin-bottom: 5px; font-size: 12px; color: #ff8906;">
+          Debug: Prize: {{selectedEpoch?.prizeRemained}} sats, Winning Constellation Stake: {{selectedEpoch?.winningConstellationTotalStake}} sats
+          <br>Is Zero Winner: {{selectedEpoch && selectedEpoch.winningConstellationTotalStake === 0 && selectedEpoch.prizeRemained > 0 ? 'Yes' : 'No'}}
+        </div>
+        <button 
+          class="recover-button" 
+          (click)="recoverZeroWinnerCycle()"
+          title="Recover unclaimed prize from this cycle since no stakes were placed in the winning constellation">
+          Recover Zero Winner Cycle Prize
+        </button>
+        <div class="info-text">
+          <i class="info-icon">ℹ️</i>
+          <span>No allocations were made to the winning constellation. Unclaimed prize can be recovered.</span>
+        </div>
+      </div>
+
     </ng-container>
   </div>
 </div>

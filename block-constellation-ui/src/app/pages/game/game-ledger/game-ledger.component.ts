@@ -19,10 +19,11 @@ interface EpochDetails {
   userWinningAllocation: number;
   claimed: boolean;
   isCurrent: boolean;
-  // New properties for reward calculation
+  // Properties for reward calculation
   winningConstellationTotalStake: number;
   userRewardAmount: number;
   userAllocationPercentage: number;
+  prizeRemained: number; // Add this property
 }
 
 interface UserAllocation {
@@ -104,31 +105,47 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
   // Subscriptions
   private subscriptions = new Subscription();
   
+  // Add a new property to cache the zero winner status
+  hasZeroWinnerValue: boolean = false;
+  
   constructor() {
     this.updateLoadingState(true);
     
     effect(() => {
       // Update wallet connection status whenever it changes
-      this.walletConnected = this.walletService.isLoggedIn();
-      
-      // No immediate data loading here as we'll rely on the route params subscription
-      // to determine which epoch to load, regardless of wallet connection status
+
+      this.walletConnected = this.walletService.isLoggedIn()?true:false;
+      console.log('Wallet connection status:', this.walletConnected);
     });
   }
   
   ngOnInit(): void {
+    console.log('GameLedgerComponent initialized');
+    // Verify wallet connection status in init
+    console.log('Wallet connected:', this.walletConnected);
+    
     // Subscribe to route params to get the epoch ID and load appropriate data
+    this.loadData();
+  }
+
+  private loadData(): void {
+    console.log('Loading data');
+    this.loadingLedger = true;
+    
     this.subscriptions.add(
       this.route.paramMap.pipe(
         switchMap(params => {
           const epochIdParam = params.get('id');
+          console.log('Route param epoch ID:', epochIdParam);
           
           // Always get current epoch ID, regardless of wallet connection
           return this.blockConstellationContractService.getCurrentCycleId().pipe(
             map(currentEpochId => {
+              console.log('Raw current epoch ID:', currentEpochId);
               this.currentEpochId = this.safeParseNumber(
                 typeof currentEpochId === 'bigint' ? Number(currentEpochId) : currentEpochId
               );
+              console.log('Parsed current epoch ID:', this.currentEpochId);
               return { currentEpochId: this.currentEpochId, requestedEpochId: epochIdParam };
             }),
             catchError(error => {
@@ -143,6 +160,7 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
           if (requestedEpochId) {
             // If we have an epoch ID in the URL, load that specific epoch
             const requestedId = parseInt(requestedEpochId, 10);
+            console.log('Loading requested epoch ID:', requestedId);
             
             // Validate the requested epoch ID
             if (!isNaN(requestedId) && requestedId >= 0 && requestedId < currentEpochId) {
@@ -150,12 +168,14 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
             } else {
               // If invalid epoch ID, redirect to the most recent completed epoch
               const validEpochId = Math.max(0, currentEpochId - 1);
+              console.log('Redirecting to valid epoch ID:', validEpochId);
               this.router.navigate(['/play/ledger', validEpochId]);
               return of(null);
             }
           } else {
             // No epoch ID in URL, load most recent completed epoch
             if (currentEpochId <= 0) {
+              console.log('No previous epochs available');
               this.updateStatus('No previous epochs available yet', 'info');
               this.updateLoadingState(false);
               return of(null);
@@ -163,11 +183,13 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
             
             // Load the previous completed epoch (current - 1)
             const completedEpochId = Math.max(0, currentEpochId - 1);
+            console.log('Loading most recent completed epoch:', completedEpochId);
             return this.loadEpochDetails(completedEpochId);
           }
         })
       ).subscribe({
         next: (epoch: EpochDetails | null) => {
+          console.log('Loaded epoch data:', epoch);
           if (epoch) {
             this.selectEpoch(epoch);
           }
@@ -303,11 +325,18 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
       // Add new properties with safe handling
       winningConstellationTotalStake: totalWinningConstellationStake,
       userRewardAmount: userRewardAmount,
-      userAllocationPercentage: userAllocationPercentage
+      userAllocationPercentage: userAllocationPercentage,
+      prizeRemained: prizeRemained // Add this property to track remaining prize
     };
     
     // Add the epoch to our cache using Map
     this.epochs.set(epochId, epochDetails);
+    
+    // Explicitly log the critical values we use to determine zero winners
+    console.log('Processing epoch data - zero winner check:', {
+      prizeRemained: prizeRemained,
+      winningConstellationTotalStake: totalWinningConstellationStake
+    });
     
     return epochDetails;
   }
@@ -362,6 +391,9 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
     this.selectedEpoch = epoch;
     this.selectedEpochId = epoch.id;
     
+    // Calculate if this epoch has zero winners when selected
+    this.updateZeroWinnerStatus(epoch);
+    
     // Fetch current average Bitcoin price when selecting an epoch
     this.subscriptions.add(
       this.binanceService.getBitcoinPrice()
@@ -378,6 +410,40 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
     );
   }
   
+  /**
+   * Update the zero winner status for a given epoch
+   * This avoids calling hasZeroWinner() in template rendering loops
+   */
+  private updateZeroWinnerStatus(epoch: EpochDetails | null): void {
+    if (!epoch) {
+      this.hasZeroWinnerValue = false;
+      return;
+    }
+    
+    // Log the values for debugging
+    console.log('Calculating Zero Winner Status:', {
+      prizeRemained: epoch.prizeRemained,
+      winningConstellationTotalStake: epoch.winningConstellationTotalStake
+    });
+    
+    // A cycle has a zero winner when there is prize money remaining but NO stake 
+    // in the winning constellation (stake must be exactly zero, not just low)
+    this.hasZeroWinnerValue = epoch.prizeRemained > 0 && epoch.winningConstellationTotalStake === 0;
+  }
+  
+  /**
+   * Determines if the epoch has zero winners (for programmatic access)
+   * Note: For template binding, use the hasZeroWinnerValue property instead
+   * @param epoch The epoch to check
+   */
+  hasZeroWinner(epoch: EpochDetails | null): boolean {
+    if (!epoch) {
+      return false;
+    }
+    
+    return epoch.prizeRemained > 0 && epoch.winningConstellationTotalStake === 0;
+  }
+
   /**
    * Update URL when changing epochs
    * @param epochId The epoch ID to navigate to
@@ -542,6 +608,54 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
     
     return canClaim;
   }
+
+  /**
+   * Recover prize from cycles with no winners
+   */
+  recoverZeroWinnerCycle(): void {
+    if (!this.selectedEpoch || !this.walletConnected) return;
+    
+    this.updateStatus('Recovering unclaimed prize...', 'info');
+    
+    this.subscriptions.add(
+      this.blockConstellationContractService.recoverZeroWinnerCycle(this.selectedEpoch.id)
+        .pipe(finalize(() => this.loadSelectedEpoch()))
+        .subscribe({
+          next: (response) => {
+            console.log('Recover zero winner cycle response:', response);
+            if (response.txid) {
+              this.updateStatus('Successfully recovered unclaimed prize', 'success');
+              // Update the selected epoch to reflect the recovery
+              if (this.selectedEpoch) {
+                this.selectedEpoch.prizeRemained = 0;
+              }
+            } else if (response.error) {
+              this.updateStatus(`Failed to recover prize: ${response.error}`, 'error');
+            }
+          },
+          error: (error) => {
+            console.error('Error recovering prize:', error);
+            this.updateStatus('Failed to recover unclaimed prize', 'error');
+          }
+        })
+    );
+  }
+  
+  /**
+   * Reload data for the currently selected epoch
+   * Used after operations that modify epoch data
+   */
+  private loadSelectedEpoch(): void {
+    if (!this.selectedEpoch) return;
+    
+    this.loadEpochDetails(this.selectedEpoch.id).subscribe(
+      (updatedEpoch) => {
+        if (updatedEpoch) {
+          this.selectEpoch(updatedEpoch);
+        }
+      }
+    );
+  }
   
   /**
    * Helper method to safely parse numbers from blockchain data
@@ -550,44 +664,40 @@ export class GameLedgerComponent implements OnInit, OnDestroy {
    * @returns The parsed number or default value
    */
   private safeParseNumber(value: any, defaultValue: number = 0): number {
-    if (value === undefined || value === null) return defaultValue;
+    if (typeof value === 'bigint') {
+      // Convert bigint to number safely
+      return Number(value);
+    } else if (typeof value === 'number') {
+      // For number type, just return the value
+      return value;
+    }
     
-    const parsed = Number(value);
-    return isNaN(parsed) ? defaultValue : parsed;
+    // For other types, attempt to parse as float and then to integer
+    const parsedValue = parseFloat(value);
+    return isNaN(parsedValue) ? defaultValue : Math.floor(parsedValue);
   }
   
   /**
-   * Update loading state
+   * Update loading state and emit loading status
+   * @param isLoading True to show loading, false to hide
    */
   private updateLoadingState(isLoading: boolean): void {
+    console.log('Setting loading state:', isLoading);
     this.loadingLedger = isLoading;
     this.loadingSubject.next(isLoading);
   }
   
   /**
-   * Update status message
+   * Update status message and type
+   * @param message The message text
+   * @param type The message type (success, error, info, warning)
    */
-  private updateStatus(message: string, type: StatusMessage['type']): void {
-    this.statusSubject.next({ text: message, type });
-    
-    // Automatically clear success and info messages after delay
-    if (type === 'success' || type === 'info') {
-      this.clearStatusMessageAfterDelay();
-    }
-  }
-  
-  /**
-   * Clear status message after delay
-   * @param delay Delay in milliseconds
-   */
-  private clearStatusMessageAfterDelay(delay: number = 5000): void {
-    setTimeout(() => {
-      this.statusSubject.next({ text: '', type: '' });
-    }, delay);
+  private updateStatus(message: string, type: 'success' | 'error' | 'info' | 'warning'): void {
+    this.statusSubject.next({ text: message, type: type });
   }
   
   ngOnDestroy(): void {
-    // Cleanup subscriptions
+    // Unsubscribe from all subscriptions to prevent memory leaks
     this.subscriptions.unsubscribe();
   }
 }

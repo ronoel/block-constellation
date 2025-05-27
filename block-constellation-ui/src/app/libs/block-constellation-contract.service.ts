@@ -597,6 +597,8 @@ export class BlockConstellationContractService extends ContractUtil {
      * @param cycleId The ID of the cycle to recover from
      */
     recoverZeroWinnerCycle(cycleId: number): Observable<BlockConstellationResponse> {
+        console.log(`Attempting to recover zero winner cycle: ${cycleId}`);
+
         const ftPostCondition: FungiblePostCondition = {
             type: 'ft-postcondition',
             address: this.getContractAddress(),
@@ -612,10 +614,19 @@ export class BlockConstellationContractService extends ContractUtil {
                     Cl.uint(cycleId)
                 ],
                 (tx: any) => this.transactionService.sponsorTransaction(tx).subscribe({
-                        next: (txid: string) => resolve({ txid }),
-                        error: reject
+                        next: (txid: string) => {
+                            console.log(`Zero winner cycle recovery successful. TxID: ${txid}`);
+                            resolve({ txid });
+                        },
+                        error: (err: Error) => {
+                            console.error(`Error sponsoring zero winner recovery: ${err}`);
+                            reject(err);
+                        }
                     }),
-                reject,
+                (err: Error) => {
+                    console.error(`Error in zero winner recovery: ${err}`);
+                    reject(err);
+                },
                 [ftPostCondition],
                 PostConditionMode.Deny
             );
