@@ -417,6 +417,7 @@ export class BlockConstellationContractService extends ContractUtil {
             []
         )).pipe(
             map((result: any) => {
+                console.log('Fetching current cycle data...', result);
                 const data = cvToValue(result);
                 console.log('Current cycle data:', data);
                 

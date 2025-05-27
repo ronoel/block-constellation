@@ -199,13 +199,18 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
   
   // Load data when user is not logged in
   private loadPublicData(): void {
+
+    console.log('Loading public data for constellations...');
     // Make sure we reset user data when loading public data
     this.resetUserAllocationData();
+
+    console.log('Fetching current cycle data...');
     
     const cycleSubscription = this.blockConstellationContractService
       .getCurrentCycle()
       .subscribe({
         next: (cycleData) => {
+          console.log('Current cycle data:', cycleData);
           this.currentEpoch = Number(cycleData.cycleId) || 0;
           this.totalStakedPool = (cycleData.cyclePrize || 0) / 100000000;
           

@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: southamerica-east1-docker.pkg.dev/smiling-stock-373320/pulseb-containers/block-constellation-ui:0.0.15
+        image: southamerica-east1-docker.pkg.dev/smiling-stock-373320/pulseb-containers/block-constellation-ui:0.0.16
         ports:
         - containerPort: 4200
           protocol: TCP

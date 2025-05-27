@@ -93,7 +93,7 @@ export abstract class ContractUtil {
       network: environment.network as StacksNetworkName, // This is now properly typed
       // client: { baseUrl: environment.blockchainAPIUrl }, // optional, defaults inferred from network
       // client: { baseUrl: 'https://api.platform.hiro.so/v1/ext/d1087667a742b16e54ea8a64f12dbc28/stacks-blockchain-api' }, // optional, defaults inferred from network
-      senderAddress: this.walletService.getSTXAddress() ? this.walletService.getSTXAddress() : this.contractAddress,
+      senderAddress: this.walletService.isLoggedIn() ? this.walletService.getSTXAddress() : this.contractAddress,
       client: {
         baseUrl: environment.blockchainAPIUrl, // This is now properly typed
         fetch: customFetchFn, // Use the custom fetch function with API key middleware
