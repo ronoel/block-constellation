@@ -608,7 +608,7 @@ export class BlockConstellationContractService extends ContractUtil {
         };
 
         return from(new Promise<BlockConstellationResponse>((resolve, reject) => {
-            this.callSponsoredFunction(
+            this.callPublicFunction(
                 'recover-zero-winner-cycle',
                 [
                     Cl.uint(cycleId)
