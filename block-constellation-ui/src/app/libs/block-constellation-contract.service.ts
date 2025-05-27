@@ -591,4 +591,45 @@ export class BlockConstellationContractService extends ContractUtil {
             );
         }));
     }
+
+    /**
+     * Public function to recover prizes from cycles with no winners
+     * @param cycleId The ID of the cycle to recover from
+     */
+    recoverZeroWinnerCycle(cycleId: number): Observable<BlockConstellationResponse> {
+        console.log(`Attempting to recover zero winner cycle: ${cycleId}`);
+
+        const ftPostCondition: FungiblePostCondition = {
+            type: 'ft-postcondition',
+            address: this.getContractAddress(),
+            condition: 'gt',
+            amount: 1,
+            asset: this.sbtcTokenService.getAsset()
+        };
+
+        return from(new Promise<BlockConstellationResponse>((resolve, reject) => {
+            this.callSponsoredFunction(
+                'recover-zero-winner-cycle',
+                [
+                    Cl.uint(cycleId)
+                ],
+                (tx: any) => this.transactionService.sponsorTransaction(tx).subscribe({
+                        next: (txid: string) => {
+                            console.log(`Zero winner cycle recovery successful. TxID: ${txid}`);
+                            resolve({ txid });
+                        },
+                        error: (err: Error) => {
+                            console.error(`Error sponsoring zero winner recovery: ${err}`);
+                            reject(err);
+                        }
+                    }),
+                (err: Error) => {
+                    console.error(`Error in zero winner recovery: ${err}`);
+                    reject(err);
+                },
+                [ftPostCondition],
+                PostConditionMode.Deny
+            );
+        }));
+    }
 }

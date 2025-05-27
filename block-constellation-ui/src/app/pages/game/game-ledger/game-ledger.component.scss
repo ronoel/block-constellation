@@ -646,6 +646,49 @@ $cosmic-gradient: linear-gradient(135deg, #7f5af0, #4033c0);
   animation: fadeIn 0.3s ease-out;
 }
 
+// Zero Winner Recovery Button
+.zero-winner-recovery {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: rgba($cosmic-card-bg, 0.7);
+  border: 1px dashed rgba($cosmic-divider, 0.5);
+  
+  .recover-button {
+    background: transparent;
+    color: $cosmic-text;
+    border: 1px solid $cosmic-divider;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      opacity: 1;
+      background-color: rgba($cosmic-primary, 0.1);
+    }
+  }
+  
+  .info-text {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: $cosmic-text;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .info-icon {
+      margin-right: 6px;
+      font-size: 0.9rem;
+    }
+  }
+}
+
 // Responsive Design
 @media (max-width: 768px) {
   .epoch-navigator {
@@ -669,6 +712,20 @@ $cosmic-gradient: linear-gradient(135deg, #7f5af0, #4033c0);
   .allocations-table {
     display: block;
     overflow-x: auto;
+  }
+  
+  .zero-winner-recovery {
+    padding: 0.75rem;
+    
+    .info-text {
+      flex-direction: column;
+      text-align: center;
+      
+      .info-icon {
+        margin-right: 0;
+        margin-bottom: 4px;
+      }
+    }
   }
 }
 
