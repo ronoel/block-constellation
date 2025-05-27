@@ -599,14 +599,6 @@ export class BlockConstellationContractService extends ContractUtil {
     recoverZeroWinnerCycle(cycleId: number): Observable<BlockConstellationResponse> {
         console.log(`Attempting to recover zero winner cycle: ${cycleId}`);
 
-        const ftPostCondition: FungiblePostCondition = {
-            type: 'ft-postcondition',
-            address: this.getContractAddress(),
-            condition: 'gt',
-            amount: 1,
-            asset: this.sbtcTokenService.getAsset()
-        };
-
         return from(new Promise<BlockConstellationResponse>((resolve, reject) => {
             this.callPublicFunction(
                 'recover-zero-winner-cycle',
@@ -627,8 +619,8 @@ export class BlockConstellationContractService extends ContractUtil {
                     console.error(`Error in zero winner recovery: ${err}`);
                     reject(err);
                 },
-                [ftPostCondition],
-                PostConditionMode.Deny
+                [],
+                PostConditionMode.Allow
             );
         }));
     }
