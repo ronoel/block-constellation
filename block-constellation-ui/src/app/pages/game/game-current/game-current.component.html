@@ -45,7 +45,7 @@
   <!-- Top-up Alert (if balance is low) -->
   <div class="top-up-alert" *ngIf="walletConnected && feeBalance < 1000">
     <div class="container">
-      <p>You need ≥ 1,000 sats to stake. <button class="btn-deposit">Deposit</button></p>
+      <p>You need ≥ 1,000 sats to stake. <button class="btn-deposit" (click)="openDepositUrl()">Deposit</button></p>
     </div>
   </div>
 
