@@ -557,4 +557,8 @@ export class GameCurrentComponent implements OnInit, OnDestroy {
     // Store in localStorage that the user has seen the onboarding
     localStorage.setItem('hasSeenOnboarding', 'true');
   }
+
+  openDepositUrl(): void {
+    window.open('https://www.btcstyx.com/?source=bolt-constellation', '_blank');
+  }
 }
